@@ -98,65 +98,82 @@
             </el-collapse>
             <el-collapse v-model="activeCollapseTab" class="m-3" @change="handleChange">
                 <el-collapse-item title="Images" name="image">
+                    <template v-if="imagesData.length">
+                        <el-table
+                            ref="multipleTableImage"
+                            :data="imagesData"
+                            style="width: 100%"
+                            @selection-change="handleSelectImageChange"
+                        >
+                            <el-table-column type="selection" width="55"/>
+                            <el-table-column property="id" label="ID" width="100">
+                                <template v-slot:default="scope">
+                                    {{scope.row.id}}
+                                </template>
+                            </el-table-column>
+                            <el-table-column property="src" label="Preview" width="120">
+                                <template v-slot:default="scope">
+                                    <el-image :src="scope.row.src"/>
+                                </template>
+                            </el-table-column>
+                            <el-table-column property="src" label="Link" show-overflow-tooltip>
+                                <template v-slot:default="scope">
+                                    <a :href="scope.row.src" target="_blank">{{scope.row.src}}</a>
+                                </template>
+                            </el-table-column>
+                        </el-table>
 
-                    <el-table
-                        ref="multipleTableImage"
-                        :data="imagesData"
-                        style="width: 100%"
-                        @selection-change="handleSelectImageChange"
-                    >
-                        <el-table-column type="selection" width="55"/>
-                        <el-table-column property="id" label="ID" width="100">
-                            <template v-slot:default="scope">
-                                {{scope.row.id}}
+                        <div style="margin-top: 20px">
+                            <el-button @click="toggleSelectImage()" type="info">Clear selection</el-button>
+                            <el-button @click="toggleRemoveImage()" type="danger">Delete selection</el-button>
+                            <template v-if="countImg" >
+                                <el-button :type="info" @click="handleImageLoadMore" > Next Page
+                                    <el-icon class="el-icon--right">
+                                        <ArrowRight/>
+                                    </el-icon>
+                                </el-button>
                             </template>
-                        </el-table-column>
-                        <el-table-column property="src" label="Preview" width="120">
-                            <template v-slot:default="scope">
-                                <el-image :src="scope.row.src"/>
-                            </template>
-                        </el-table-column>
-                        <el-table-column property="src" label="Link" show-overflow-tooltip>
-                            <template v-slot:default="scope">
-                                <a :href="scope.row.src" target="_blank">{{scope.row.src}}</a>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-
-                    <div style="margin-top: 20px">
-                        <el-button @click="toggleSelectImage()" type="info">Clear selection</el-button>
-                        <el-button @click="toggleRemoveImage()" type="danger">Delete selection</el-button>
-                        <template v-if="countImg" >
-                            <el-button :type="info" @click="handleImageLoadMore" > Next Page
-                                <el-icon class="el-icon--right">
-                                    <ArrowRight/>
-                                </el-icon>
-                            </el-button>
-                        </template>
-                    </div>
-
-
+                        </div>
+                    </template>
                 </el-collapse-item>
                 <el-collapse-item title="Posters" name="poster">
-                    <template v-for="(poster, index) in postersData" :key="index">
-                        <el-image
-                            style="width: 150px; height: 150px; margin: 5px"
-                            :srcset="poster.srcset"
-                            :zoom-rate="1.2"
-                            :max-scale="7"
-                            :min-scale="0.2"
-                            :preview-src-list="srcListPosters"
-                            :initial-index="index"
-                            fit="cover"
-                        />
+                    <template v-if="postersData.length">
+                        <el-table
+                            ref="multipleTablePoster"
+                            :data="postersData"
+                            style="width: 100%"
+                            @selection-change="handleSelectPosterChange"
+                        >
+                            <el-table-column type="selection" width="55"/>
+                            <el-table-column property="id" label="ID" width="100">
+                                <template v-slot:default="scope">
+                                    {{scope.row.id}}
+                                </template>
+                            </el-table-column>
+                            <el-table-column property="src" label="Preview" width="120">
+                                <template v-slot:default="scope">
+                                    <el-image :src="scope.row.src"/>
+                                </template>
+                            </el-table-column>
+                            <el-table-column property="src" label="Link" show-overflow-tooltip>
+                                <template v-slot:default="scope">
+                                    <a :href="scope.row.src" target="_blank">{{scope.row.src}}</a>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+
+                        <div style="margin-top: 20px">
+                            <el-button @click="toggleSelectPoster()" type="info">Clear selection</el-button>
+                            <el-button @click="toggleRemovePoster()" type="danger">Delete selection</el-button>
+                            <template v-if="countPoster" >
+                                <el-button :type="info" @click="handlePosterLoadMore" > Next Page
+                                    <el-icon class="el-icon--right">
+                                        <ArrowRight/>
+                                    </el-icon>
+                                </el-button>
+                            </template>
+                        </div>
                     </template>
-                    <div v-if="countPoster" class="el-image" style="width: 150px; height: 150px; text-align: center;">
-                        <el-button :type="info" link @click="handlePosterLoadMore" style="padding-top: 55px"> Next Page
-                            <el-icon class="el-icon--right">
-                                <ArrowRight/>
-                            </el-icon>
-                        </el-button>
-                    </div>
                 </el-collapse-item>
             </el-collapse>
         </el-col>
@@ -185,7 +202,9 @@
     const activeCollapseTab = ref(['1']);
 
     const multipleTableImage = ref()
+    const multipleTablePoster = ref()
     const multipleSelectImage = ref([])
+    const multipleSelectPoster = ref([])
 
     const handleChange = (val: string[],) => {
         mediaStore.flushState();
@@ -199,9 +218,9 @@
     const handlePosterLoadMore = () => {
         mediaStore.updatePosterPageSize();
     }
-    const handleClick = (tab: TabsPaneContext, event: Event) => {
-        //console.log(tab, event)
-    }
+    // const handleClick = (tab: TabsPaneContext, event: Event) => {
+    //     //console.log(tab, event)
+    // }
 
     const toggleSelectImage = (rows?: []) => {
         if (rows) {
@@ -213,13 +232,28 @@
         }
 
     }
+    const toggleSelectPoster = (rows?: []) => {
+        if (rows) {
+            rows.forEach((row) => {
+                multipleTablePoster.value!.toggleRowSelection(row, undefined);
+            })
+        } else {
+            multipleTablePoster.value!.clearSelection();
+        }
+
+    }
     const handleSelectImageChange = (val?: []) => {
         multipleSelectImage.value = [];
         val.filter(function(arr, i){
            multipleSelectImage.value.push(arr.id)
          });
     }
-
+    const handleSelectPosterChange = (val?: []) => {
+        multipleSelectPoster.value = [];
+        val.filter(function(arr, i){
+            multipleSelectPoster.value.push(arr.id)
+        });
+    }
     const toggleRemoveImage = () => {
         if (multipleSelectImage.value.length){
             getUnique(multipleSelectImage.value);
@@ -228,7 +262,7 @@
                 cancelButtonText: 'Cancel',
                 type: 'warning',
             }).then(() => {
-                mediaStore.removeMultipleImages(multipleSelectImage.value);
+                mediaStore.removeMultipleImages(multipleSelectImage.value,'images');
                 multipleTableImage.value!.clearSelection();
                 ElMessage({
                     type: 'success',
@@ -243,7 +277,31 @@
         } else {
             ElMessage.error('No pictures have been selected');
         }
+    }
 
+    const toggleRemovePoster = () => {
+        if (multipleSelectPoster.value.length){
+            getUnique(multipleSelectPoster.value);
+            ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectPoster.value.length} posters will be deleted. Continue?`, 'WARNING', {
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel',
+                type: 'warning',
+            }).then(() => {
+                mediaStore.removeMultipleImages(multipleSelectPoster.value,'posters');
+                multipleTablePoster.value!.clearSelection();
+                ElMessage({
+                    type: 'success',
+                    message: 'Delete completed',
+                })
+            }).catch(() => {
+                ElMessage({
+                    type: 'info',
+                    message: 'Delete canceled',
+                })
+            })
+        } else {
+            ElMessage.error('No pictures have been selected');
+        }
     }
 
     const getUnique = (arr) => {

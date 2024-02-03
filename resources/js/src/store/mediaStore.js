@@ -37,9 +37,11 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
-    const removeImages = async (ids) =>{
+    const removeImages = async (ids,type) =>{
         try {
-            axios.delete('/api/media/images/'
+            axios.delete('/api/media/'
+                + type
+                + '/'
                 + route.params.slug, { data: ids}).then((response) => {
                 console.log('RESPONSE11', response.data);
                 //if (response.data.success) getImages();
@@ -80,8 +82,8 @@ export const useMediaStore = defineStore('mediaStore',() => {
         pagePoster.value =  pagePoster.value + 1;
         getPosters();
     }
-    const removeMultipleImages = (ids) => {
-        removeImages(ids);
+    const removeMultipleImages = (ids,type) => {
+        removeImages(ids,type);
     }
     const flushState = () => {
         pageImg.value = 1;
