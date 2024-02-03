@@ -201,10 +201,10 @@
     const activeAccordionTab = ref('1')
     const activeCollapseTab = ref(['1']);
 
-    const multipleTableImage = ref()
-    const multipleTablePoster = ref()
-    const multipleSelectImage = ref([])
-    const multipleSelectPoster = ref([])
+    const multipleTableImage = ref();
+    const multipleTablePoster = ref();
+    const multipleSelectImage = ref([]);
+    const multipleSelectPoster = ref([]);
 
     const handleChange = (val: string[],) => {
         mediaStore.flushState();

@@ -2,6 +2,7 @@ import DashboardAdm from "@/pages/DashboardAdm.vue";
 import MoviesInfoAdm from "@/pages/MoviesInfoAdm.vue";
 import PersonsInfoAdm from "@/pages/PersonsInfoAdm.vue";
 import UpdateMovieAdm from "@/pages/UpdateMovieAdm.vue";
+import UpdatePersonAdm from "@/pages/UpdatePersonAdm.vue";
 import MovieDetailsAdm from "@/pages/MovieDetailsAdm.vue";
 import PersonDetailsAdm from "@/pages/PersonDetailsAdm.vue";
 
@@ -31,7 +32,12 @@ const routes = [
     {
         path: '/movies/:slug/edit/:id',
         component: UpdateMovieAdm,
-        name: 'edit',
+        name: 'editMovie',
+    },
+    {
+        path: '/persons/:slug/edit/:id',
+        component: UpdatePersonAdm,
+        name: 'editPerson',
     },
 
 ];
