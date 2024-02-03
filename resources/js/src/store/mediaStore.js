@@ -23,12 +23,26 @@ export const useMediaStore = defineStore('mediaStore',() => {
                 + route.params.id
                 + '?page=' + pageImg.value
             ).then((response) => {
-                console.log('RESPONCE', response.data.data);
+                console.log('RESPONCE', response.data);
                 response.data.data.forEach((item) => {
                     imagesData.value.push(item);
                     srcListImages.value.push(item.src);
                 });
                 countImg.value = response.data.to;
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {
+            //loader.value = false;
+        }
+    }
+    const removeImages = async (ids) =>{
+        try {
+            axios.delete('/api/media/images/'
+                + route.params.slug, { data: ids}).then((response) => {
+                console.log('RESPONSE11', response.data);
+                //if (response.data.success) getImages();
             });
         } catch (e) {
             error.value = e;
@@ -66,6 +80,9 @@ export const useMediaStore = defineStore('mediaStore',() => {
         pagePoster.value =  pagePoster.value + 1;
         getPosters();
     }
+    const removeMultipleImages = (ids) => {
+        removeImages(ids);
+    }
     const flushState = () => {
         pageImg.value = 1;
         pagePoster.value = 1;
@@ -82,6 +99,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
         srcListPosters,
         countImg,
         countPoster,
+        removeMultipleImages,
         flushState,
         updatePosterPageSize,
         updateImagePageSize,

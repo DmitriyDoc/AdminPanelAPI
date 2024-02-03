@@ -4,6 +4,11 @@
             <h1>{{ singleData.title }}</h1>
             <span>{{ singleData.original_title }}</span>
         </el-col>
+        <el-col> <el-button type="success" link >
+            <RouterLink :to="{ name: 'edit', params: { slug: route.params.slug, id:  route.params.id }}">
+                Edit
+            </RouterLink>
+        </el-button></el-col>
         <el-col :span="4">
             <el-image :src="singleData.poster" :fit="cover" />
             <ul class="list-group">

@@ -43,15 +43,15 @@ class MediaController extends Controller
             if ($slug == 'all') {
                 foreach ($allowedTableNames as $type){
                     $model = convertVariableToModelName(ucfirst($imgType), $type, ['App', 'Models']);
-                    $res = $model::select('id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
+                    $res = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
                     if (!empty($res['data'])) break;
                 }
             } elseif ($slug == 'Celebs')  {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $res = $model::select('id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$id)->simplePaginate(10)->toArray();
+                $res = $model::select('id','id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$id)->simplePaginate(10)->toArray();
             } else {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $res = $model::select('id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
+                $res = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
             }
 
             return $res ?? [];
@@ -102,8 +102,33 @@ class MediaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $type, string $slug,Request $request)
     {
-        //
+        $allowedTypesNames = [
+            0=>'images',
+            1=>'posters',
+        ];
+        $allowedTableNames = [
+            0=>'FeatureFilm',
+            1=>'MiniSeries',
+            2=>'ShortFilm',
+            3=>'TvMovie',
+            4=>'TvSeries',
+            5=>'TvShort',
+            6=>'TvSpecial',
+            7=>'Video',
+            8=>'Celebs',
+        ];
+
+        if (in_array($type,$allowedTypesNames) && in_array($slug,$allowedTableNames)){
+            $model = convertVariableToModelName(ucfirst($type),$slug, ['App', 'Models']);
+            $model::destroy($request->all());
+            return [
+                'success' => true,
+                'status' => 200,
+            ];
+
+        }
+
     }
 }

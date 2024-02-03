@@ -36,6 +36,7 @@ Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'inde
 
 // MEDIA QUERY
 Route::get('/media/{type}/{slug}/{id}',[\App\Http\Controllers\MediaController::class, 'index']);
+Route::delete('/media/{type}/{slug}',[\App\Http\Controllers\MediaController::class, 'destroy']);
 
 // Resources QUERY
 Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {

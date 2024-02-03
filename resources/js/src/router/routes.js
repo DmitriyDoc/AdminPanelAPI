@@ -28,11 +28,11 @@ const routes = [
         component: PersonDetailsAdm,
         name: 'showperson',
     },
-    // {
-    //     path: '/movies/:slug/edit/:id',
-    //     component: UpdateMovieAdm,
-    //     name: 'edit',
-    // },
+    {
+        path: '/movies/:slug/edit/:id',
+        component: UpdateMovieAdm,
+        name: 'edit',
+    },
 
 ];
 export default routes;
