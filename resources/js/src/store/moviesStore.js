@@ -57,6 +57,11 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const removeItem = async (id,index) => {
         axios.delete('/api/movies/' + route.params.slug + '/' + id).then((response) => {
             tableData.value.splice(index,1);
+            showItem();
+        });
+    }
+    const updateItem = async (dataForm) => {
+        axios.patch('/api/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm }).then((response) => {
             getMovies();
         });
     }
@@ -88,6 +93,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         route,
         loader,
         error,
+        updateItem,
         showItem,
         removeItem,
         updatePageSize,

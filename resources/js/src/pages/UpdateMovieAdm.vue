@@ -1,32 +1,10 @@
 <template>
     <el-row v-if="singleData.genres && singleData.cast">
         <el-col :span="24">
-            <h1>{{ singleData.title }}</h1>
-            <span>{{ singleData.original_title }}</span>
+            <h1>{{  singleData.original_title }}</h1>
         </el-col>
         <el-col :span="4">
-            <el-image :src="singleData.poster" :fit="cover"/>
-            <ul class="list-group">
-                <li class="list-group-item bg-light"><span><strong>Type: </strong></span>{{ singleData.type_film ??
-                    'empty' }}
-                </li>
-                <li class="list-group-item"><span><strong>Year release: </strong></span>{{ singleData.year_release ??
-                    'empty' }}
-                </li>
-                <li class="list-group-item"><span><strong>Release Date: </strong></span>{{ singleData.release_date ??
-                    'empty' }}
-                </li>
-                <li class="list-group-item"><span><strong>Restriction: </strong></span>{{ singleData.restrictions ??
-                    'empty' }}
-                </li>
-                <li class="list-group-item"><span><strong>Runtime: </strong></span>{{ singleData.runtime ?? 'empty' }}
-                </li>
-                <li class="list-group-item"><span><strong>Rating: </strong></span>{{ singleData.rating ?? 'empty' }}
-                </li>
-                <li class="list-group-item"><span><strong>Budget Movie: </strong></span>{{ singleData.budget ?? 'empty'
-                    }}
-                </li>
-            </ul>
+            <el-image :src="singleData.poster" :fit="cover" />
         </el-col>
         <el-col :span="20">
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
@@ -91,11 +69,6 @@
                     </li>
                 </el-tab-pane>
             </el-tabs>
-            <el-collapse v-if="singleData.story_line" v-model="activeAccordionTab" class="m-3" accordion>
-                <el-collapse-item title="Story" name="1">
-                    <div class="p-1 m-1 border bg-light">{{ singleData.story_line }}</div>
-                </el-collapse-item>
-            </el-collapse>
             <el-collapse v-model="activeCollapseTab" class="m-3" @change="handleChange">
                 <el-collapse-item title="Images" name="image">
                     <template v-if="imagesData.length">
@@ -176,11 +149,64 @@
                     </template>
                 </el-collapse-item>
             </el-collapse>
+            <el-form
+                ref="ruleFormRef"
+                :model="ruleForm"
+                label-width="120px"
+                class="demo-ruleForm"
+                :size="formSize"
+                status-icon
+            >
+                <el-form-item label="Title:" prop="title">
+                    <el-input v-model="ruleForm.title" maxlength="150" show-word-limit />
+                </el-form-item>
+
+                <el-form-item label="Original Title:"  prop="title_oiginal">
+                    <el-input v-model="ruleForm.original_title" maxlength="150" show-word-limit />
+                </el-form-item>
+
+                <el-form-item label="Year:" prop="year">
+                    <el-input v-model="ruleForm.year_release" maxlength="10" show-word-limit/>
+                </el-form-item>
+
+                <el-form-item label="Release Date:" prop="release_date">
+                    <el-input v-model="ruleForm.release_date" maxlength="50" show-word-limit/>
+                </el-form-item>
+
+                <el-form-item label="Restrictions:" prop="restrictions">
+                    <el-input v-model="ruleForm.restrictions" maxlength="10" show-word-limit/>
+                </el-form-item>
+
+                <el-form-item label="Runtime:" prop="runtime">
+                    <el-input v-model="ruleForm.runtime" maxlength="8" show-word-limit/>
+                </el-form-item>
+
+                <el-form-item label="Rating:" prop="rating">
+                    <el-input v-model="ruleForm.rating" maxlength="5" show-word-limit/>
+                </el-form-item>
+
+                <el-form-item label="Movie Budget:" prop="budget">
+                    <el-input v-model="ruleForm.budget" maxlength="128" show-word-limit/>
+                </el-form-item>
+
+                <el-form-item label="Story:" prop="story">
+                    <el-input v-model="ruleForm.story_line" maxlength="3000" show-word-limit :autosize="{ minRows: 4, maxRows: 4 }" type="textarea" />
+                </el-form-item>
+
+                <el-form-item>
+                    <el-button type="primary" @click="submitForm(ruleFormRef)">
+                        Update
+                    </el-button>
+                </el-form-item>
+
+            </el-form>
         </el-col>
     </el-row>
     <el-row v-else>
         <el-col><h2>Not Enough Data ...</h2></el-col>
     </el-row>
+
+
 </template>
 
 <script lang="ts" setup>
@@ -206,15 +232,20 @@
     const multipleSelectImage = ref([]);
     const multipleSelectPoster = ref([]);
 
+    const formSize = ref('default');
+    const ruleFormRef = ref();
+
     const handleChange = (val: string[],) => {
         mediaStore.flushState();
         if (val[1]) {
             (val[1] === 'image') ? mediaStore.getImages() : mediaStore.getPosters();
         }
     }
+
     const handleImageLoadMore = () => {
         mediaStore.updateImagePageSize();
     }
+
     const handlePosterLoadMore = () => {
         mediaStore.updatePosterPageSize();
     }
@@ -307,6 +338,50 @@
     const getUnique = (arr) => {
         return arr.filter((el, ind) => ind === arr.indexOf(el));
     };
+
+    ////EDIT FORM
+    const ruleForm = reactive({
+        title: singleData.value.title,
+        original_title: singleData.value.original_title,
+        year_release: singleData.value.year_release,
+        release_date: singleData.value.release_date,
+        restrictions: singleData.value.restrictions,
+        runtime: singleData.value.runtime,
+        rating: singleData.value.rating,
+        budget: singleData.value.budget,
+        story_line: singleData.value.story_line,
+    });
+    console.log('FORM',ruleForm);
+    console.log('DATA',singleData);
+
+    const submitForm = async (formEl) => {
+        if (!formEl) return
+        await formEl.validate((valid, fields) => {
+            if (valid) {
+                ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+                    confirmButtonText: 'OK',
+                    cancelButtonText: 'Cancel',
+                    type: 'warning',
+                }).then(() => {
+                    moviesStore.updateItem(ruleForm);
+                    console.log('submit!');
+                    multipleTablePoster.value!.clearSelection();
+                    ElMessage({
+                        type: 'success',
+                        message: 'Update completed',
+                    })
+                }).catch(() => {
+                    ElMessage({
+                        type: 'info',
+                        message: 'Update canceled',
+                    })
+                })
+
+            } else {
+                console.log('error submit!', fields);
+            }
+        })
+    }
     moviesStore.showItem();
 </script>
 

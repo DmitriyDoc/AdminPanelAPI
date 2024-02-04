@@ -143,9 +143,23 @@ class MoviesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $slug,string $id)
     {
-        //
+        $allowedTableNames = [
+            0=>'FeatureFilm',
+            1=>'MiniSeries',
+            2=>'ShortFilm',
+            3=>'TvMovie',
+            4=>'TvSeries',
+            5=>'TvShort',
+            6=>'TvSpecial',
+            7=>'Video',
+        ];
+        if (in_array($slug,$allowedTableNames)){
+            if ($data = $request->data)
+            $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
+            $model::where('id_movie',$id)->update($data);
+        }
     }
 
     /**
@@ -153,7 +167,7 @@ class MoviesController extends Controller
      */
     public function destroy(string $slug, string $id)
     {
-        dd($id);
+        //dd($id);
         $types = [
             0=>'IdType',
             1=>'Info',

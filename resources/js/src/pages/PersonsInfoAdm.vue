@@ -81,7 +81,7 @@
                         </RouterLink>
                     </el-button>
 <!--                    <el-button link type="primary" >-->
-<!--                        <RouterLink :to="{ name: 'edit', params: { slug: route.params.slug, id: scope.row.id_movie }}">-->
+<!--                        <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id: scope.row.actor_id }}">-->
 <!--                            Edit-->
 <!--                        </RouterLink>-->
 <!--                    </el-button>-->

@@ -42,6 +42,7 @@ Route::delete('/media/{type}/{slug}',[\App\Http\Controllers\MediaController::cla
 Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
     Route::get('/movies/{slug}', 'index');
     Route::get('/movies/{slug}/show/{id}', 'show');
+    Route::patch('/movies/{slug}/update/{id}', 'update');
     Route::delete('/movies/{slug}/{id}', 'destroy');
 
 });
