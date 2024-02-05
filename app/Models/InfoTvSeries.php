@@ -9,6 +9,7 @@ class InfoTvSeries extends Model
 {
     use HasFactory;
     protected $table = 'movies_info_tv_series';
+    public $segment = 'tv_series';
 
     protected $fillable = [
         'id',

@@ -62,7 +62,12 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     }
     const updateItem = async (dataForm) => {
         axios.patch('/api/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm }).then((response) => {
-            getMovies();
+            showItem();
+        });
+    }
+    const syncItem = async () => {
+        axios.put('/api/updatemovies',{ data: {id:singleData.value.id_movie,type:singleData.value.type_film} }).then((response) => {
+            showItem();
         });
     }
     state.value.searchQuery = '';
@@ -93,6 +98,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         route,
         loader,
         error,
+        syncItem,
         updateItem,
         showItem,
         removeItem,

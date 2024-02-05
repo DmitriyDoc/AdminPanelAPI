@@ -5,6 +5,9 @@
         </el-col>
         <el-col :span="4">
             <el-image :src="singleData.poster" :fit="cover" />
+            <el-button type="danger" style="width: 100%;" @click="submitSync()">
+                Sync with IMDB
+            </el-button>
         </el-col>
         <el-col :span="20">
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
@@ -351,8 +354,6 @@
         budget: singleData.value.budget,
         story_line: singleData.value.story_line,
     });
-    console.log('FORM',ruleForm);
-    console.log('DATA',singleData);
 
     const submitForm = async (formEl) => {
         if (!formEl) return
@@ -380,6 +381,27 @@
             } else {
                 console.log('error submit!', fields);
             }
+        })
+    }
+
+    const submitSync = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            moviesStore.syncItem();
+            console.log('submit sync!');
+
+            ElMessage({
+                type: 'success',
+                message: 'Sync with IMDB completed',
+            })
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Sync canceled',
+            })
         })
     }
     moviesStore.showItem();

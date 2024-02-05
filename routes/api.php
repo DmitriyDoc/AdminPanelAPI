@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Route;
 //Route::any('/images', 'App\Http\Controllers\Parser\ParserImagesController');
 //
 //Route::any('/updatecelebs', 'App\Http\Controllers\Parser\ParserUpdateCelebController');
-//Route::any('/updatemovies', 'App\Http\Controllers\Parser\ParserUpdateMovieController');
+Route::put('/updatemovies', [App\Http\Controllers\Parser\ParserUpdateMovieController::class,'update']);
 
 
 // DASHBOARD QUERY

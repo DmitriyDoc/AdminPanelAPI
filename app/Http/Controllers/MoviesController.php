@@ -33,7 +33,7 @@ class MoviesController extends Controller
         $allowedFilterFields = $model->getFillable();
         $limit = $requst->query('limit',50);
         $sortDir = strtolower($requst->query('spin','desc'));
-        $sortBy = $requst->query('orderBy','created_at');
+        $sortBy = $requst->query('orderBy','updated_at');
         if (!in_array($sortBy,$allowedFilterFields)){
             $sortBy = $allowedSortFields[0];
         }
