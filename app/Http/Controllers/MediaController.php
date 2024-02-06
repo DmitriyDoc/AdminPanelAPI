@@ -122,7 +122,7 @@ class MediaController extends Controller
 
         if (in_array($type,$allowedTypesNames) && in_array($slug,$allowedTableNames)){
             $model = convertVariableToModelName(ucfirst($type),$slug, ['App', 'Models']);
-            $model::destroy($request->all());
+            $model::whereIn('id', $request->all())->delete();
             return [
                 'success' => true,
                 'status' => 200,

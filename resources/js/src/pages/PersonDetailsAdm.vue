@@ -11,7 +11,7 @@
             </el-button>
         </el-col>
         <el-col :span="4"><div class="grid-content ep-bg-purple" />
-            <el-image :src="singleData.photo" :fit="cover" />
+            <el-image :src="singleData.photo" :fit="cover" style="width: 100%" />
             <ul class="list-group">
                 <li class="list-group-item"><span><strong>Birthday: </strong></span>{{ singleData.birthday ?? 'empty' }}</li>
                 <li class="list-group-item"><span><strong>Birthday Location: </strong></span>{{ singleData.birthdayLocation ?? 'empty' }}</li>

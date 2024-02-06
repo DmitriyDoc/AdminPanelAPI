@@ -60,6 +60,11 @@ export const usePersonsStore = defineStore('personsStore',() => {
             getCelebs();
         });
     }
+    const syncItem = async () => {
+        axios.put('/api/updateceleb',{ data: {id:singleData.value.id_celeb} }).then((response) => {
+            showItem();
+        });
+    }
     state.value.searchQuery = '';
     getCelebs();
 
@@ -88,6 +93,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         route,
         loader,
         error,
+        syncItem,
         showItem,
         removeItem,
         updatePageSize,

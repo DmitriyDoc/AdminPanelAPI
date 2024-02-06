@@ -66,7 +66,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         });
     }
     const syncItem = async () => {
-        axios.put('/api/updatemovies',{ data: {id:singleData.value.id_movie,type:singleData.value.type_film} }).then((response) => {
+        axios.put('/api/updatemovie',{ data: {id:singleData.value.id_movie,type:singleData.value.type_film} }).then((response) => {
             showItem();
         });
     }

@@ -4,7 +4,10 @@
             <h1>{{ singleData.nameActor }}</h1>
         </el-col>
         <el-col :span="4"><div class="grid-content ep-bg-purple" />
-            <el-image :src="singleData.photo" :fit="cover" />
+            <el-image :src="singleData.photo" :fit="cover" style="width: 100%" />
+            <el-button type="danger" style="width: 100%;" @click="submitSync()">
+                Sync with IMDB
+            </el-button>
             <ul class="list-group">
                 <li class="list-group-item"><span><strong>Birthday: </strong></span>{{ singleData.birthday ?? 'empty' }}</li>
                 <li class="list-group-item"><span><strong>Birthday Location: </strong></span>{{ singleData.birthdayLocation ?? 'empty' }}</li>
@@ -110,6 +113,7 @@
 
     const moviesStore = usePersonsStore();
     const mediaStore = useMediaStore();
+    const personsStore = usePersonsStore();
     const { singleData, route, error, } = storeToRefs(moviesStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
 
@@ -176,7 +180,27 @@
     const getUnique = (arr) => {
         return arr.filter((el, ind) => ind === arr.indexOf(el));
     };
-    moviesStore.showItem();
+    const submitSync = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            personsStore.syncItem();
+            console.log('submit sync person!');
+
+            ElMessage({
+                type: 'success',
+                message: 'Sync with IMDB completed',
+            })
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Sync canceled',
+            })
+        })
+    }
+
 </script>
 
 <style lang="scss" scoped>
