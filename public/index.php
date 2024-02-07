@@ -3,6 +3,8 @@
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
+ini_set('max_execution_time', 240000);// 4 min in miliseconds
+
 define('LARAVEL_START', microtime(true));
 
 /*

@@ -160,6 +160,7 @@ class MoviesController extends Controller
             $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
             $model::where('id_movie',$id)->update($data);
         }
+        return ['success'=>true];
     }
 
     /**

@@ -366,7 +366,6 @@
                 }).then(() => {
                     moviesStore.updateItem(ruleForm);
                     console.log('submit!');
-                    multipleTablePoster.value!.clearSelection();
                     ElMessage({
                         type: 'success',
                         message: 'Update completed',
@@ -377,7 +376,7 @@
                         message: 'Update canceled',
                     })
                 })
-
+2
             } else {
                 console.log('error submit!', fields);
             }
