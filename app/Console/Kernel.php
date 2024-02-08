@@ -147,9 +147,11 @@ class Kernel extends ConsoleKernel
     private function startParserByType(array $movieArgs, string $segment,string $type):void {
         $movieArgs['segmentTable'] = $segment;
         $movieArgs['titleType'] = $type;
-        (new ParserIdTypeController())->index($movieArgs,'asc');
-        (new ParserIdTypeController())->index($movieArgs,'desc');
-        (new ParserUpdateMovieController())->index($segment,date('Y-m-d'));
+        $parserTypeId = new ParserIdTypeController;
+        $parserUpdateMovie = new ParserUpdateMovieController;
+        $parserTypeId->index($movieArgs,'asc');
+        $parserTypeId->index($movieArgs,'desc');
+        $parserUpdateMovie->index($segment,date('Y-m-d'));
     }
 
     /**
