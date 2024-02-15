@@ -116,6 +116,10 @@
     const defaultSpin = ref(false);
     const options = ref([
         {
+            value: 'id',
+            label: 'ID',
+        },
+        {
             value: 'id_movie',
             label: 'ID movie',
         },

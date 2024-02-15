@@ -30,7 +30,10 @@ class MoviesController extends Controller
 
         $model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
         $allowedSortFields = ['desc','asc'];
+
         $allowedFilterFields = $model->getFillable();
+        array_push($allowedFilterFields,'id');
+
         $limit = $requst->query('limit',50);
         $sortDir = strtolower($requst->query('spin','desc'));
         $sortBy = $requst->query('orderBy','updated_at');
