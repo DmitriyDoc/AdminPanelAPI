@@ -60,8 +60,9 @@ export const usePersonsStore = defineStore('personsStore',() => {
             getCelebs();
         });
     }
+    console.log('DATA---->',singleData);
     const syncItem = async () => {
-        axios.put('/api/updateceleb',{ data: {id:singleData.value.id_celeb} }).then((response) => {
+        axios.put('/api/updateceleb',{ data: {id:singleData.value.id_celeb,type:'Celebs'} }).then((response) => {
             showItem();
         });
     }

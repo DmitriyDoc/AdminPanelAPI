@@ -80,11 +80,11 @@
                             Details
                         </RouterLink>
                     </el-button>
-<!--                    <el-button link type="primary" >-->
-<!--                        <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id: scope.row.actor_id }}">-->
-<!--                            Edit-->
-<!--                        </RouterLink>-->
-<!--                    </el-button>-->
+                    <el-button link type="primary" >
+                        <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id: scope.row.actor_id }}">
+                            Edit
+                        </RouterLink>
+                    </el-button>
                     <el-button link type="danger" @click="handleRemove(scope.row.actor_id,scope.$index)" :icon="Delete"  />
                  </template>
             </el-table-column>

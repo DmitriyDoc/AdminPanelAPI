@@ -21,12 +21,9 @@ trait ParserTrait
         gc_collect_cycles(); // принудительный вызов встроенного сборщика мусора PHP
     }
 
-//    public function updateDB($table,$data,$id,$signField){
-//        if (!empty($data)) {
-//            DB::table($table)->where($signField, $id)->update($data);
-//            gc_collect_cycles(); // принудительный вызов встроенного сборщика мусора PHP
-//        }
-//    }
+    public function touchDB($model,$id,$key){
+        $model->where($key,'=',$id)->touch();
+    }
 
     public function deleteById($table,$signField,$id){
         DB::table($table)->where($signField, '=', $id)->delete();

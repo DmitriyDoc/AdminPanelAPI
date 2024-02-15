@@ -44,7 +44,9 @@ class MoviesController extends Controller
             $searchQuery = trim(strtolower(strip_tags($requst->query('search'))));
             $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
         }
-        $modelArr = $model->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+
+        $modelArr = $model->select('id_movie','title','created_at','updated_at')->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
                 $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';

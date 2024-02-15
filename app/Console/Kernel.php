@@ -98,12 +98,12 @@ class Kernel extends ConsoleKernel
             Log::info('>>> ARTISAN PARSED TV SPECIAL FILM FINISH');
         })->name('parse_start_tv_special')->withoutOverlapping();//->daily()
 
-        //PARSED CELEBS//
+        //PARSE CELEBS//
 
 //        $schedule->call(function () use ($movieArgs,$celebsGroups) {
 //            $movieArgs['flagType'] = false;
-//            foreach ($celebsGroups as $grope){
-//                $movieArgs['titleType'] = $grope;
+//            foreach ($celebsGroups as $group){
+//                $movieArgs['titleType'] = $group;
 //                $movieArgs['sort'] = 'death_date'; //birth_date, death_date, starmeter, alpha
 //                (new ParserIdTypeController())->index($movieArgs,'asc');
 //                (new ParserIdTypeController())->index($movieArgs,'desc');

@@ -59,7 +59,7 @@ class ParserUpdateMovieController extends ParserController
     public function update(Request $request)
     {
         if ($data = $request->all()){
-            $model = convertVariableToModelName('Info', $data['data']['type'], ['App', 'Models']);
+            $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
             if ($segment = $model->segment ) {
                 $this->signByField = 'id_movie';
                 $this->imgUrlFragment = '/title/';
@@ -87,6 +87,8 @@ class ParserUpdateMovieController extends ParserController
 
                     $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
                     $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
+
+                    $this->touchDB($model, $data['data']['id'],$this->signByField);
                 }
             }
         }

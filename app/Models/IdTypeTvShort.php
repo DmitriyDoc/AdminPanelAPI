@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class IdTypeTvShort extends Model
 {
-
+    public $segment = 'tv_short';
     /**
      * The table associated with the model.
      *

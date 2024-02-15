@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class IdTypeVideo extends Model
 {
-
+    public $segment = 'video';
     /**
      * The table associated with the model.
      *

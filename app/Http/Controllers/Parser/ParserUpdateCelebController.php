@@ -40,7 +40,7 @@ class ParserUpdateCelebController extends ParserController
                     foreach ($this->idCeleb as $id) {
                         array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
                         array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/fullcredits');
-                        array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=publicity'); //event
+                        array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=event'); //publicity event
                     }
                 }
                 $this->linksGetter($this->linksInfo,'getCelebsInfo');
@@ -55,11 +55,12 @@ class ParserUpdateCelebController extends ParserController
 
     public function update(Request $request){
         if ($data = $request->all()){
+            $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
+
             $this->signByField = 'id_celeb';
             $this->imgUrlFragment = '/name/';
             $this->chunkSize = 1;
 
-            $this->insert_id_table = 'celebs_id';
             $this->update_info_table = 'celebs_info';
             $this->update_id_images_table = 'celebs_id_images';
             $this->update_images_table = 'celebs_images';
@@ -72,7 +73,7 @@ class ParserUpdateCelebController extends ParserController
                 foreach ($this->idCeleb as $id) {
                     array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
                     array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/fullcredits');
-                    array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=event'); //publicity
+                    array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=publicity'); //publicity event
                 }
             }
             $this->linksGetter($this->linksInfo,'getCelebsInfo');
@@ -80,8 +81,8 @@ class ParserUpdateCelebController extends ParserController
             $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN);
 
             $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
+            $this->touchDB($model, $data['data']['id'],'actor_id');
             $this->idCeleb = [];
-
         }
     }
 }
