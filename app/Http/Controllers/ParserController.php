@@ -115,8 +115,9 @@ class ParserController extends Controller
     protected function linksGetter( $links, $methodName, $table = null,$pattern = null ){
         if (!empty($links)){
             $infoChunks = array_chunk($links, $this->chunkSize);
+            $connector = new CurlConnectorController();
             foreach ($infoChunks as $chunk) {
-                $pages = (new CurlConnectorController())->getCurlMulty($chunk);
+                $pages = $connector->getCurlMulty($chunk);
                 if (is_array($pages)){
                     $this->{$methodName}( $pages, $table, $pattern );
                 }

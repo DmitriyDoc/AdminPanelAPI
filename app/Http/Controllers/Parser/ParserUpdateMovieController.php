@@ -4,10 +4,6 @@
 namespace App\Http\Controllers\Parser;
 
 use App\Http\Controllers\ParserController;
-use App\Traits\Components\IdImagesTrait;
-use App\Traits\Components\ImagesTrait;
-use App\Traits\Components\MoviesInfoTrait;
-use App\Traits\ParserTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -89,6 +85,8 @@ class ParserUpdateMovieController extends ParserController
                     $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
 
                     $this->touchDB($model, $data['data']['id'],$this->signByField);
+
+                    $this->idMovies = [];
                 }
             }
         }

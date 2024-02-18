@@ -82,6 +82,7 @@ class ParserUpdateCelebController extends ParserController
 
             $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
             $this->touchDB($model, $data['data']['id'],'actor_id');
+
             $this->idCeleb = [];
         }
     }

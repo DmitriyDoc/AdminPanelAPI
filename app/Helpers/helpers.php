@@ -1,4 +1,7 @@
 <?php
+
+use \Illuminate\Support\Facades\DB;
+
 $movieArgs = [
     'flagType' => true,
     'dateFrom' =>  date('Y-m-d',strtotime("-1 days")),
@@ -74,4 +77,14 @@ if (!function_exists('convertVariableToModelName')) {
         }
     }
 
+}
+
+if (!function_exists('transaction')) {
+    function transaction(\Closure $callback, int $attempts = 1)
+    {
+        if (DB::transactionLevel()){
+            return $callback();
+        }
+        return DB::transaction($callback,$attempts);
+    }
 }
