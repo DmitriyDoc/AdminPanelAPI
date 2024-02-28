@@ -9,7 +9,7 @@ class CelebsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $requst): array
+    public function index(Request $request): array
     {
         $tableName = request()->segment(3) ?? '';
         $allowedTableNames = [
@@ -33,17 +33,17 @@ class CelebsController extends Controller
         $allowedFilterFields = $model->getFillable();
         array_push($allowedFilterFields,'id');
 
-        $limit = $requst->query('limit',50);
-        $sortDir = strtolower($requst->query('spin','desc'));
-        $sortBy = $requst->query('orderBy','created_at');
+        $limit = $request->query('limit',50);
+        $sortDir = strtolower($request->query('spin','desc'));
+        $sortBy = $request->query('orderBy','created_at');
         if (!in_array($sortBy,$allowedFilterFields)){
             $sortBy = $allowedSortFields[0];
         }
         if (!in_array($sortDir,$allowedSortFields)){
             $sortDir = $allowedSortFields[0];
         }
-        if ($requst->has('search')){
-            $searchQuery = trim(strtolower(strip_tags($requst->query('search'))));
+        if ($request->has('search')){
+            $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
             $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
         }
         $modelArr = $model->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();

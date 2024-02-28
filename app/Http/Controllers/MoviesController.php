@@ -10,7 +10,7 @@ class MoviesController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $requst): array
+    public function index(Request $request): array
     {
         $tableName = request()->segment(3) ?? '';
         $allowedTableNames = [
@@ -34,17 +34,17 @@ class MoviesController extends Controller
         $allowedFilterFields = $model->getFillable();
         array_push($allowedFilterFields,'id');
 
-        $limit = $requst->query('limit',50);
-        $sortDir = strtolower($requst->query('spin','desc'));
-        $sortBy = $requst->query('orderBy','updated_at');
+        $limit = $request->query('limit',50);
+        $sortDir = strtolower($request->query('spin','desc'));
+        $sortBy = $request->query('orderBy','updated_at');
         if (!in_array($sortBy,$allowedFilterFields)){
             $sortBy = $allowedSortFields[0];
         }
         if (!in_array($sortDir,$allowedSortFields)){
             $sortDir = $allowedSortFields[0];
         }
-        if ($requst->has('search')){
-            $searchQuery = trim(strtolower(strip_tags($requst->query('search'))));
+        if ($request->has('search')){
+            $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
             $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
         }
 
@@ -173,7 +173,6 @@ class MoviesController extends Controller
      */
     public function destroy(string $slug, string $id)
     {
-        //dd($id);
         $types = [
             0=>'IdType',
             1=>'Info',
