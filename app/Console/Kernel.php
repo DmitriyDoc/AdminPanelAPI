@@ -104,7 +104,7 @@ class Kernel extends ConsoleKernel
 //            $movieArgs['flagType'] = false;
 //            foreach ($celebsGroups as $group){
 //                $movieArgs['titleType'] = $group;
-//                $movieArgs['sort'] = 'death_date'; //birth_date, death_date, starmeter, alpha
+//                $movieArgs['sort'] = 'starmeter'; //birth_date, death_date, starmeter, alpha
 //                (new ParserIdTypeController())->index($movieArgs,'asc');
 //                (new ParserIdTypeController())->index($movieArgs,'desc');
 //                Log::info('>>> ARTISAN PARSED CELEBS ID BY:',[ $movieArgs['titleType'] ]);
