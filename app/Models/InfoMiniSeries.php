@@ -36,4 +36,8 @@ class InfoMiniSeries extends Model
     {
         return $this->hasOne(PostersMiniSeries::class,'id_movie','id_movie')->oldest();
     }
+    public function collection()
+    {
+        return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
+    }
 }

@@ -5,10 +5,10 @@
                 <el-menu :default-openeds="['1', '3']">
                     <el-sub-menu index="1">
                         <template #title>
-                            <el-icon><message /></el-icon>Navigator One
+                            <el-icon><message /></el-icon><h5>Types</h5>
                         </template>
                         <el-menu-item-group>
-                            <template #title>Movies List Info:</template>
+                            <template #title><h6>Movies List Info:  </h6></template>
                             <RouterLink to="/movies/FeatureFilm"><el-menu-item index="1-1">Feature Film</el-menu-item></RouterLink>
                             <RouterLink to="/movies/MiniSeries"><el-menu-item index="1-1">Mini Series</el-menu-item></RouterLink>
                             <RouterLink to="/movies/ShortFilm"><el-menu-item index="1-1">Short Film</el-menu-item></RouterLink>

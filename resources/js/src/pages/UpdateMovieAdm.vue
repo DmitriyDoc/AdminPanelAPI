@@ -8,6 +8,15 @@
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
+            <div class="mt-3">
+                <h5>Check viewed:</h5>
+                <el-checkbox v-model="singleData.collection.viewed" label="Viewed" border class="d-block pt-1" />
+            </div>
+            <div class="mt-3">
+                <h5>Select section:</h5>
+                <el-cascader v-model="singleData.collection.id" placeholder="select ..." :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;"/>
+            </div>
+
         </el-col>
         <el-col :span="20">
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
@@ -216,15 +225,20 @@
     import {storeToRefs} from 'pinia';
     import {useMoviesStore} from "../store/moviesStore";
     import {useMediaStore} from "../store/mediaStore";
+    import {useCategoriesStore} from "../store/categoriesStore";
     import type {TabsPaneContext} from 'element-plus';
     import {ElMessage, ElMessageBox, ElTable} from 'element-plus'
     import {ArrowRight} from '@element-plus/icons-vue'
-    import {ref, watch, reactive} from "vue";
+    import {ref, watch, reactive, computed} from "vue";
+    import {useRoute} from "vue-router";
 
+    const route = useRoute();
     const moviesStore = useMoviesStore();
     const mediaStore = useMediaStore();
-    const {singleData, route, error,} = storeToRefs(moviesStore);
-    const {imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster} = storeToRefs(mediaStore);
+    const categoryStore = useCategoriesStore();
+    const { singleData, error } = storeToRefs(moviesStore);
+    const { imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
+    const { optionsCats } = storeToRefs(categoryStore);
 
     const activeTabName = ref('first');
     const activeAccordionTab = ref('1')
@@ -237,6 +251,31 @@
 
     const formSize = ref('default');
     const ruleFormRef = ref();
+
+    const handleCategoryChange = (value) => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            categoryStore.setCategories({
+                id_movie: singleData.value.id_movie,
+                type_film: route.params.slug,
+                collection_id: value[1],
+                viewed: singleData.value.collection.viewed
+            })
+            ElMessage({
+                type: 'success',
+                message: 'Collection selected',
+            })
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Select collection canceled',
+            })
+        })
+
+    }
 
     const handleChange = (val: string[],) => {
         mediaStore.flushState();
@@ -404,6 +443,7 @@
         })
     }
     moviesStore.showItem();
+    categoryStore.getCategories();
 </script>
 
 <style lang="scss" scoped>

@@ -53,7 +53,10 @@ Route::controller(\App\Http\Controllers\CelebsController::class)->group(function
     Route::delete('/persons/{slug}/{id}', 'destroy');
 
 });
-
+Route::controller(\App\Http\Controllers\CategoriesController::class)->group(function () {
+    Route::get('/categories', 'index');
+    Route::post('/categories', 'store');
+});
 // RESOURCES QUERY
 //Route::apiResources([
 //    '/celebs' => \App\Http\Controllers\CelebsController::class,

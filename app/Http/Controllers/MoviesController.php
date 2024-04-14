@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use App\Models\Collection;
 use App\Models\IdTypeFeatureFilm;
 use Illuminate\Http\Request;
 
@@ -111,7 +113,7 @@ class MoviesController extends Controller
 
         if ($slug != 'all') {
             $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-            $modelArr = $model::with('poster')->where('id_movie',$id)->get()->toArray();
+            $modelArr = $model::with('poster','collection')->where('id_movie',$id)->get()->toArray();
         } else {
             foreach ($allowedTableNames as $type){
                 $model = convertVariableToModelName('IdType', $type, ['App', 'Models']);
@@ -119,7 +121,6 @@ class MoviesController extends Controller
                 if (!empty($modelArr)) break;
             }
         }
-
         if (!empty($modelArr)){
             $infoMovieData = $modelArr[0]['info'] ?? $modelArr[0] ?? [];
             $infoMovieData['genres'] = (object) unset_serialize_key(unserialize($modelArr[0]['genres'] ?? $modelArr[0]['info']['genres'] ?? null)) ?? [];
@@ -131,7 +132,16 @@ class MoviesController extends Controller
             $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr[0]['created_at'] ?? $modelArr[0]['info']['created_at'] ?? null)) ?? '';
             $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr[0]['updated_at'] ?? $modelArr[0]['info']['updated_at'] ?? null)) ?? '';
             $infoMovieData['poster'] = $modelArr[0]['poster']['src'] ?? '';
+            if (!empty( $modelArr[0]['collection'])) {
+                $collection = Collection::with('category')->find($modelArr[0]['collection'][0]['collection_id'])->toArray();
+                $infoMovieData['collection']['id'] = $collection['id'] ?? null;
+                $infoMovieData['collection']['label'] = $collection['label'] ?? null;
+                $infoMovieData['collection']['category_value'] = $collection['category'][0]['value'] ?? null;
+                $infoMovieData['collection']['viewed'] = (bool) $modelArr[0]['collection'][0]['viewed'] ?? false;
 
+                unset( $infoMovieData['collection'][0]);
+                unset($collection);
+            }
             unset($modelArr);
         }
         return $infoMovieData;

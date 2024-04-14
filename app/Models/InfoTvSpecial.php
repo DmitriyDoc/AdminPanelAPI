@@ -36,4 +36,8 @@ class InfoTvSpecial extends Model
     {
         return $this->hasOne(PostersTvSpecial::class,'id_movie','id_movie')->oldest();
     }
+    public function collection()
+    {
+        return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
+    }
 }

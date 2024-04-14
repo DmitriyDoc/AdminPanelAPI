@@ -77,12 +77,12 @@
                 <template v-slot:default="scope">
                     <el-button type="success" link >
                         <RouterLink :to="{ name: 'showperson', params: { slug: route.params.slug, id: scope.row.actor_id }}">
-                            Details
+                            <el-button link type="primary" :icon="View" title="Details"/>
                         </RouterLink>
                     </el-button>
                     <el-button link type="primary" >
                         <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id: scope.row.actor_id }}">
-                            Edit
+                            <el-button link type="primary" :icon="EditPen" title="Edit"/>
                         </RouterLink>
                     </el-button>
                     <el-button link type="danger" @click="handleRemove(scope.row.actor_id,scope.$index)" :icon="Delete"  />
@@ -101,7 +101,7 @@
     import { storeToRefs } from 'pinia';
     import { usePersonsStore } from "../store/personsStore";
     import { RouterLink } from 'vue-router'
-    import { Delete } from '@element-plus/icons-vue';
+    import { Delete,View,EditPen } from '@element-plus/icons-vue';
     import { ElMessage, ElMessageBox } from 'element-plus'
     import type { FormInstance } from 'element-plus'
     import type { Action } from 'element-plus'

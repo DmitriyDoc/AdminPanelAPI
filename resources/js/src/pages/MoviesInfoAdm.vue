@@ -62,7 +62,7 @@
         />
     </div>
     <template v-if="tableData">
-        <el-table :data="tableData" v-loading="loader" style="width: 100%" >
+        <el-table :data="tableData" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
             <el-table-column type="index" />
             <el-table-column fixed prop="created_at" label="Date Create" width="130" />
             <el-table-column prop="poster" label="Cover" width="130" >
@@ -73,19 +73,19 @@
             <el-table-column prop="id_movie" label="ID Movie" width="120" />
             <el-table-column prop="title" label="Title" width="600" />
             <el-table-column prop="updated_at" label="Date Update" width="120" />
-            <el-table-column prop="id_movie" fixed="right" label="Operations" width="200">
+            <el-table-column prop="id_movie" fixed="right" label="Operations" width="120">
                 <template v-slot:default="scope">
                     <el-button type="success" link >
                         <RouterLink :to="{ name: 'showmovie', params: { slug: route.params.slug, id: scope.row.id_movie }}">
-                            Details
+                            <el-button link type="primary" :icon="View" title="Details"/>
                         </RouterLink>
                     </el-button>
                     <el-button link type="primary" >
                         <RouterLink :to="{ name: 'editMovie', params: { slug: route.params.slug, id: scope.row.id_movie }}">
-                            Edit
+                            <el-button link type="primary" :icon="EditPen" title="Edit"/>
                         </RouterLink>
                     </el-button>
-                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete"  />
+                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" title="Remove" />
                  </template>
             </el-table-column>
         </el-table>
@@ -101,7 +101,7 @@
     import { storeToRefs } from 'pinia';
     import { useMoviesStore } from "../store/moviesStore";
     import { RouterLink } from 'vue-router'
-    import { Delete } from '@element-plus/icons-vue';
+    import { Delete,View,EditPen } from '@element-plus/icons-vue';
     import { ElMessage, ElMessageBox } from 'element-plus'
     import type { FormInstance } from 'element-plus'
     import type { Action } from 'element-plus'

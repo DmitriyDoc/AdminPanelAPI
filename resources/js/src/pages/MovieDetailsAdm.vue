@@ -15,6 +15,11 @@
             <el-image :src="singleData.poster" :fit="cover" />
             <ul class="list-group">
                 <li class="list-group-item bg-light"><span><strong>Type: </strong></span>{{ singleData.type_film ?? 'empty' }}</li>
+                <li class="list-group-item" :style="{ backgroundColor: singleData.collection.category_value + '!important'}">
+                    <span :class="[singleData.collection.label ? 'text-white' : 'text-black']">
+                        <strong>{{ singleData.collection.label ?? 'UNSELECTED'}}</strong>
+                    </span>
+                </li>
                 <li class="list-group-item"><span><strong>Year release: </strong></span>{{ singleData.year_release ?? 'empty' }}</li>
                 <li class="list-group-item"><span><strong>Release Date: </strong></span>{{ singleData.release_date ?? 'empty' }}</li>
                 <li class="list-group-item"><span><strong>Restriction: </strong></span>{{ singleData.restrictions ?? 'empty' }}</li>
@@ -146,7 +151,6 @@
     const activeTabName = ref('first');
     const activeAccordionTab = ref('1')
     const activeCollapseTab = ref(['1']);
-
     const handleChange = (val: string[],) => {
         mediaStore.flushState();
         if (val[1]){

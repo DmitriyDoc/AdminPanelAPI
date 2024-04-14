@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 
 class InfoFeatureFilm extends Model
 {
@@ -37,5 +38,8 @@ class InfoFeatureFilm extends Model
     {
         return $this->hasOne(PostersFeatureFilm::class,'id_movie','id_movie')->oldest();
     }
-
+    public function collection()
+    {
+        return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
+    }
 }

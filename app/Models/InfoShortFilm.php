@@ -36,5 +36,9 @@ class InfoShortFilm extends Model
     {
         return $this->hasOne(PostersShortFilm::class,'id_movie','id_movie')->oldest();
     }
+    public function collection()
+    {
+        return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
+    }
 
 }
