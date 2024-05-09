@@ -41,7 +41,7 @@ class FranchiseController extends Controller
                 });
                 foreach ($TypeFilmArray as $key => $item){
                     $model = convertVariableToModelName('IdType',$key, ['App', 'Models']);
-                    $collection->add($model->select('type_film','id_movie','title','created_at','updated_at')->whereIn('id_movie',$item)->with('poster')->get()->all());
+                    $collection->add($model->select('type_film','id_movie','title','year','created_at','updated_at')->whereIn('id_movie',$item)->with('poster')->get()->all());
                 }
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
@@ -65,6 +65,7 @@ class FranchiseController extends Controller
                         $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                         $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                         $collectionResponse['data'][$k]['title'] = $item['title'] ?? '';
+                        $collectionResponse['data'][$k]['year'] = $item['year'] ?? null;
                         $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                         $collectionResponse['data'][$k]['type_film'] = $item['type_film'] ?? '';
                         $collectionResponse['data'][$k]['poster'] = $item['poster']['src'] ?? '';

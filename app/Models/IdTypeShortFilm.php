@@ -24,6 +24,7 @@ class IdTypeShortFilm extends Model
         'id',
         'id_movie',
         'title',
+        'year',
         'created_at',
         'updated_at',
     ];

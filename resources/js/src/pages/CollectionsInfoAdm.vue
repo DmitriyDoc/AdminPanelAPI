@@ -89,6 +89,7 @@
                 </template>
             </el-table-column>
             <el-table-column prop="id_movie" label="ID Movie" width="120" />
+            <el-table-column prop="year" label="Year" width="100" />
             <el-table-column prop="franchise" label="Franchise" width="200" >
                 <template v-slot:default="scope">
                     <template v-if="scope.row.franchise">
@@ -153,6 +154,10 @@
         {
             value: 'title',
             label: 'Title',
+        },
+        {
+            value: 'year',
+            label: 'Year',
         },
         {
             value: 'created_at',

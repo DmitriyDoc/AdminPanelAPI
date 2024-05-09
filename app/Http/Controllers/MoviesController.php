@@ -50,7 +50,7 @@ class MoviesController extends Controller
             $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
         }
 
-        $modelArr = $model->select('id_movie','title','created_at','updated_at')->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+        $modelArr = $model->select('id_movie','title','year','created_at','updated_at')->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
 
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
@@ -178,7 +178,11 @@ class MoviesController extends Controller
                 $modelInfo = convertVariableToModelName('Info', $slug, ['App', 'Models']);
                 $modelIdType = convertVariableToModelName('IdType', $slug, ['App', 'Models']);
                 $modelInfo::where('id_movie',$id)->update($data);
-                $modelIdType::where('id_movie',$id)->update(['title' => $data['title']]);
+
+                $modelIdType::where('id_movie',$id)->update([
+                    'title' => $data['title'],
+                    'year' => $data['year_release']
+                ]);
             });
 
         }
