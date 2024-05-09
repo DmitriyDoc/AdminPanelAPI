@@ -21,6 +21,7 @@ class IdTypeMiniSeries extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
         'id_movie',
         'title',
         'created_at',
@@ -41,5 +42,9 @@ class IdTypeMiniSeries extends Model
     public function info()
     {
         return $this->hasOne(InfoMiniSeries::class,'id_movie','id_movie');
+    }
+    public function categories()
+    {
+        return $this->hasOne(CollectionsCategoriesPivot::class,'id_movie','id_movie');
     }
 }

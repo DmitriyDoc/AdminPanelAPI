@@ -12,7 +12,6 @@
 <!--        <el-menu-item  index="2"><router-link to="/parser">Parser</router-link></el-menu-item>-->
         <el-menu-item  index="3"><router-link to="/movies/FeatureFilm">Movies Info</router-link></el-menu-item>
         <el-menu-item  index="4"><router-link to="/persons/Celebs">Celebs Info</router-link></el-menu-item>
-
     </el-menu>
 </template>
 

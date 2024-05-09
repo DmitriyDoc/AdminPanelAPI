@@ -13,7 +13,7 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Collection::class,'category_id','id');
+        return $this->hasMany(Collection::class,'category_id','id')->orderBy('id','desc');
     }
 
 }

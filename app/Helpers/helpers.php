@@ -88,3 +88,31 @@ if (!function_exists('transaction')) {
         return DB::transaction($callback,$attempts);
     }
 }
+if (!function_exists('cascaderStructure')) {
+    function cascaderStructure($collectionArray)
+    {
+        if ( !empty($collectionArray) ){
+            foreach ( $collectionArray as $catKey => $catValue ){
+                $collectionArray[$catKey]['label'] = $catValue['label'];
+                $collectionArray[$catKey]['value'] = $catValue['id'];
+                $collectionArray[$catKey]['disabled'] = true;
+                unset($collectionArray[$catKey]['id']);
+                unset($collectionArray[$catKey]['title']);
+                foreach ( $catValue['children'] as $colKey => $colValue ){
+                    $collectionArray[$catKey]['children'][$colKey]['label'] = $colValue['label'];
+                    $collectionArray[$catKey]['children'][$colKey]['value'] = $colValue['id'];
+                    unset($collectionArray[$catKey]['children'][$colKey]['id']);
+                    unset($collectionArray[$catKey]['children'][$colKey]['category_id']);
+                    if (!empty($colValue['children'])){
+                        foreach ($colValue['children'] as $frhKey => $frValue){
+                            $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['value'] = $frValue['id'];
+                            unset($collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['id']);
+                            unset($collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['collection_id']);
+                        }
+                    }
+                }
+            }
+        }
+        return $collectionArray ?? '';
+    }
+}

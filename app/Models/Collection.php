@@ -15,4 +15,9 @@ class Collection extends Model
     {
         return $this->hasMany(Category::class,'id','category_id');
     }
+
+    public function children()
+    {
+        return $this->hasMany(Franchise::class,'collection_id','id')->orderBy('id','desc');
+    }
 }

@@ -8,15 +8,26 @@
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
-            <div class="mt-3">
-                <h5>Check viewed:</h5>
-                <el-checkbox v-model="singleData.collection.viewed" label="Viewed" border class="d-block pt-1" />
-            </div>
-            <div class="mt-3">
-                <h5>Select section:</h5>
-                <el-cascader v-model="singleData.collection.id" placeholder="select ..." :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;"/>
-            </div>
+            <template v-if="singleData.collection">
+                <div class="mt-3">
+                    <h5>Check viewed:</h5>
+                    <el-checkbox v-model="singleData.collection.viewed" label="Viewed" border class="d-block pt-1" />
+                </div>
+                <div class="mt-3">
+                    <h5>Check short:</h5>
+                    <el-checkbox v-model="singleData.collection.short" label="Short film" border class="d-block pt-1" />
+                </div>
 
+                <div class="mt-3">
+                    <h5>Select section:</h5>
+                    <el-cascader v-model="singleData.collection.id" placeholder="select ..." :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
+                        <template #default="{ node, data }">
+                            <span>{{ data.label }}</span>
+                            <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                        </template>
+                    </el-cascader>
+                </div>
+            </template>
         </el-col>
         <el-col :span="20">
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
@@ -251,6 +262,10 @@
 
     const formSize = ref('default');
     const ruleFormRef = ref();
+    const ruleForm = ref(singleData);
+    const propsCascader = {
+        checkStrictly: true,
+    }
 
     const handleCategoryChange = (value) => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
@@ -262,7 +277,9 @@
                 id_movie: singleData.value.id_movie,
                 type_film: route.params.slug,
                 collection_id: value[1],
-                viewed: singleData.value.collection.viewed
+                franchise_id: value[2],
+                viewed: singleData.value.collection.viewed,
+                short: singleData.value.collection.short,
             })
             ElMessage({
                 type: 'success',
@@ -381,19 +398,6 @@
         return arr.filter((el, ind) => ind === arr.indexOf(el));
     };
 
-    ////EDIT FORM
-    const ruleForm = reactive({
-        title: singleData.value.title,
-        original_title: singleData.value.original_title,
-        year_release: singleData.value.year_release,
-        release_date: singleData.value.release_date,
-        restrictions: singleData.value.restrictions,
-        runtime: singleData.value.runtime,
-        rating: singleData.value.rating,
-        budget: singleData.value.budget,
-        story_line: singleData.value.story_line,
-    });
-
     const submitForm = async (formEl) => {
         if (!formEl) return
         await formEl.validate((valid, fields) => {
@@ -403,7 +407,16 @@
                     cancelButtonText: 'Cancel',
                     type: 'warning',
                 }).then(() => {
-                    moviesStore.updateItem(ruleForm);
+                    moviesStore.updateItem({
+                        title: ruleForm.value.title,
+                        original_title: ruleForm.value.original_title,
+                        year_release: ruleForm.value.year_release,
+                        restrictions: ruleForm.value.restrictions,
+                        runtime: ruleForm.value.runtime,
+                        rating: ruleForm.value.rating,
+                        budget: ruleForm.value.budget,
+                        story_line: ruleForm.value.story_line,
+                    });
                     console.log('submit!');
                     ElMessage({
                         type: 'success',

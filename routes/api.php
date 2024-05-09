@@ -55,7 +55,22 @@ Route::controller(\App\Http\Controllers\CelebsController::class)->group(function
 });
 Route::controller(\App\Http\Controllers\CategoriesController::class)->group(function () {
     Route::get('/categories', 'index');
+    Route::get('/categories/sections', 'getSections');
+    Route::get('/categories/show', 'show');
     Route::post('/categories', 'store');
+    Route::post('/category', 'add');
+});
+Route::controller(\App\Http\Controllers\SectionsController::class)->group(function () {
+    Route::get('/sections/{slug}', 'index');
+    Route::delete('/sections', 'destroy');
+});
+Route::controller(\App\Http\Controllers\CollectionsController::class)->group(function () {
+    Route::get('/collections/{slugSect}/{slugColl}', 'index');
+    Route::delete('/collections', 'destroy');
+});
+Route::controller(\App\Http\Controllers\FranchiseController::class)->group(function () {
+    Route::get('/franchise/{slugSect}/{slugFran}', 'index');
+    Route::delete('/franchise', 'destroy');
 });
 // RESOURCES QUERY
 //Route::apiResources([

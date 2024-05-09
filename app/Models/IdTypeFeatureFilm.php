@@ -21,6 +21,7 @@ class IdTypeFeatureFilm extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
         'id_movie',
         'title',
         'created_at',
@@ -41,6 +42,9 @@ class IdTypeFeatureFilm extends Model
     {
         return $this->hasOne(InfoFeatureFilm::class,'id_movie','id_movie');
     }
-
+    public function categories()
+    {
+        return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
+    }
 
 }

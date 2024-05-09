@@ -1,8 +1,8 @@
 <template>
-    <el-aside width="200px">
+    <el-aside width="250px">
         <el-container class="layout-container-demo" style="height: auto">
             <el-scrollbar>
-                <el-menu :default-openeds="['1', '3']">
+                <el-menu :default-openeds="['1', '2']">
                     <el-sub-menu index="1">
                         <template #title>
                             <el-icon><message /></el-icon><h5>Types</h5>
@@ -28,28 +28,32 @@
                     </el-sub-menu>
                     <el-sub-menu index="2">
                         <template #title>
-                            <el-icon><icon-menu /></el-icon>Navigator Two
+                            <el-icon><icon-menu /></el-icon><h5>Sections</h5>
                         </template>
                         <el-menu-item-group>
-                            <template #title>Group 1</template>
-                            <el-menu-item index="2-1">Option 1</el-menu-item>
-                            <el-menu-item index="2-2">Option 2</el-menu-item>
+                            <template v-for="(item, index) in sections">
+                                <RouterLink :to="'/section/'+item.value">
+                                    <el-menu-item :index="'2-'+index" class="section-color-line" :style="{borderLeftColor: item.value}">
+                                        {{item.title}}
+                                    </el-menu-item>
+                                </RouterLink>
+                            </template>
                         </el-menu-item-group>
-                        <el-menu-item-group title="Group 2">
-                            <el-menu-item index="2-3">Option 3</el-menu-item>
-                        </el-menu-item-group>
-                        <el-sub-menu index="2-4">
-                            <template #title>Option 4</template>
-                            <el-menu-item index="2-4-1">Option 4-1</el-menu-item>
-                        </el-sub-menu>
+<!--                        <el-menu-item-group title="Group 2">-->
+<!--                            <el-menu-item index="2-3">Option 3</el-menu-item>-->
+<!--                        </el-menu-item-group>-->
+<!--                        <el-sub-menu index="2-4">-->
+<!--                            <template #title>Option 4</template>-->
+<!--                            <el-menu-item index="2-4-1">Option 4-1</el-menu-item>-->
+<!--                        </el-sub-menu>-->
                     </el-sub-menu>
                     <el-sub-menu index="3">
                         <template #title>
-                            <el-icon><setting /></el-icon>Navigator Three
+                            <el-icon><setting /></el-icon><h5>Categories</h5>
                         </template>
                         <el-menu-item-group>
-                            <template #title>Group 1</template>
-                            <el-menu-item index="3-1">Option 1</el-menu-item>
+                            <template #title><h6>Franchise:</h6></template>
+                            <RouterLink to="/categories/franchise/"><el-menu-item index="3-1">Add Franchise</el-menu-item></RouterLink>
                             <el-menu-item index="3-2">Option 2</el-menu-item>
                         </el-menu-item-group>
                         <el-menu-item-group title="Group 2">
@@ -66,8 +70,14 @@
     </el-aside>
 </template>
 
-<script>
+<script setup>
+    import {storeToRefs} from "pinia";
     import { RouterLink } from 'vue-router'
+    import {useSectionStore} from "../store/sectionsStore";
+    const sectionStore = useSectionStore();
+    const { sections } = storeToRefs(sectionStore);
+
+    sectionStore.getSections();
 </script>
 
 <style lang="scss" scoped>
@@ -92,5 +102,10 @@
         justify-content: center;
         height: 100%;
         right: 20px;
+    }
+    .section-color-line {
+        border-left-color: gray;
+        border-left-width: thick;
+        border-left-style: solid;
     }
 </style>

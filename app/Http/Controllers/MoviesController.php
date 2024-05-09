@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Collection;
+use App\Models\CollectionsCategoriesPivot;
 use App\Models\IdTypeFeatureFilm;
 use Illuminate\Http\Request;
 
@@ -34,7 +35,6 @@ class MoviesController extends Controller
         $allowedSortFields = ['desc','asc'];
 
         $allowedFilterFields = $model->getFillable();
-        array_push($allowedFilterFields,'id');
 
         $limit = $request->query('limit',50);
         $sortDir = strtolower($request->query('spin','desc'));
@@ -58,6 +58,7 @@ class MoviesController extends Controller
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                 $modelArr['data'][$k]['poster'] = $item['poster']['src'] ?? '';
             }
+
             return $modelArr;
         }
         return [];
@@ -134,10 +135,11 @@ class MoviesController extends Controller
             $infoMovieData['poster'] = $modelArr[0]['poster']['src'] ?? '';
             if (!empty( $modelArr[0]['collection'])) {
                 $collection = Collection::with('category')->find($modelArr[0]['collection'][0]['collection_id'])->toArray();
-                $infoMovieData['collection']['id'] = $collection['id'] ?? null;
+                $infoMovieData['collection']['id'] = $modelArr[0]['collection'][0]['franchise_id'] ? $modelArr[0]['collection'][0]['franchise_id'] : $modelArr[0]['collection'][0]['collection_id'];
                 $infoMovieData['collection']['label'] = $collection['label'] ?? null;
                 $infoMovieData['collection']['category_value'] = $collection['category'][0]['value'] ?? null;
                 $infoMovieData['collection']['viewed'] = (bool) $modelArr[0]['collection'][0]['viewed'] ?? false;
+                $infoMovieData['collection']['short'] = (bool) $modelArr[0]['collection'][0]['short'] ?? false;
 
                 unset( $infoMovieData['collection'][0]);
                 unset($collection);
@@ -172,8 +174,13 @@ class MoviesController extends Controller
         ];
         if (in_array($slug,$allowedTableNames)){
             if ($data = $request->data)
-            $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-            $model::where('id_movie',$id)->update($data);
+            transaction( function () use ($data,$id,$slug){
+                $modelInfo = convertVariableToModelName('Info', $slug, ['App', 'Models']);
+                $modelIdType = convertVariableToModelName('IdType', $slug, ['App', 'Models']);
+                $modelInfo::where('id_movie',$id)->update($data);
+                $modelIdType::where('id_movie',$id)->update(['title' => $data['title']]);
+            });
+
         }
         return ['success'=>true];
     }
