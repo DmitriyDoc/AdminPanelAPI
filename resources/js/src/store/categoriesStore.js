@@ -14,9 +14,18 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
         }
     }
 
-    const getCategoriesShow = async () =>{
+    const getCategoriesFranchise = async () =>{
         try {
-            axios.get('/api/categories/show').then((response) => {
+            axios.get('/api/categories/select_franchise').then((response) => {
+                optionsCats.value = response.data;
+            });
+        } catch (e) {
+            console.log('error',e);
+        }
+    }
+    const getCategoriesCollection = async () =>{
+        try {
+            axios.get('/api/categories/select_collection').then((response) => {
                 optionsCats.value = response.data;
             });
         } catch (e) {
@@ -31,9 +40,17 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
             console.log('error',e);
         }
     }
-    const setCategory = async (data) => {
+    const setCategoryFranchise = async (data) => {
         try {
-            axios.post('/api/category',data).then((response) => {
+            axios.post('/api/categories/franchise',data).then((response) => {
+            });
+        } catch (e) {
+            console.log('error',e);
+        }
+    }
+    const setCategoryCollection = async (data) => {
+        try {
+            axios.post('/api/categories/collection',data).then((response) => {
             });
         } catch (e) {
             console.log('error',e);
@@ -43,7 +60,9 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
         optionsCats,
         getCategories,
         setCategories,
-        setCategory,
-        getCategoriesShow,
+        setCategoryFranchise,
+        setCategoryCollection,
+        getCategoriesFranchise,
+        getCategoriesCollection
     }
 });

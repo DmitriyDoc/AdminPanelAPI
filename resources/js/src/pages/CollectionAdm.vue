@@ -1,23 +1,22 @@
 <template>
-    <h3>Add Franchise:</h3>
+    <h3>Add Collection:</h3>
     <el-row>
         <el-col :span="6">
             <div class="mt-3">
-                <h5>Select collection:</h5>
+                <h5>Select section:</h5>
                 <el-cascader  v-model="categoryId" placeholder="select ..." :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
-                    <template #default="{ node, data }">
+                    <template #default="{ data }">
                         <span>{{ data.label }}</span>
-                        <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
                     </template>
                 </el-cascader>
             </div>
             <div class="mt-3">
                 <div class="input-group mb-3">
-                    <span>The name of the new franchise</span>
+                    <span>The name of the new collection</span>
                     <el-input
-                        v-model="nameFranchise"
+                        v-model="nameCollection"
                         maxlength="50"
-                        placeholder="Input franchise ..."
+                        placeholder="Input collection ..."
                         show-word-limit
                         type="text"
                     />
@@ -39,11 +38,12 @@
 
     const categoryStore = useCategoriesStore();
     const { optionsCats } = storeToRefs(categoryStore);
+
+    const nameCollection = ref('');
+    const categoryId = ref(null);
     const propsCascader = {
         checkStrictly: true,
     }
-    const nameFranchise = ref('');
-    const categoryId = ref(null);
 
     const handleAddFranchise = () => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
@@ -51,27 +51,31 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            categoryStore.setCategoryFranchise({
-                collection_id: categoryId.value,
-                label: nameFranchise.value,
+            categoryStore.setCategoryCollection({
+                category_id: categoryId.value,
+                label: nameCollection.value,
             });
             categoryId.value = null;
-            nameFranchise.value = '';
+            nameCollection.value = '';
             ElMessage({
                 type: 'success',
-                message: 'Franchise added',
+                message: 'Collection added',
             })
         }).catch(() => {
             ElMessage({
                 type: 'info',
-                message: 'Addition of a new franchise has been canceled',
+                message: 'Addition of a new collection has been canceled',
             })
         })
     }
     const handleCategoryChange = (value) => {
-        categoryId.value = value[1]
+        for (var el of optionsCats.value) {
+            if (value[0] === el.value){
+                categoryId.value = el.id;
+            }
+        }
     }
-    categoryStore.getCategoriesFranchise();
+    categoryStore.getCategoriesCollection();
 
 </script>
 

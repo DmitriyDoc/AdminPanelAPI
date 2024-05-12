@@ -9,6 +9,7 @@ import UpdatePersonAdm from "@/pages/UpdatePersonAdm.vue";
 import MovieDetailsAdm from "@/pages/MovieDetailsAdm.vue";
 import PersonDetailsAdm from "@/pages/PersonDetailsAdm.vue";
 import FranchiseAdm from "@/pages/FranchiseAdm.vue";
+import CollectionAdm from "@/pages/CollectionAdm.vue";
 
 const routes = [
     {
@@ -61,6 +62,11 @@ const routes = [
         path: '/categories/franchise/',
         component: FranchiseAdm,
         name: 'addFranchise',
+    },
+    {
+        path: '/categories/collection/',
+        component: CollectionAdm,
+        name: 'addCollection',
     },
 
 ];

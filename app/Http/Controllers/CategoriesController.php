@@ -29,15 +29,20 @@ class CategoriesController extends Controller
         return json_encode($sections ?? '');
     }
 
-    public function show()
+    public function showSelectFranchise()
     {
         $collectionArray = Category::with('children')->get()->toArray();
         $collectionArray = cascaderStructure($collectionArray);
         return json_encode($collectionArray);
     }
-    public function add(Request $request)
+    public function showSelectCollection()
     {
-        request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label)) ]);
+        $collectionArray = Category::get()->toArray();
+        return json_encode($collectionArray);
+    }
+    public function addFranchise(Request $request)
+    {
+        request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label))]);
         $data = Validator::make($request->all(),[
             'label' => 'required|string|max:50',
             'value' => 'required|string|max:50',
@@ -50,6 +55,21 @@ class CategoriesController extends Controller
         }
         Franchise::create($data->getData());
     }
+    public function addCollection(Request $request)
+    {
+    request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label))]);
+    $data = Validator::make($request->all(),[
+        'label' => 'required|string|max:50',
+        'value' => 'required|string|max:50',
+        'category_id' => 'required|numeric',
+    ]);
+    if ($data->fails()) {
+        return response()->json([
+            'errors' => $data->errors()
+        ], 422);
+    }
+    Collection::create($data->getData());
+}
     public function store(Request $request)
     {
         $data = Validator::make($request->all(),[

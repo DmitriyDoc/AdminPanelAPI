@@ -10,6 +10,7 @@ class Collection extends Model
     use HasFactory;
     protected $guarded = false;
     protected $table = 'collections';
+    public $timestamps = false;
 
     public function category()
     {

@@ -56,9 +56,11 @@ Route::controller(\App\Http\Controllers\CelebsController::class)->group(function
 Route::controller(\App\Http\Controllers\CategoriesController::class)->group(function () {
     Route::get('/categories', 'index');
     Route::get('/categories/sections', 'getSections');
-    Route::get('/categories/show', 'show');
+    Route::get('/categories/select_franchise', 'showSelectFranchise');
+    Route::get('/categories/select_collection', 'showSelectCollection');
     Route::post('/categories', 'store');
-    Route::post('/category', 'add');
+    Route::post('/categories/franchise', 'addFranchise');
+    Route::post('/categories/collection', 'addCollection');
 });
 Route::controller(\App\Http\Controllers\SectionsController::class)->group(function () {
     Route::get('/sections/{slug}', 'index');
