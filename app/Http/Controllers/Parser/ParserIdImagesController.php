@@ -62,11 +62,11 @@ class ParserIdImagesController extends ParserController
         DB::table($this->select_id_table)->where('created_at','>=', $this->dateFrom)->orderBy('id')->chunk(1, function ($ids) {
             if ($this->flagType){
                 foreach ($ids as $id) {
-                    array_push($this->links,$this->domen.'/title/'.$id->movie_id.'/mediaindex?refine='.$this->refine);
+                    array_push($this->links,$this->domen.'/title/'.$id->movie_id.'/mediaindex/?contentTypes='.$this->refine);
                 }
             } else {
                 foreach ($ids as $id) {
-                    array_push($this->links,$this->domen.'/name/'.$id->actor_id.'/mediaindex?refine=publicity');
+                    array_push($this->links,$this->domen.'/name/'.$id->actor_id.'/mediaindex/?contentTypes==publicity');
                 }
             }
             $pages = (new CurlConnectorController())->getCurlMulty($this->links);
