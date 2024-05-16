@@ -5,6 +5,8 @@
         </el-col>
         <el-col :span="4">
             <el-image :src="singleData.poster" :fit="cover" />
+            <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2" size="small">If checked, all images need to be reassigned after synchronization (if they have been set)</el-text></div>
+            <el-checkbox v-model="checkedImagesSync">Sync with all Images </el-checkbox>
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
@@ -107,9 +109,9 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Preview" width="120">
+                            <el-table-column property="src" label="Preview" width="200">
                                 <template v-slot:default="scope">
-                                    <el-image :src="scope.row.src"/>
+                                    <el-image :src="scope.row.srcset"/>
                                 </template>
                             </el-table-column>
                             <el-table-column property="src" label="Link" show-overflow-tooltip>
@@ -146,9 +148,9 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Preview" width="120">
+                            <el-table-column property="src" label="Preview" width="200">
                                 <template v-slot:default="scope">
-                                    <el-image :src="scope.row.src"/>
+                                    <el-image :src="scope.row.srcset"/>
                                 </template>
                             </el-table-column>
                             <el-table-column property="src" label="Link" show-overflow-tooltip>
@@ -263,9 +265,11 @@
     const formSize = ref('default');
     const ruleFormRef = ref();
     const ruleForm = ref(singleData);
+    const checkedImagesSync = ref(false);
     const propsCascader = {
         checkStrictly: true,
     }
+
 
     const handleCategoryChange = (value) => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
@@ -411,6 +415,7 @@
                         title: ruleForm.value.title,
                         original_title: ruleForm.value.original_title,
                         year_release: ruleForm.value.year_release,
+                        release_date: ruleForm.value.release_date,
                         restrictions: ruleForm.value.restrictions,
                         runtime: ruleForm.value.runtime,
                         rating: ruleForm.value.rating,
@@ -441,7 +446,7 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            moviesStore.syncItem();
+            moviesStore.syncItem(checkedImagesSync.value);
             console.log('submit sync!');
 
             ElMessage({

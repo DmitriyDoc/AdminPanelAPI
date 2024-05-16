@@ -53,7 +53,12 @@ class MediaController extends Controller
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
                 $res = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
             }
-
+            if (!empty($res)){
+                foreach ($res['data'] as &$item){
+                    $img = explode(',',$item['srcset'] ?? '');
+                    $item['srcset'] = $img[0];
+                }
+            }
             return $res ?? [];
         }
 

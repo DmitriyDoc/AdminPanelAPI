@@ -57,10 +57,10 @@
                 <el-collapse-item title="Images" name="image" >
                     <template v-if="imagesData.length">
                         <el-table
-                            ref="multipleTableImage"
+
                             :data="imagesData"
                             style="width: 100%"
-                            @selection-change="handleSelectImageChange"
+
                         >
                             <el-table-column type="selection" width="55"/>
                             <el-table-column property="id" label="ID" width="100">
@@ -68,9 +68,9 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Preview" width="120">
+                            <el-table-column property="src" label="Preview" width="200">
                                 <template v-slot:default="scope">
-                                    <el-image :src="scope.row.src"/>
+                                    <el-image :src="scope.row.srcset"/>
                                 </template>
                             </el-table-column>
                             <el-table-column property="src" label="Link" show-overflow-tooltip>
