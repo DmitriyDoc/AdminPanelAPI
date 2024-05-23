@@ -18,7 +18,6 @@ class CategoriesController extends Controller
         $collectionArray = Category::with((array('children' => function($query)  {
             $query->with('children');
         })))->get()->toArray();
-        //dd($collectionArray);
         $collectionArray = cascaderStructure($collectionArray);
         return json_encode($collectionArray);
     }

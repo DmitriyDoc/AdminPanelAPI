@@ -69,9 +69,11 @@ class SectionsController extends Controller
                     if (!empty($section[0])){
                         foreach ($section[0]['children'] as $col){
                             foreach ($item['categories'] as $key => $cat){
-                                if ($cat['collection_id'] == $col['id'] ){
-                                    $collectionResponse['data'][$k]['collection'][$key]['label'] = $col['label'];
-                                    $collectionResponse['data'][$k]['collection'][$key]['value'] = $col['value'];
+                                if (!empty($cat['collection_id'] )){
+                                    if ($cat['collection_id'] == $col['id'] ){
+                                        $collectionResponse['data'][$k]['collection'][$key]['label'] = $col['label'];
+                                        $collectionResponse['data'][$k]['collection'][$key]['value'] = $col['value'];
+                                    }
                                 }
                             }
                         }
@@ -82,7 +84,8 @@ class SectionsController extends Controller
                     $collectionResponse['data'][$k]['year'] = $item['year'] ?? null;
                     $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                     $collectionResponse['data'][$k]['type_film'] = $item['type_film'] ?? '';
-                    $collectionResponse['data'][$k]['poster'] = $item['poster']['src'] ?? '';
+                    $img = explode(',',$item['poster']['srcset'] ?? '');
+                    $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
                 }
                 $collectionResponse['title'] = $section[0]['title'];
                 $collectionResponse['total'] = $collapsed->count();

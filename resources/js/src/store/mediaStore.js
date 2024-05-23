@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
-import { onMounted, onUpdated,onBeforeUnmount, ref} from "vue";
+import { onMounted, onUpdated,onBeforeUnmount, ref,reactive} from "vue";
 
 export const useMediaStore = defineStore('mediaStore',() => {
     const route = useRoute();
@@ -14,7 +14,68 @@ export const useMediaStore = defineStore('mediaStore',() => {
     const countImg = ref(null);
     const countPoster = ref(null);
     const error = ref();
-
+    const postersAssignInfo = reactive({
+        id_poster_original: {
+            locale: 'Original',
+            count: 0,
+        },
+        id_poster_original_alt: {
+            locale: 'Original Alternate',
+            count: 0,
+        },
+        id_poster_ru: {
+            locale: 'Russian',
+            count: 0,
+        },
+        id_poster_ru_alt: {
+            locale: 'Russian Alternate',
+            count: 0,
+        },
+        id_posters_characters: {
+            locale: 'Characters',
+            count: 0,
+        },
+        id_posters_alternative: {
+            locale: 'Alternative',
+            count: 0,
+        },
+        id_wallpaper: {
+            locale: 'Wallpapers',
+            count: 0,
+        },
+    });
+    const getAssignedImages = async () =>{
+        try {
+            axios.get('/api/media/show/images/'
+                + route.params.slug
+                + '/'
+                + route.params.id
+            ).then((response) => {
+                response.data.forEach((item) => {
+                    imagesData.value.push(item);
+                    srcListImages.value.push(item.src);
+                });
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {}
+    }
+    const getAssignedPosters = async () =>{
+        try {
+            axios.get('/api/media/show/posters/'
+                + route.params.id
+            ).then((response) => {
+                response.data.forEach((item) => {
+                    postersData.value.push(item);
+                    srcListPosters.value.push(item.src);
+                });
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {}
+    }
     const getImages = async () =>{
         try {
             axios.get('/api/media/images/'
@@ -23,28 +84,11 @@ export const useMediaStore = defineStore('mediaStore',() => {
                 + route.params.id
                 + '?page=' + pageImg.value
             ).then((response) => {
-                console.log('RESPONCE', response.data);
                 response.data.data.forEach((item) => {
                     imagesData.value.push(item);
                     srcListImages.value.push(item.src);
                 });
                 countImg.value = response.data.to;
-            });
-        } catch (e) {
-            error.value = e;
-            console.log('error',e);
-        } finally {
-            //loader.value = false;
-        }
-    }
-    const removeImages = async (ids,type) =>{
-        try {
-            axios.delete('/api/media/'
-                + type
-                + '/'
-                + route.params.slug, { data: ids}).then((response) => {
-                console.log('RESPONSE11', response.data);
-                //if (response.data.success) getImages();
             });
         } catch (e) {
             error.value = e;
@@ -65,7 +109,43 @@ export const useMediaStore = defineStore('mediaStore',() => {
                     postersData.value.push(item);
                     srcListPosters.value.push(item.src);
                 });
+                if (response.data.poster_count){
+                    for (var item in response.data.poster_count) {
+                        postersAssignInfo[item].count = reactive(response.data.poster_count[item]);
+                    }
+                }
                 countPoster.value = response.data.to;
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {
+            //loader.value = false;
+        }
+    }
+    const removeImages = async (ids,type) =>{
+        try {
+            axios.delete('/api/media/'
+                + type
+                + '/'
+                + route.params.slug, { data: ids}).then((response) => {
+                //if (response.data.success) getImages();
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {
+            //loader.value = false;
+        }
+    }
+    const setPoster = async (id,cat) =>{
+        try {
+            axios.post('/api/media/poster_assign', {
+                type_film: route.params.slug,
+                id_movie: route.params.id,
+                id_poster: id,
+                poster_cat: cat,
+                }).then((response) => {
             });
         } catch (e) {
             error.value = e;
@@ -85,6 +165,9 @@ export const useMediaStore = defineStore('mediaStore',() => {
     const removeMultipleImages = (ids,type) => {
         removeImages(ids,type);
     }
+    const assignPoster = (id,cat) => {
+        setPoster(id,cat);
+    }
     const flushState = () => {
         pageImg.value = 1;
         pagePoster.value = 1;
@@ -101,11 +184,15 @@ export const useMediaStore = defineStore('mediaStore',() => {
         srcListPosters,
         countImg,
         countPoster,
+        postersAssignInfo,
         removeMultipleImages,
+        assignPoster,
         flushState,
         updatePosterPageSize,
         updateImagePageSize,
         getImages,
         getPosters,
+        getAssignedImages,
+        getAssignedPosters,
     }
 });

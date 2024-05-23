@@ -68,7 +68,8 @@ class FranchiseController extends Controller
                         $collectionResponse['data'][$k]['year'] = $item['year'] ?? null;
                         $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                         $collectionResponse['data'][$k]['type_film'] = $item['type_film'] ?? '';
-                        $collectionResponse['data'][$k]['poster'] = $item['poster']['src'] ?? '';
+                        $img = explode(',',$item['poster']['srcset'] ?? '');
+                        $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
                     }
                     $collectionResponse['title'] = $collectionTitle;
                     $collectionResponse['total'] = $collapsed->count();

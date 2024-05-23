@@ -16,6 +16,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        $allowedTableNames = [
+            0=>'FeatureFilm',
+            1=>'MiniSeries',
+            2=>'ShortFilm',
+            3=>'TvMovie',
+            4=>'TvSeries',
+            5=>'TvShort',
+            6=>'TvSpecial',
+            7=>'Video',
+        ];
         $movieArgs = [
             'flagType' => true,
             'dateFrom' =>  date('Y-m-d',strtotime("-1 days")),
@@ -132,6 +142,25 @@ class Kernel extends ConsoleKernel
 //            }
 //           (new ParserUpdateMovieController())->index('tv_special',date('Y-m-d'));
 //        })->name('parse_diapason_date');//->withoutOverlapping()->everyMinute()
+
+        // ACTUALIZE YEAR and TITLE for tables IdType//
+        $schedule->call(function () use ($allowedTableNames) {
+            foreach ($allowedTableNames as $table){
+                $modelInfo = convertVariableToModelName('Info', $table, ['App', 'Models']);
+                $modelIdType = convertVariableToModelName('IdType', $table, ['App', 'Models']);
+                $modelInfo = $modelInfo::select('id_movie','title','year_release')->limit(50)->orderBy('created_at','desc')->get();
+                foreach ($modelInfo as $key => $item){
+                    if (!empty($item['year_release'])){
+                        $modelIdType::where('id_movie',$item['id_movie'])->update([
+                            'title' => $item['title'],
+                            'year' => $item['year_release']
+                        ]);
+                    }
+                }
+                Log::info(">>> ACTUALIZE ID TYPE FINISH",[$table]);
+            }
+        })->name('actualize_years_in_tables_type_id');//->daily()
+
     }
 
     /**

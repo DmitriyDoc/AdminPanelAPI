@@ -12,7 +12,7 @@
             </el-button>
         </el-col>
         <el-col :span="4">
-            <el-image :src="singleData.poster" :fit="cover" />
+            <el-image :src="singleData.poster" fit="cover" />
             <ul class="list-group">
                 <li class="list-group-item bg-light"><span><strong>Type: </strong></span>{{ singleData.type_film ?? 'empty' }}</li>
                 <template v-if="singleData.collection">
@@ -31,7 +31,7 @@
             </ul>
         </el-col>
         <el-col :span="20" >
-            <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
+            <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick()">
                 <el-tab-pane label="Genres" name="first">
                     <li class="list-group-item">
                         <template v-for="(genre, index) in singleData.genres">
@@ -156,7 +156,7 @@
     const handleChange = (val: string[],) => {
         mediaStore.flushState();
         if (val[1]){
-            (val[1] === 'image') ? mediaStore.getImages() : mediaStore.getPosters();
+            (val[1] === 'image') ? mediaStore.getAssignedImages() : mediaStore.getAssignedPosters();
         }
     }
     const handleImageLoadMore = () => {

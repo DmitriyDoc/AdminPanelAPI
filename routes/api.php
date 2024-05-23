@@ -36,9 +36,13 @@ Route::put('/updateceleb', [App\Http\Controllers\Parser\ParserUpdateCelebControl
 Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
 
 // MEDIA QUERY
-Route::get('/media/{type}/{slug}/{id}',[\App\Http\Controllers\MediaController::class, 'index']);
-Route::delete('/media/{type}/{slug}',[\App\Http\Controllers\MediaController::class, 'destroy']);
-
+Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
+Route::get('/media/show/images/{slug}/{id}', 'showImages');
+Route::get('/media/show/posters/{id}', 'showPosters');
+Route::get('/media/{type}/{slug}/{id}', 'index');
+Route::post('/media/poster_assign', 'store');
+Route::delete('/media/{type}/{slug}', 'destroy');
+});
 // Resources QUERY
 Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
     Route::get('/movies/{slug}', 'index');

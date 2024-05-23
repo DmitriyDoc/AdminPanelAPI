@@ -4,7 +4,7 @@
             <h1>{{  singleData.original_title }}</h1>
         </el-col>
         <el-col :span="4">
-            <el-image :src="singleData.poster" :fit="cover" />
+            <el-image :src="singleData.poster" fit="cover" />
             <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2" size="small">If checked, all images need to be reassigned after synchronization (if they have been set)</el-text></div>
             <el-checkbox v-model="checkedImagesSync">Sync with all Images </el-checkbox>
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
@@ -32,7 +32,7 @@
             </template>
         </el-col>
         <el-col :span="20">
-            <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
+            <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick()">
                 <el-tab-pane label="Genres" name="first">
                     <li class="list-group-item">
                         <template v-for="(genre, index) in singleData.genres">
@@ -109,7 +109,7 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Preview" width="200">
+                            <el-table-column property="src" label="Preview" width="150">
                                 <template v-slot:default="scope">
                                     <el-image :src="scope.row.srcset"/>
                                 </template>
@@ -125,7 +125,7 @@
                             <el-button @click="toggleSelectImage()" type="info">Clear selection</el-button>
                             <el-button @click="toggleRemoveImage()" type="danger">Delete selection</el-button>
                             <template v-if="countImg" >
-                                <el-button :type="info" @click="handleImageLoadMore" > Next Page
+                                <el-button type="info" @click="handleImageLoadMore" > Next Page
                                     <el-icon class="el-icon--right">
                                         <ArrowRight/>
                                     </el-icon>
@@ -148,7 +148,7 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Preview" width="200">
+                            <el-table-column property="src" label="Preview" width="150">
                                 <template v-slot:default="scope">
                                     <el-image :src="scope.row.srcset"/>
                                 </template>
@@ -161,15 +161,29 @@
                         </el-table>
 
                         <div style="margin-top: 20px">
-                            <el-button @click="toggleSelectPoster()" type="info">Clear selection</el-button>
-                            <el-button @click="toggleRemovePoster()" type="danger">Delete selection</el-button>
-                            <template v-if="countPoster" >
-                                <el-button :type="info" @click="handlePosterLoadMore" > Next Page
-                                    <el-icon class="el-icon--right">
-                                        <ArrowRight/>
-                                    </el-icon>
-                                </el-button>
-                            </template>
+                            <div class="mt-3">
+                                <template v-if="countPoster" >
+                                    <el-button type="info" @click="handlePosterLoadMore" class="w-100"> Next Page
+                                        <el-icon class="el-icon--right">
+                                            <ArrowRight/>
+                                        </el-icon>
+                                    </el-button>
+                                </template>
+                            </div>
+                            <div style="position: sticky; top: 15px;">
+                                <h3 class="text-center mt-3 mb-3">Assign selection poster(s) as:</h3>
+                                <template v-for="(item, index) in postersAssignInfo">
+                                    <el-badge :value="item.count" class="item me-3 mt-3" :is-dot="!item.count" type="success">
+                                        <el-tag>
+                                            <el-button @click="toggleAssignPoster(index)" type="primary">{{item.locale}}</el-button>
+                                        </el-tag>
+                                    </el-badge>
+                                </template>
+                                <div class="mt-3">
+                                    <el-button @click="toggleSelectPoster()" type="info">Clear selection</el-button>
+                                    <el-button @click="toggleRemovePoster()" type="danger">Delete selection</el-button>
+                                </div>
+                            </div>
                         </div>
                     </template>
                 </el-collapse-item>
@@ -250,7 +264,7 @@
     const mediaStore = useMediaStore();
     const categoryStore = useCategoriesStore();
     const { singleData, error } = storeToRefs(moviesStore);
-    const { imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
+    const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
     const { optionsCats } = storeToRefs(categoryStore);
 
     const activeTabName = ref('first');
@@ -397,7 +411,30 @@
             ElMessage.error('No pictures have been selected');
         }
     }
-
+    const toggleAssignPoster = (category) => {
+        if (multipleSelectPoster.value.length){
+            //getUnique(multipleSelectPoster.value);
+            ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectPoster.value.length} posters will be assign. Continue?`, 'WARNING', {
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel',
+                type: 'warning',
+            }).then(() => {
+                mediaStore.assignPoster(multipleSelectPoster.value,category);
+                toggleSelectPoster();
+                ElMessage({
+                    type: 'success',
+                    message: 'Assign completed',
+                })
+            }).catch(() => {
+                ElMessage({
+                    type: 'info',
+                    message: 'Categorization canceled',
+                })
+            })
+        } else {
+            ElMessage.error('No pictures have been selected');
+        }
+    }
     const getUnique = (arr) => {
         return arr.filter((el, ind) => ind === arr.indexOf(el));
     };

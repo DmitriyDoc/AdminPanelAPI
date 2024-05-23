@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\IdTypeFeatureFilm;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MoviesController extends Controller
 {
@@ -50,13 +51,14 @@ class MoviesController extends Controller
             $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
         }
 
-        $modelArr = $model->select('id_movie','title','year','created_at','updated_at')->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+        $modelArr = $model->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
 
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
                 $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                $modelArr['data'][$k]['poster'] = $item['poster']['src'] ?? '';
+                $img = explode(',',$item['poster']['srcset'] ?? '');
+                $modelArr['data'][$k]['poster'] = $img[0] ?? '';
             }
 
             return $modelArr;
@@ -132,7 +134,8 @@ class MoviesController extends Controller
             $infoMovieData['companies'] = (object) unset_serialize_key(unserialize($modelArr[0]['companies'] ?? $modelArr[0]['info']['companies'] ?? null)) ?? [];
             $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr[0]['created_at'] ?? $modelArr[0]['info']['created_at'] ?? null)) ?? '';
             $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr[0]['updated_at'] ?? $modelArr[0]['info']['updated_at'] ?? null)) ?? '';
-            $infoMovieData['poster'] = $modelArr[0]['poster']['src'] ?? '';
+            $img = explode(',',$modelArr[0]['poster']['srcset'] ?? '');
+            $infoMovieData['poster'] = $img[0] ?? '';
             if (!empty( $modelArr[0]['collection'])) {
                 $collection = Collection::with('category')->find($modelArr[0]['collection'][0]['collection_id'])->toArray();
                 $infoMovieData['collection']['id'] = $modelArr[0]['collection'][0]['franchise_id'] ? $modelArr[0]['collection'][0]['franchise_id'] : $modelArr[0]['collection'][0]['collection_id'];
@@ -172,13 +175,13 @@ class MoviesController extends Controller
             6=>'TvSpecial',
             7=>'Video',
         ];
+
         if (in_array($slug,$allowedTableNames)){
             if ($data = $request->data)
             transaction( function () use ($data,$id,$slug){
                 $modelInfo = convertVariableToModelName('Info', $slug, ['App', 'Models']);
                 $modelIdType = convertVariableToModelName('IdType', $slug, ['App', 'Models']);
                 $modelInfo::where('id_movie',$id)->update($data);
-
                 $modelIdType::where('id_movie',$id)->update([
                     'title' => $data['title'],
                     'year' => $data['year_release']

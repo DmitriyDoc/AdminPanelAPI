@@ -23,6 +23,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
 
     const getMovies = async () =>{
         try {
+            tableData.value = [];
             axios.get('/api/movies/'
                 + route.params.slug
                 + '?page=' + state.value.page
@@ -65,8 +66,13 @@ export const useMoviesStore = defineStore('moviesStore',() => {
             showItem();
         });
     }
-    const syncItem = async () => {
-        axios.put('/api/updatemovie',{ data: {id:singleData.value.id_movie,type:singleData.value.type_film} }).then((response) => {
+    const syncItem = async (checkedImages) => {
+        console.log(checkedImages);
+        axios.put('/api/updatemovie',{ data: {
+            id: singleData.value.id_movie,
+            type: singleData.value.type_film,
+            flagImages: checkedImages,
+        }}).then((response) => {
             showItem();
         });
     }

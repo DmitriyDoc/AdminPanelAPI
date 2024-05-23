@@ -70,14 +70,16 @@ class CollectionsController extends Controller
                                 $collectionSort = $collectionSort->sortByDesc($sortBy);
                             }
                         }
-
-                        foreach ($collectionSort->values()->toArray() as $k => $item) {
+                        $collectionSortArr = $collectionSort->values()->toArray();
+                        foreach ($collectionSortArr as $k => $item) {
                             if (!empty($collectionFranchise)){
-                                foreach ($collectionFranchise as $col){
-                                    foreach ($item['categories'] as $key => $cat){
-                                        if ($cat['franchise_id'] == $col['id'] ){
-                                            $collectionResponse['data'][$k]['franchise'][$key]['label'] = $col['label'];
-                                            $collectionResponse['data'][$k]['franchise'][$key]['value'] = $col['value'];
+                                foreach ($item['categories'] as $key => $cat){
+                                    foreach ($collectionFranchise as $col){
+                                        if (!empty($cat['franchise_id']) ){
+                                            if ($cat['franchise_id'] == $col['id'] ){
+                                                $collectionResponse['data'][$k]['franchise'][$key]['label'] = $col['label'];
+                                                $collectionResponse['data'][$k]['franchise'][$key]['value'] = $col['value'];
+                                            }
                                         }
                                     }
                                 }
@@ -88,7 +90,8 @@ class CollectionsController extends Controller
                             $collectionResponse['data'][$k]['year'] = $item['year'] ?? null;
                             $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                             $collectionResponse['data'][$k]['type_film'] = $item['type_film'] ?? '';
-                            $collectionResponse['data'][$k]['poster'] = $item['poster']['src'] ?? '';
+                            $img = explode(',',$item['poster']['srcset'] ?? '');
+                            $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
                         }
                         $collectionResponse['title'] = $collectionTitle;
                         $collectionResponse['total'] = $collapsed->count();

@@ -65,7 +65,9 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
         state.value.sortBy = param;
     }
     const updateCurrentPage = (param) => {
+        console.log(param);
         state.value.page = param;
+        console.log(state.value.page );
     }
     const updatePageSize = (param) => {
         state.value.limit = param;
