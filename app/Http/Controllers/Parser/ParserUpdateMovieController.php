@@ -75,20 +75,17 @@ class ParserUpdateMovieController extends ParserController
                 if (!empty($this->idMovies)) {
                     foreach ($this->idMovies as $id) {
                         array_push($this->linksInfo, $this->domen . $this->imgUrlFragment . $id);
-                        if ($data['data']['flagImages']){
-                            array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=still_frame');
-                            array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=poster');
-                        }
+                        array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=still_frame');
+                        array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=poster');
+
                     }
 
                     $this->linksGetter($this->linksInfo, 'getMoviesInfo');
+                    $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN);
+                    $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN);
+                    $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
+                    $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
 
-                    if ($data['data']['flagImages']){
-                        $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN);
-                        $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN);
-                        $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
-                        $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
-                    }
                     $this->touchDB($model, $data['data']['id'],$this->signByField);
                     $this->idMovies = [];
                 }

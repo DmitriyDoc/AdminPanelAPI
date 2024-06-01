@@ -5,8 +5,6 @@
         </el-col>
         <el-col :span="4">
             <el-image :src="singleData.poster" fit="cover" />
-            <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2" size="small">If checked, all images need to be reassigned after synchronization (if they have been set)</el-text></div>
-            <el-checkbox v-model="checkedImagesSync">Sync with all Images </el-checkbox>
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
@@ -279,7 +277,6 @@
     const formSize = ref('default');
     const ruleFormRef = ref();
     const ruleForm = ref(singleData);
-    const checkedImagesSync = ref(false);
     const propsCascader = {
         checkStrictly: true,
     }
@@ -483,7 +480,7 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            moviesStore.syncItem(checkedImagesSync.value);
+            moviesStore.syncItem();
             console.log('submit sync!');
 
             ElMessage({

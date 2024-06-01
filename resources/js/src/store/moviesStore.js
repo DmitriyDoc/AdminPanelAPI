@@ -66,12 +66,11 @@ export const useMoviesStore = defineStore('moviesStore',() => {
             showItem();
         });
     }
-    const syncItem = async (checkedImages) => {
+    const syncItem = async () => {
         console.log(checkedImages);
         axios.put('/api/updatemovie',{ data: {
             id: singleData.value.id_movie,
             type: singleData.value.type_film,
-            flagImages: checkedImages,
         }}).then((response) => {
             showItem();
         });
