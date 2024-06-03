@@ -19,5 +19,9 @@ class PostersTvShort extends Model
         'created_at',
         'updated_at',
     ];
+    public function assignPosters()
+    {
+        return $this->hasOne(AssignPoster::class,'id_movie','id_movie');
+    }
 
 }

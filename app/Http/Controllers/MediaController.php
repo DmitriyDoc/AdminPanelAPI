@@ -53,7 +53,11 @@ class MediaController extends Controller
                 $res = $model::select('id','id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$id)->simplePaginate(10)->toArray();
             } else {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $res = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
+                $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id);
+                if ($imgType == 'posters'){
+                    $model->with('assignPosters');
+                }
+                $res = $model->simplePaginate(10)->toArray();
             }
             if (!empty($res)){
                 foreach ($res['data'] as &$item){
@@ -67,6 +71,9 @@ class MediaController extends Controller
                     ksort($sortImgArr,SORT_NATURAL );
                     $item['srcset'] = $sortImgArr[array_key_first($sortImgArr)];
                     $item['src'] = $sortImgArr['1024w'] ?? $sortImgArr[array_key_last($sortImgArr)];
+                    if ($imgType == 'posters'){
+                        $item['status_poster'] = $this->checkAssignPoster($item['id'],$item['assign_posters']);
+                    }
                 }
             }
             $modelAssignPoster = AssignPoster::where('id_movie',$id)->get();
@@ -291,5 +298,58 @@ class MediaController extends Controller
 
         }
 
+    }
+
+    private function checkAssignPoster($id, $assignArray = null){
+        if (!empty($assignArray)){
+            foreach ($assignArray as $key => $item){
+                switch ($key) {
+                    case 'id_poster_original':
+                        if ($item == $id){
+                            return "Original poster";
+                        }
+                        break;
+                    case 'id_poster_original_alt':
+                        if ($item == $id){
+                            return "Original poster alt.";
+                        }
+                        break;
+                    case 'id_poster_ru':
+                        if ($item == $id){
+                            return "Russian poster";
+                        }
+                        break;
+                    case 'id_poster_ru_alt':
+                        if ($item == $id){
+                            return "Russian poster alt.";
+                        }
+                        break;
+                    case 'id_posters_characters':
+                        if (!empty($item)){
+                            $decodeArr = json_decode($item,true);
+                            if (in_array($id, $decodeArr)){
+                                unset($decodeArr);
+                                return "Character poster";
+                            }
+                        }
+                        break;
+                    case 'id_posters_alternative':
+                        if (!empty($item)){
+                            $decodeArr = json_decode($item,true);
+                            if (in_array($id, $decodeArr)){
+                                unset($decodeArr);
+                                return "Alternative poster";
+                            }
+                        }
+                        break;
+                    case 'id_wallpaper':
+                        if ($item == $id){
+                            return "Wallpaper";
+                        }
+                        break;
+                }
+            }
+        }
+        return null;
     }
 }

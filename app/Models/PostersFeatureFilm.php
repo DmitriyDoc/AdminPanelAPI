@@ -20,4 +20,9 @@ class PostersFeatureFilm extends Model
         'updated_at',
     ];
 
+    public function assignPosters()
+    {
+        return $this->hasOne(AssignPoster::class,'id_movie','id_movie');
+    }
+
 }

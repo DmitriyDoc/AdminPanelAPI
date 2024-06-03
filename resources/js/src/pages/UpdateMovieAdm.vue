@@ -8,6 +8,7 @@
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
+            <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2 mt-2">After synchronization, all posters must be reassigned.</el-text></div>
             <template v-if="singleData.collection">
                 <div class="mt-3">
                     <h5>Check viewed:</h5>
@@ -151,6 +152,16 @@
                                     <el-image :src="scope.row.srcset"/>
                                 </template>
                             </el-table-column>
+                            <el-table-column property="status_poster" label="Assign Status" width="150">
+                                <template v-slot:default="scope">
+                                    <el-text v-if="scope.row.status_poster" type="success" class="fw-bold">
+                                        {{scope.row.status_poster}}
+                                    </el-text>
+                                    <el-text type="danger" class="fw-bold"  v-else>
+                                        {{'no assigned'}}
+                                    </el-text>
+                                </template>
+                            </el-table-column>
                             <el-table-column property="src" label="Link" show-overflow-tooltip>
                                 <template v-slot:default="scope">
                                     <a :href="scope.row.src" target="_blank">{{scope.row.src}}</a>
@@ -168,7 +179,7 @@
                                     </el-button>
                                 </template>
                             </div>
-                            <div style="position: sticky; top: 15px;">
+                            <div>
                                 <h3 class="text-center mt-3 mb-3">Assign selection poster(s) as:</h3>
                                 <template v-for="(item, index) in postersAssignInfo">
                                     <el-badge :value="item.count" class="item me-3 mt-3" :is-dot="!item.count" type="success">
