@@ -42,7 +42,7 @@ class SectionsController extends Controller
 
             foreach ($TypeFilmArray as $key => $item){
                 $model = convertVariableToModelName('IdType',$key, ['App', 'Models']);
-                $collection->add($model->select('type_film','id_movie','title','year','created_at','updated_at')->whereIn('id_movie',$item)->with(['poster','categories'])->get()->all());
+                $collection->add($model->select('type_film','id_movie','title','year','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
 
             }
             $collapsed = $collection->collapse();
@@ -64,8 +64,22 @@ class SectionsController extends Controller
                         $collectionSort = $collectionSort->sortByDesc($sortBy);
                     }
                 }
-                foreach ($collectionSort->values()->toArray() as $k => $item) {
+                $collectionSortArr = $collectionSort->values()->toArray();
 
+                foreach ($collectionSortArr as $movieItem){
+                    if ($movieItem['assign_poster']){
+                        $idsPostersArr[$movieItem['assign_poster']['type_film']][] = $movieItem['assign_poster']['id_poster_original'];
+                    }
+                }
+                if (!empty($idsPostersArr)){
+                    $posterCollection = collect();
+                    foreach ($idsPostersArr as $key => $item){
+                        $model = convertVariableToModelName('Posters',$key, ['App', 'Models']);
+                        $posterCollection->add($model->select('srcset','id_movie')->whereIn('id',$item)->get()->all());
+                    }
+                    $collapsedPosters = $posterCollection->collapse()->toArray();
+                }
+                foreach ($collectionSort->values()->toArray() as $k => $item) {
                     if (!empty($section[0])){
                         foreach ($section[0]['children'] as $col){
                             foreach ($item['categories'] as $key => $cat){
@@ -78,14 +92,20 @@ class SectionsController extends Controller
                             }
                         }
                     }
+                    if (!empty($collapsedPosters)){
+                        foreach ($collapsedPosters as $posterItem){
+                            if ($item['id_movie'] == $posterItem['id_movie']){
+                                $img = explode(',',$posterItem['srcset'] ?? '');
+                                $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
+                            }
+                        }
+                    }
                     $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                     $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                     $collectionResponse['data'][$k]['title'] = $item['title'] ?? '';
                     $collectionResponse['data'][$k]['year'] = $item['year'] ?? null;
                     $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                     $collectionResponse['data'][$k]['type_film'] = $item['type_film'] ?? '';
-                    $img = explode(',',$item['poster']['srcset'] ?? '');
-                    $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
                 }
                 $collectionResponse['title'] = $section[0]['title'];
                 $collectionResponse['total'] = $collapsed->count();
