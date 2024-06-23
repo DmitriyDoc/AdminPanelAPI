@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use function Ramsey\Collection\Map\get;
 
 class IdTypeFeatureFilm extends Model
 {
@@ -28,6 +29,10 @@ class IdTypeFeatureFilm extends Model
         'created_at',
         'updated_at',
     ];
+    public function assignPoster()
+    {
+        return $this->hasOne(AssignPoster::class,'id_movie','id_movie');
+    }
     public function poster()
     {
         return $this->hasOne(PostersFeatureFilm::class,'id_movie','id_movie')->oldest();
