@@ -25,16 +25,17 @@ trait IdImagesTrait
                         //GET IDS
                         $this->setImagesId($document);
                         $currentUpdateTable =  DB::table($updateTable)->where('id_movie',$currentMovieId)->get('id_images')->toArray();
-                        $currentUpdateTable = (array)$currentUpdateTable[0];
-                        if ($currentUpdateTable['id_images']){
-                            $currentIds = json_decode($currentUpdateTable['id_images'],true);
-                            $mergeIds = array_merge($currentIds, $this->imagesId);
-                            $resultIds = array_unique($mergeIds);
+                        if (!empty($currentUpdateTable)){
+                            $currentUpdateTable = (array)$currentUpdateTable[0];
+                            if ($currentUpdateTable['id_images']){
+                                $currentIds = json_decode($currentUpdateTable['id_images'],true);
+                                $mergeIds = array_merge($currentIds, $this->imagesId);
+                                $resultIds = array_unique($mergeIds);
+                            }
                         }
-                        $insertData['id_images'] = $mergeIds ? json_encode($resultIds,JSON_UNESCAPED_UNICODE) : $this->imagesId??null;
+                        $insertData['id_images'] = !empty($mergeIds) ? json_encode($resultIds,JSON_UNESCAPED_UNICODE) : json_encode($this->imagesId,JSON_UNESCAPED_UNICODE)??null;
                     }
                     $insertData[$this->signByField] = $currentMovieId??null;
-
                     $this->updateOrInsert($updateTable,$insertData,$this->signByField);
                     $this->imagesId = [];
                     unset($insertData);
