@@ -91,7 +91,7 @@
                  </template>
             </el-table-column>
         </el-table>
-        <el-backtop :right="100" :bottom="100" />
+        <el-backtop :right="20" :bottom="100" />
     </template>
     <template v-else>
         <p style="text-align: center">Not Found</p>
