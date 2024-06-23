@@ -4,7 +4,7 @@
             <h1>{{  singleData.original_title }}</h1>
         </el-col>
         <el-col :span="4">
-            <el-image :src="singleData.poster" fit="cover" />
+            <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" />
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
@@ -133,7 +133,21 @@
                         </div>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item title="Posters" name="poster">
+                <el-collapse-item title="Posters" name="poster" class="posters-collapse">
+                    <div class="posters-assign-block">
+                        <h3 class="text-center mt-3 mb-3">Assign poster(s) as:</h3>
+                        <template v-for="(item, index) in postersAssignInfo">
+                            <el-badge :value="item.count" class="item me-3 mt-3" :is-dot="!item.count" type="success">
+                                <el-tag>
+                                    <el-button @click="toggleAssignPoster(index)" type="primary">{{item.locale}}</el-button>
+                                </el-tag>
+                            </el-badge>
+                        </template>
+                        <div class="mt-3">
+                            <el-button @click="toggleSelectPoster()" type="info">Clear selection</el-button>
+                            <el-button @click="toggleRemovePoster()" type="danger">Delete selection</el-button>
+                        </div>
+                    </div>
                     <template v-if="postersData.length">
                         <el-table
                             ref="multipleTablePoster"
@@ -179,20 +193,6 @@
                                     </el-button>
                                 </template>
                             </div>
-                            <div>
-                                <h3 class="text-center mt-3 mb-3">Assign selection poster(s) as:</h3>
-                                <template v-for="(item, index) in postersAssignInfo">
-                                    <el-badge :value="item.count" class="item me-3 mt-3" :is-dot="!item.count" type="success">
-                                        <el-tag>
-                                            <el-button @click="toggleAssignPoster(index)" type="primary">{{item.locale}}</el-button>
-                                        </el-tag>
-                                    </el-badge>
-                                </template>
-                                <div class="mt-3">
-                                    <el-button @click="toggleSelectPoster()" type="info">Clear selection</el-button>
-                                    <el-button @click="toggleRemovePoster()" type="danger">Delete selection</el-button>
-                                </div>
-                            </div>
                         </div>
                     </template>
                 </el-collapse-item>
@@ -226,7 +226,7 @@
                 </el-form-item>
 
                 <el-form-item label="Runtime:" prop="runtime">
-                    <el-input v-model="ruleForm.runtime" maxlength="8" show-word-limit/>
+                    <el-input v-model="ruleForm.runtime" maxlength="10" show-word-limit/>
                 </el-form-item>
 
                 <el-form-item label="Rating:" prop="rating">
@@ -525,6 +525,17 @@
     .grid-content {
         border-radius: 4px;
         min-height: 36px;
+    }
+    .posters-collapse  :deep(.el-collapse-item__content){
+        max-height: 1000px;
+        overflow-y: scroll;
+    }
+    .posters-assign-block {
+        position: sticky;
+        top: 0px;
+        z-index: 100;
+        padding: 10px;
+        background-color: aliceblue;
     }
 </style>
 
