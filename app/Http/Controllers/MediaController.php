@@ -80,9 +80,7 @@ class MediaController extends Controller
             if ($modelAssignPoster->isNotEmpty()){
                 $arrayAssignPoster = $modelAssignPoster->toArray();
                 $res['poster_count']['id_poster_original'] = $arrayAssignPoster[0]['id_poster_original'] ? 1 : 0;
-                $res['poster_count']['id_poster_original_alt'] = $arrayAssignPoster[0]['id_poster_original_alt'] ? 1 : 0;
                 $res['poster_count']['id_poster_ru'] = $arrayAssignPoster[0]['id_poster_ru'] ? 1 : 0;
-                $res['poster_count']['id_poster_ru_alt'] = $arrayAssignPoster[0]['id_poster_ru_alt'] ? 1 : 0;
                 $res['poster_count']['id_posters_characters'] = count(json_decode($arrayAssignPoster[0]['id_posters_characters']??'')??[]) ?? 0;
                 $res['poster_count']['id_posters_alternative'] = count(json_decode($arrayAssignPoster[0]['id_posters_alternative']??'')??[]) ?? 0;
                 $res['poster_count']['id_wallpaper'] = $arrayAssignPoster[0]['id_wallpaper'] ? 1 : 0;
@@ -108,12 +106,10 @@ class MediaController extends Controller
         $data = $request->all();
         $allowedPosterAssignNames = [
             0=>'id_poster_original',
-            1=>'id_poster_original_alt',
-            2=>'id_poster_ru',
-            3=>'id_poster_ru_alt',
-            4=>'id_posters_characters',
-            5=>'id_posters_alternative',
-            6=>'id_wallpaper',
+            1=>'id_poster_ru',
+            2=>'id_posters_characters',
+            3=>'id_posters_alternative',
+            4=>'id_wallpaper',
         ];
         $allowedTableNames = [
             0=>'FeatureFilm',
@@ -131,13 +127,7 @@ class MediaController extends Controller
                 case 'id_poster_original':
                     $id = $data['id_poster'][0];
                     break;
-                case 'id_poster_original_alt':
-                    $id = $data['id_poster'][0];
-                    break;
                 case 'id_poster_ru':
-                    $id = $data['id_poster'][0];
-                    break;
-                case 'id_poster_ru_alt':
                     $id = $data['id_poster'][0];
                     break;
                 case 'id_posters_characters':
@@ -211,12 +201,14 @@ class MediaController extends Controller
         $res = [];
         if (!empty(strip_tags($idMovie))){
             $assignModel = AssignPoster::where('id_movie',$idMovie)->get();
+
             if ($assignModel->isNotEmpty()){
                 $idArr = [];
                 $assignPostersArr = $assignModel[0]->toArray();
                 $type = $assignPostersArr['type_film'];
                 unset($assignPostersArr['type_film']);
                 unset($assignPostersArr['id_movie']);
+                unset($assignPostersArr['id']);
                 foreach ($assignPostersArr as $item){
                     if ($item){
                         if (is_string($item)){
@@ -232,6 +224,7 @@ class MediaController extends Controller
                 unset($assignPostersArr);
                 $model = convertVariableToModelName('Posters',$type, ['App', 'Models']);
                 $res = $model::select('id','id_movie','src','srcset')->whereIn('id',$idArr)->get()->toArray();
+
                 if (!empty($res)){
                     foreach ($res as &$item){
                         $imagesArr = explode(',',$item['srcset'] ?? '');
@@ -249,6 +242,7 @@ class MediaController extends Controller
 
             }
         }
+
         return $res;
     }
     /**
@@ -309,19 +303,9 @@ class MediaController extends Controller
                             return "Original poster";
                         }
                         break;
-                    case 'id_poster_original_alt':
-                        if ($item == $id){
-                            return "Original poster alt.";
-                        }
-                        break;
                     case 'id_poster_ru':
                         if ($item == $id){
                             return "Russian poster";
-                        }
-                        break;
-                    case 'id_poster_ru_alt':
-                        if ($item == $id){
-                            return "Russian poster alt.";
                         }
                         break;
                     case 'id_posters_characters':
