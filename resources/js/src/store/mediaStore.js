@@ -19,16 +19,8 @@ export const useMediaStore = defineStore('mediaStore',() => {
             locale: 'Original',
             count: 0,
         },
-        id_poster_original_alt: {
-            locale: 'Original Alternate',
-            count: 0,
-        },
         id_poster_ru: {
             locale: 'Russian',
-            count: 0,
-        },
-        id_poster_ru_alt: {
-            locale: 'Russian Alternate',
             count: 0,
         },
         id_posters_characters: {
@@ -146,6 +138,8 @@ export const useMediaStore = defineStore('mediaStore',() => {
                 id_poster: id,
                 poster_cat: cat,
                 }).then((response) => {
+                //flushState();
+                getPosters();
             });
         } catch (e) {
             error.value = e;
