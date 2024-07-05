@@ -78,7 +78,7 @@ class ParserUpdateCelebController extends ParserController
             }
             $this->linksGetter($this->linksInfo,'getCelebsInfo');
             $this->linksGetter($this->linksCredits,'credits');
-            $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN);
+            $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN, $this->signByField);
 
             $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
             $this->touchDB($model, $data['data']['id'],'actor_id');

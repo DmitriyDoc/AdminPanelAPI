@@ -38,7 +38,7 @@ class ParserController extends Controller
         3 => 'writer',
         5 => 'soundtrack',
         6 => 'director',
-        7 => 'editor',
+        7 => 'composer',
         8 => 'production_manager',
         9 => 'miscellaneous',
         10 => 'self',
@@ -62,7 +62,6 @@ class ParserController extends Controller
         28 => 'special_effects',
         29 => 'animation_department',
         30 => 'sound_department',
-        31 => 'composer',
     ];
     protected $domen = 'https://www.imdb.com';
     protected $signByField;
@@ -112,14 +111,14 @@ class ParserController extends Controller
         }
 
     }
-    protected function linksGetter( $links, $methodName, $table = null,$pattern = null ){
+    protected function linksGetter( $links, $methodName, $table = null, $pattern = null, $columnKey = 'id_movie'){
         if (!empty($links)){
             $infoChunks = array_chunk($links, $this->chunkSize);
             $connector = new CurlConnectorController();
             foreach ($infoChunks as $chunk) {
                 $pages = $connector->getCurlMulty($chunk);
                 if (is_array($pages)){
-                    $this->{$methodName}( $pages, $table, $pattern );
+                    $this->{$methodName}( $pages, $table, $pattern, $columnKey );
                 }
             }
         }

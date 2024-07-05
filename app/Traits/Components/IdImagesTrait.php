@@ -11,7 +11,7 @@ trait IdImagesTrait
 {
     private $imagesId = [];
 
-    protected function getIdImages($pages,$updateTable,$pattern)
+    protected function getIdImages($pages,$updateTable,$pattern,$columnKey)
     {
         if (!empty($pages)) {
             foreach ($pages as $url => $page) {
@@ -24,7 +24,7 @@ trait IdImagesTrait
                     if ($document->has('section[data-testid=sub-section-images]')) {
                         //GET IDS
                         $this->setImagesId($document);
-                        $currentUpdateTable =  DB::table($updateTable)->where('id_movie',$currentMovieId)->get('id_images')->toArray();
+                        $currentUpdateTable =  DB::table($updateTable)->where($columnKey,$currentMovieId)->get('id_images')->toArray();
                         if (!empty($currentUpdateTable)){
                             $currentUpdateTable = (array)$currentUpdateTable[0];
                             if ($currentUpdateTable['id_images']){
