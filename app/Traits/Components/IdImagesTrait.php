@@ -28,7 +28,7 @@ trait IdImagesTrait
                         if (!empty($currentUpdateTable)){
                             $currentUpdateTable = (array)$currentUpdateTable[0];
                             if ($currentUpdateTable['id_images']){
-                                $currentIds = json_decode($currentUpdateTable['id_images'],true);
+                                $currentIds = json_decode($currentUpdateTable['id_images'],true)??[];
                                 $mergeIds = array_merge($currentIds, $this->imagesId);
                                 $resultIds = array_unique($mergeIds);
                             }
