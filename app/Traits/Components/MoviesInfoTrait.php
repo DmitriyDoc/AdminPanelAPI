@@ -32,7 +32,7 @@ trait MoviesInfoTrait
                         if (is_integer($infoCount)){
                             switch ($infoCount) {
                                 case 4:
-                                    $insertData['type_film'] = $infoContainer->child(0)->text()??null;
+                                    //$insertData['type_film'] = $infoContainer->child(0)->text()??null;
                                     $insertData['year_release'] = (int)$infoContainer->child(1)->text()??null;
                                     $insertData['restrictions'] = $infoContainer->child(2)->text()??null;
                                     $insertData['runtime'] = $infoContainer->child(3)->text()??null;
@@ -44,7 +44,7 @@ trait MoviesInfoTrait
                                         $insertData['runtime'] = $infoContainer->child(2)->text()??null;
                                     }
                                     if (is_numeric(get_id_from_url($infoContainer->child(1)->text(),self::YEAR_PATTERN))){
-                                        $insertData['type_film'] = $infoContainer->child(0)->text()??null;
+                                        //$insertData['type_film'] = $infoContainer->child(0)->text()??null;
                                         $insertData['year_release'] = (int)$infoContainer->child(1)->text()??null;
                                     }
                                     break;
@@ -54,7 +54,7 @@ trait MoviesInfoTrait
                                         $insertData['runtime'] = ctype_alnum($infoContainer->child(1)->text())?$infoContainer->child(1)->text():null;
                                     }
                                     if (is_numeric(get_id_from_url($infoContainer->child(1)->text(),self::YEAR_PATTERN))){
-                                        $insertData['type_film'] = $infoContainer->child(0)->text()??null;
+                                        //$insertData['type_film'] = $infoContainer->child(0)->text()??null;
                                         $insertData['year_release'] = (int)$infoContainer->child(1)->text()??null;
                                     }
                                     break;
