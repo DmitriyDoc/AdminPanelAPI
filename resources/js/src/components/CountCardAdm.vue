@@ -10,7 +10,7 @@
             </el-statistic>
             <div class="statistic-footer">
                 <div class="footer-item">
-                    <span>update</span>
+                    <span>update today</span>
                     <span :class="[countCard.lastAddCount  ? 'red' : 'grey']">{{countCard.lastAddCount}}</span>
                 </div>
             </div>
