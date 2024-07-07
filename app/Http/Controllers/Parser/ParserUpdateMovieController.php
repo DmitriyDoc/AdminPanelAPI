@@ -42,14 +42,18 @@ class ParserUpdateMovieController extends ParserController
                 array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=still_frame');
                 array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=poster');
             }
+
+            $this->linksGetter($this->linksInfo, 'getMoviesInfo');
+            $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN, $this->signByField);
+            $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN, $this->signByField);
+
+            $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
+            $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
+
+            foreach ($this->idMovies as $id) {
+                $this->localizing($id);
+            }
         }
-
-        $this->linksGetter($this->linksInfo, 'getMoviesInfo');
-        $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN, $this->signByField);
-        $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN, $this->signByField);
-
-        $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
-        $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
     }
 
     public function update(Request $request)
@@ -86,11 +90,19 @@ class ParserUpdateMovieController extends ParserController
                     $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
                     $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
 
+                    $this->localizing($id);
+
                     $this->touchDB($model, $data['data']['id'],$this->signByField);
                     $this->idMovies = [];
                 }
             }
         }
 
+    }
+    public function localizing($movieId){
+        $updateModel = DB::table($this->update_info_table)->where($this->signByField,$movieId)->get(['genres','cast','directors','writers','story_line','countries','release_date','id_movie','type_film']);
+        if ($updateModel->isNotEmpty()){
+            $this->localizing->translateMovie($updateModel[0],$movieId,$this->signByField);
+        }
     }
 }

@@ -67,6 +67,7 @@ class ParserController extends Controller
     protected $signByField;
     protected $imgUrlFragment;
     protected $chunkSize;
+    protected $localizing;
 
     protected $start = 0;
     protected $dateFrom;
@@ -85,6 +86,11 @@ class ParserController extends Controller
     protected $linksCredits = [];
 
     use ParserTrait,MoviesInfoTrait,IdImagesTrait,ImagesTrait,CelebsInfoTrait,CelebsCreditsTrait;
+
+    public function __construct()
+    {
+        $this->localizing = new TranslatorController();
+    }
 
     public function __call( $name, $arguments ) {
         call_user_func($name, $arguments);

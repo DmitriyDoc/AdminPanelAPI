@@ -50,6 +50,9 @@ class ParserUpdateCelebController extends ParserController
                 $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
                 $this->idCeleb = [];
             });
+            foreach ($this->idCeleb as $id) {
+                $this->localizing($id);
+            }
         }
     }
 
@@ -80,10 +83,17 @@ class ParserUpdateCelebController extends ParserController
             $this->linksGetter($this->linksCredits,'credits');
             $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN, $this->signByField);
 
+            $this->localizing($data['data']['id']);
             $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
             $this->touchDB($model, $data['data']['id'],'actor_id');
 
             $this->idCeleb = [];
+        }
+    }
+    public function localizing($celebId){
+        $updateModel = DB::table($this->update_info_table)->where($this->signByField,$celebId)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
+        if ($updateModel->isNotEmpty()){
+            $this->localizing->translateCeleb($updateModel[0],$celebId,$this->signByField);
         }
     }
 }
