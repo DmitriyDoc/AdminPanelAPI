@@ -467,11 +467,6 @@
                         budget: ruleForm.value.budget,
                         story_line: ruleForm.value.story_line,
                     });
-                    console.log('submit!');
-                    ElMessage({
-                        type: 'success',
-                        message: 'Update completed',
-                    })
                 }).catch(() => {
                     ElMessage({
                         type: 'info',
@@ -492,12 +487,6 @@
             type: 'warning',
         }).then(() => {
             moviesStore.syncItem();
-            console.log('submit sync!');
-
-            ElMessage({
-                type: 'success',
-                message: 'Sync with IMDB completed',
-            })
         }).catch(() => {
             ElMessage({
                 type: 'info',

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
 import { onMounted, onUpdated, ref} from "vue";
+import {ElMessage} from "element-plus";
 
 export const useMoviesStore = defineStore('moviesStore',() => {
     const state = ref({
@@ -62,8 +63,20 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         });
     }
     const updateItem = async (dataForm) => {
-        axios.patch('/api/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm }).then((response) => {
-            showItem();
+        axios.patch('/api/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm })
+            .then((response) => {
+                if (response.status === 200) {
+                    showItem();
+                    ElMessage({
+                        type: 'success',
+                        message: 'Update completed',
+                    })
+                } else {
+                    ElMessage({
+                        type: 'error',
+                        message: 'Update error',
+                    })
+                }
         });
     }
     const syncItem = async () => {
@@ -72,7 +85,18 @@ export const useMoviesStore = defineStore('moviesStore',() => {
             id: singleData.value.id_movie??route.params.id,
             type: route.params.slug,
         }}).then((response) => {
-            showItem();
+            if (response.status === 200) {
+                showItem();
+                ElMessage({
+                    type: 'success',
+                    message: 'Sync with IMDB completed',
+                })
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Sync with IMDB  is not finished',
+                });
+            }
         });
     }
     state.value.searchQuery = '';
