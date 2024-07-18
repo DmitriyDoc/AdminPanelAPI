@@ -187,12 +187,6 @@
             type: 'warning',
         }).then(() => {
             personsStore.syncItem();
-            console.log('submit sync person!');
-
-            ElMessage({
-                type: 'success',
-                message: 'Sync with IMDB completed',
-            })
         }).catch(() => {
             ElMessage({
                 type: 'info',

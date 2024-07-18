@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
 import { onMounted, onUpdated, ref} from "vue";
+import {ElMessage} from "element-plus";
 
 export const usePersonsStore = defineStore('personsStore',() => {
     const state = ref({
@@ -61,8 +62,22 @@ export const usePersonsStore = defineStore('personsStore',() => {
         });
     }
     const syncItem = async () => {
-        axios.put('/api/updateceleb',{ data: {id:singleData.value.id_celeb,type:'Celebs'} }).then((response) => {
-            showItem();
+        axios.put('/api/updateceleb',{ data: {
+            id:singleData.value.id_celeb,
+            type:'Celebs'
+        }}).then((response) => {
+            if (response.status === 200) {
+                showItem();
+                ElMessage({
+                    type: 'success',
+                    message: 'Sync with IMDB completed',
+                })
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Sync with IMDB  is not finished',
+                });
+            }
         });
     }
     state.value.searchQuery = '';
