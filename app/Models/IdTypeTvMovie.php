@@ -28,8 +28,10 @@ class IdTypeTvMovie extends Model
         'created_at',
         'updated_at',
     ];
-
-
+    public function assignPoster()
+    {
+        return $this->hasOne(AssignPoster::class,'id_movie','id_movie');
+    }
     public function poster()
     {
         return $this->hasOne(PostersTvMovie::class,'id_movie','id_movie')->oldest();
@@ -47,6 +49,6 @@ class IdTypeTvMovie extends Model
     }
     public function categories()
     {
-        return $this->hasOne(CollectionsCategoriesPivot::class,'id_movie','id_movie');
+        return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
     }
 }

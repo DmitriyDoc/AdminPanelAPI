@@ -34,6 +34,8 @@ Route::put('/updateceleb', [App\Http\Controllers\Parser\ParserUpdateCelebControl
 
 // DASHBOARD QUERY
 Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
+Route::get('/translate',[\App\Http\Controllers\DashboardController::class, 'test']);
+Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
 
 // MEDIA QUERY
 Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {

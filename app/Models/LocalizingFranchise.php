@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Franchise extends Model
+class LocalizingFranchise extends Model
 {
     use HasFactory;
     protected $guarded = false;
-    protected $table = 'film_franchise';
+    protected $table = 'localizing_franchise';
     public $timestamps = false;
 }

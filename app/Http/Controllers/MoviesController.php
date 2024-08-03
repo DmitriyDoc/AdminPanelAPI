@@ -48,7 +48,7 @@ class MoviesController extends Controller
         }
         if ($request->has('search')){
             $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
-            $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
+            $model = $model->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
         }
 
         $modelArr = $model->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
@@ -99,24 +99,13 @@ class MoviesController extends Controller
             7=>'Video',
         ];
 
-//            foreach ($allowedTableNames as $table){
-//                $model = convertVariableToModelName('IdType', $table, ['App', 'Models']);
-//                $res = $model::select('type')->where('id_movie',$id)->get()->toArray();
-//                if (!empty($res)){
-//                    $modelInfo = convertVariableToModelName('Info', $res[0]['type'], ['App', 'Models']);
-//                    $modelArr = $modelInfo::with('poster')->where('id_movie',$id)->get()->toArray();
-//                    break;
-//                }
-//            }
-//            dd($modelArr);
-
         if (!in_array($slug,$allowedTableNames)){
             $slug = 'all';
         }
 
         if ($slug != 'all') {
             $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-            $modelArr = $model::with('poster','collection')->where('id_movie',$id)->get()->toArray();
+            $modelArr = $model::with('poster','collection','localazing')->where('id_movie',$id)->get()->toArray();
         } else {
             foreach ($allowedTableNames as $type){
                 $model = convertVariableToModelName('IdType', $type, ['App', 'Models']);
@@ -124,6 +113,7 @@ class MoviesController extends Controller
                 if (!empty($modelArr)) break;
             }
         }
+
         if (!empty($modelArr)){
             $infoMovieData = $modelArr[0]['info'] ?? $modelArr[0] ?? [];
             $infoMovieData['genres'] = (object) unset_serialize_key(unserialize($modelArr[0]['genres'] ?? $modelArr[0]['info']['genres'] ?? null)) ?? [];
@@ -138,12 +128,12 @@ class MoviesController extends Controller
             $infoMovieData['poster'] = $img[0] ?? '';
             if (!empty( $modelArr[0]['collection'])) {
                 $collection = Collection::with('category')->find($modelArr[0]['collection'][0]['collection_id'])->toArray();
-                $infoMovieData['collection']['id'] = $modelArr[0]['collection'][0]['franchise_id'] ? $modelArr[0]['collection'][0]['franchise_id'] : $modelArr[0]['collection'][0]['collection_id'];
+                $infoMovieData['collection']['id'] = $modelArr[0]['collection'][0]['franchise_id'] ? 'fr_'.$modelArr[0]['collection'][0]['collection_id'].$modelArr[0]['collection'][0]['franchise_id'] : $modelArr[0]['collection'][0]['collection_id'];
+
                 $infoMovieData['collection']['label'] = $collection['label'] ?? null;
                 $infoMovieData['collection']['category_value'] = $collection['category'][0]['value'] ?? null;
                 $infoMovieData['collection']['viewed'] = (bool) $modelArr[0]['collection'][0]['viewed'] ?? false;
                 $infoMovieData['collection']['short'] = (bool) $modelArr[0]['collection'][0]['short'] ?? false;
-
                 unset( $infoMovieData['collection'][0]);
                 unset($collection);
             }

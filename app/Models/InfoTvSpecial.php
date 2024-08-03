@@ -40,4 +40,8 @@ class InfoTvSpecial extends Model
     {
         return $this->hasMany(CollectionsCategoriesPivot::class,'id_movie','id_movie');
     }
+    public function localazing()
+    {
+        return $this->hasOne(LocalizingInfoMovies::class,'id_movie','id_movie');
+    }
 }

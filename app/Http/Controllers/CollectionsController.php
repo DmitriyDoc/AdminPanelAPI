@@ -6,6 +6,7 @@ use App\Models\AssignPoster;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
+use App\Models\LocalizingFranchise;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -32,6 +33,7 @@ class CollectionsController extends Controller
             $collectionId = null;
             $collectionTitle = null;
             $sectionId = Category::where('value',$slugSect)->get('id')->toArray();
+            $localizingFranchiseModel = LocalizingFranchise::query()->get();
             if ($sectionId[0]){
                 $allowedCollectionsArray = Collection::where('category_id',$sectionId[0]['id'])->with('children')->get()->toArray();
                 foreach ($allowedCollectionsArray as $k => $item){
@@ -90,9 +92,9 @@ class CollectionsController extends Controller
                                 foreach ($item['categories'] as $key => $cat){
                                     foreach ($collectionFranchise as $col){
                                         if (!empty($cat['franchise_id']) ){
-                                            if ($cat['franchise_id'] == $col['id'] ){
-                                                $collectionResponse['data'][$k]['franchise'][$key]['label'] = $col['label'];
-                                                $collectionResponse['data'][$k]['franchise'][$key]['value'] = $col['value'];
+                                            if ($cat['franchise_id'] == $col['id']){
+                                                $collectionResponse['data'][$k]['franchise'][$key]['label'] = $localizingFranchiseModel->find($col['id'])->label;
+                                                $collectionResponse['data'][$k]['franchise'][$key]['value'] = $localizingFranchiseModel->find($col['id'])->value;
                                             }
                                         }
                                     }
@@ -115,8 +117,16 @@ class CollectionsController extends Controller
                         }
                         $collectionResponse['title'] = $collectionTitle;
                         $collectionResponse['total'] = $collapsed->count();
-                        $collectionResponse['franchise'] = $collectionFranchise;
-
+                        if (!empty($collectionResponse['data'])){
+                            foreach ($collectionResponse['data'] as $dataMovie){
+                                if (!empty($dataMovie['franchise'])){
+                                    $collectionResponse['franchise'][] = $dataMovie['franchise'][0];
+                                }
+                            }
+                        }
+                        if(!empty($collectionResponse['franchise'])){
+                            $collectionResponse['franchise'] = array_unique($collectionResponse['franchise'],SORT_REGULAR);
+                        }
                         return $collectionResponse;
                     }
                 }

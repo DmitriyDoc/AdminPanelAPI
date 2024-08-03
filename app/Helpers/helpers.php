@@ -91,6 +91,7 @@ if (!function_exists('transaction')) {
 if (!function_exists('cascaderStructure')) {
     function cascaderStructure($collectionArray)
     {
+        $localizingFranchiseModel = \App\Models\LocalizingFranchise::query()->get();
         if ( !empty($collectionArray) ){
             foreach ( $collectionArray as $catKey => $catValue ){
                 $collectionArray[$catKey]['label'] = $catValue['label'];
@@ -105,7 +106,8 @@ if (!function_exists('cascaderStructure')) {
                     unset($collectionArray[$catKey]['children'][$colKey]['category_id']);
                     if (!empty($colValue['children'])){
                         foreach ($colValue['children'] as $frhKey => $frValue){
-                            $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['value'] = $frValue['id'];
+                            $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['value'] = 'fr_'.$colValue['id'].$frValue['id'];
+                            $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['label'] = $localizingFranchiseModel->find($frValue['id'])->label??'empty label';
                             unset($collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['id']);
                             unset($collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['collection_id']);
                         }

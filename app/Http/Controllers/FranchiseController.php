@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
-use App\Models\Franchise;
+use App\Models\CollectionsFranchisesPivot;
+use App\Models\LocalizingFranchise;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,7 +30,7 @@ class FranchiseController extends Controller
         if (in_array($slugSect,$allowedSectionsNames)){
             $collectionFranchise = [];
             $collectionTitle = null;
-            $franchiseArr = Franchise::where('value',$slugFran)->get(['id','label'])->toArray();
+            $franchiseArr = LocalizingFranchise::where('value',$slugFran)->get(['id','label'])->toArray();
             if (!empty($franchiseArr)){
                 $collectionTitle = $franchiseArr[0]['label'];
                 $moviesIds = CollectionsCategoriesPivot::where('franchise_id',$franchiseArr[0]['id'])->get(['id_movie','type_film'])->toArray();
@@ -104,17 +105,17 @@ class FranchiseController extends Controller
 
     public function destroy(Request $request)
     {
-        $data = Validator::make($request->all(),[
-            'id_movie' => 'required|string|max:10',
-            'value' => 'required|string|max:50',
-        ])->safe()->all();
-
-        if (!empty($data)){
-            $collectionArr = Franchise::where('value',$data['value'])->get('id')->toArray();
-        CollectionsCategoriesPivot::where([
-            ['id_movie', '=', $data['id_movie']],
-            ['franchise_id', '=', $collectionArr[0]['id']],
-        ])->delete();
-        }
+//        $data = Validator::make($request->all(),[
+//            'id_movie' => 'required|string|max:10',
+//            'value' => 'required|string|max:50',
+//        ])->safe()->all();
+//
+//        if (!empty($data)){
+//            $collectionArr = CollectionsFranchisesPivot::where('value',$data['value'])->get('id')->toArray();
+//        CollectionsCategoriesPivot::where([
+//            ['id_movie', '=', $data['id_movie']],
+//            ['franchise_id', '=', $collectionArr[0]['id']],
+//        ])->delete();
+//        }
     }
 }

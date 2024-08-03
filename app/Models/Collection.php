@@ -19,6 +19,6 @@ class Collection extends Model
 
     public function children()
     {
-        return $this->hasMany(Franchise::class,'collection_id','id')->orderBy('id','desc');
+        return $this->hasMany(CollectionsFranchisesPivot::class,'collection_id','id')->orderBy('id','desc');
     }
 }

@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class LocalizingCelebsInfo extends Model
+class CollectionsFranchisesPivot extends Model
 {
     use HasFactory;
     protected $guarded = false;
-    protected $table = 'localizing_celebs_info';
+    protected $table = 'collections_franchises_pivot';
     public $timestamps = false;
 }

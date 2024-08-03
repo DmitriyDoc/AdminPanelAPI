@@ -100,7 +100,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         });
     }
     state.value.searchQuery = '';
-    getMovies();
+    //getMovies();
 
     const updateSearchQuery = (q) => {
         state.value.searchQuery = q;

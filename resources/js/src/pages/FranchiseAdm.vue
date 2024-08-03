@@ -23,6 +23,18 @@
                     />
                 </div>
             </div>
+            <div class="mt-3">
+                <div class="input-group mb-3">
+                    <span>Ru_ru name of the new franchise</span>
+                    <el-input
+                        v-model="nameRuFranchise"
+                        maxlength="50"
+                        placeholder="Input Ru_ru franchise ..."
+                        show-word-limit
+                        type="text"
+                    />
+                </div>
+            </div>
             <div>
                 <button @click="handleAddFranchise" class="btn btn-primary" type="submit">Add New</button>
             </div>
@@ -43,6 +55,7 @@
         checkStrictly: true,
     }
     const nameFranchise = ref('');
+    const nameRuFranchise = ref('');
     const categoryId = ref(null);
 
     const handleAddFranchise = () => {
@@ -54,6 +67,7 @@
             categoryStore.setCategoryFranchise({
                 collection_id: categoryId.value,
                 label: nameFranchise.value,
+                label_ru: nameRuFranchise.value,
             });
             categoryId.value = null;
             nameFranchise.value = '';
