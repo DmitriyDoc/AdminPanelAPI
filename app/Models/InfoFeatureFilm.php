@@ -36,7 +36,7 @@ class InfoFeatureFilm extends Model
 
     public function poster()
     {
-        return $this->hasOne(PostersFeatureFilm::class,'id_movie','id_movie')->oldest();
+        return $this->hasMany(PostersFeatureFilm::class,'id_movie','id_movie')->oldest();
     }
     public function collection()
     {

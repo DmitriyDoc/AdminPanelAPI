@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssignPoster;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\IdTypeFeatureFilm;
+use App\Models\InfoFeatureFilm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class MoviesController extends Controller
 {
+    public $typeMovieSlug;
     /**
      * Display a listing of the resource.
      */
@@ -57,7 +60,7 @@ class MoviesController extends Controller
             foreach ($modelArr['data'] as $k => $item) {
                 $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                $img = explode(',',$item['poster']['srcset'] ?? '');
+                $img = explode(',',$item['poster'][0]['srcset'] ?? '');
                 $modelArr['data'][$k]['poster'] = $img[0] ?? '';
             }
 
@@ -88,28 +91,23 @@ class MoviesController extends Controller
     public function show(string $slug, string $id)
     {
         $infoMovieData = [];
+        $posterSrcSet = null;
         $allowedTableNames = [
-            0=>'FeatureFilm',
-            1=>'MiniSeries',
-            2=>'ShortFilm',
-            3=>'TvMovie',
-            4=>'TvSeries',
+            0=>'MiniSeries',
+            1=>'TvSeries',
+            2=>'TvMovie',
+            3=>'Video',
+            4=>'TvSpecial',
             5=>'TvShort',
-            6=>'TvSpecial',
-            7=>'Video',
+            6=>'ShortFilm',
         ];
 
-        if (!in_array($slug,$allowedTableNames)){
-            $slug = 'all';
-        }
-
-        if ($slug != 'all') {
-            $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-            $modelArr = $model::with('poster','collection','localazing')->where('id_movie',$id)->get()->toArray();
-        } else {
+        $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
+        $modelArr = $model::with(['poster','collection','localazing'])->where('id_movie',$id)->get()->toArray();
+        if (empty($modelArr)){
             foreach ($allowedTableNames as $type){
-                $model = convertVariableToModelName('IdType', $type, ['App', 'Models']);
-                $modelArr = $model::with(['info','poster'])->where('id_movie',$id)->get()->toArray();
+                $model = convertVariableToModelName('Info', $type, ['App', 'Models']);
+                $modelArr = $model::with(['poster','collection','localazing'])->where('id_movie',$id)->get()->toArray();
                 if (!empty($modelArr)) break;
             }
         }
@@ -124,7 +122,18 @@ class MoviesController extends Controller
             $infoMovieData['companies'] = (object) unset_serialize_key(unserialize($modelArr[0]['companies'] ?? $modelArr[0]['info']['companies'] ?? null)) ?? [];
             $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr[0]['created_at'] ?? $modelArr[0]['info']['created_at'] ?? null)) ?? '';
             $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr[0]['updated_at'] ?? $modelArr[0]['info']['updated_at'] ?? null)) ?? '';
-            $img = explode(',',$modelArr[0]['poster']['srcset'] ?? '');
+            if (!empty($modelArr[0]['poster'])){
+                $posterSrcSet = $modelArr[0]['poster'][0]['srcset'];
+                $assignPosterId = AssignPoster::where('id_movie',$id)->get('id_poster_original')->toArray();
+                if (!empty($assignPosterId)){
+                    foreach ($modelArr[0]['poster'] as $poster){
+                        if ($poster['id'] == $assignPosterId[0]['id_poster_original']){
+                            $posterSrcSet = $poster['srcset'];
+                        }
+                    }
+                }
+            }
+            $img = explode(',',$posterSrcSet ?? '');
             $infoMovieData['poster'] = $img[0] ?? '';
             if (!empty( $modelArr[0]['collection'])) {
                 $collection = Collection::with('category')->find($modelArr[0]['collection'][0]['collection_id'])->toArray();
@@ -166,11 +175,24 @@ class MoviesController extends Controller
             7=>'Video',
         ];
 
-        if (in_array($slug,$allowedTableNames)){
+        $this->typeMovieSlug = $slug;
+        if (in_array($this->typeMovieSlug ,$allowedTableNames)){
             if ($data = $request->data)
-            transaction( function () use ($data,$id,$slug){
-                $modelInfo = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-                $modelIdType = convertVariableToModelName('IdType', $slug, ['App', 'Models']);
+
+                $modelIdType = convertVariableToModelName('IdType', $this->typeMovieSlug, ['App', 'Models']);
+                if (!$modelIdType::where('id_movie',$id)->exists()){
+
+                    foreach ($allowedTableNames as $type){
+                        $modelIdType = convertVariableToModelName('IdType', $type, ['App', 'Models']);
+                        if ($modelIdType::where('id_movie',$id)->exists()){
+                            $this->typeMovieSlug  = $type;
+                            break;
+                        }
+                    }
+                }
+            $modelInfo = convertVariableToModelName('Info', $this->typeMovieSlug, ['App', 'Models']);
+            unset($this->typeMovieSlug);
+            transaction( function () use ($data,$id,$modelInfo,$modelIdType){
                 $modelInfo::where('id_movie',$id)->update($data);
                 $modelIdType::where('id_movie',$id)->update([
                     'title' => $data['title'],

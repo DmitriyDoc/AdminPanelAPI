@@ -73,6 +73,7 @@ class CategoriesController extends Controller
     request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label))]);
     $data = Validator::make($request->all(),[
         'label' => 'required|string|max:50',
+        'label_ru' => 'required|string|max:50',
         'value' => 'required|string|max:50',
         'category_id' => 'required|numeric',
     ]);

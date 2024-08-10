@@ -1,28 +1,28 @@
 <template>
 
-    <h3 class="text-center mt-3 mb-3">{{franchiseData['title']??''}}</h3>
-<!--    <el-form-->
-<!--        ref="formRef"-->
-<!--        :model="queryValidateForm"-->
-<!--        class="demo-ruleForm"-->
-<!--    >-->
-<!--        <el-form-item prop="query" :rules="[{}]">-->
-<!--            <el-input-->
-<!--                v-model.query="queryValidateForm.query"-->
-<!--                type="text"-->
-<!--                autocomplete="off"-->
-<!--                placeholder="Search here"-->
-<!--                v-on:keydown.enter.prevent = "submitSearch(formRef)"-->
-<!--            />-->
-<!--        </el-form-item>-->
-<!--        <el-form-item>-->
-<!--            <el-button @click="resetSearch(formRef)">Reset</el-button>-->
-<!--            <el-button @click="submitSearch(formRef)">Go!</el-button>-->
-<!--        </el-form-item>-->
-<!--        <el-form-item>-->
-<!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-<!--        </el-form-item>-->
-<!--    </el-form>-->
+    <h3 class="text-center mt-3 mb-3">List Franchise:</h3>
+    <!--    <el-form-->
+    <!--        ref="formRef"-->
+    <!--        :model="queryValidateForm"-->
+    <!--        class="demo-ruleForm"-->
+    <!--    >-->
+    <!--        <el-form-item prop="query" :rules="[{}]">-->
+    <!--            <el-input-->
+    <!--                v-model.query="queryValidateForm.query"-->
+    <!--                type="text"-->
+    <!--                autocomplete="off"-->
+    <!--                placeholder="Search here"-->
+    <!--                v-on:keydown.enter.prevent = "submitSearch(formRef)"-->
+    <!--            />-->
+    <!--        </el-form-item>-->
+    <!--        <el-form-item>-->
+    <!--            <el-button @click="resetSearch(formRef)">Reset</el-button>-->
+    <!--            <el-button @click="submitSearch(formRef)">Go!</el-button>-->
+    <!--        </el-form-item>-->
+    <!--        <el-form-item>-->
+    <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+    <!--        </el-form-item>-->
+    <!--    </el-form>-->
 
     <div class="demo-pagination-block"  v-loading="loader">
         <p>Spin by:</p>
@@ -56,45 +56,31 @@
             :disabled="disabled"
             :background="background"
             layout="sizes, prev, pager, next, jumper"
-            :total="franchiseData['total']"
+            :total="franchiseList['total']"
             :page-sizes="[20, 50, 100, 300]"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
         />
     </div>
-    <template v-if="franchiseData['data']">
-        <el-table :data="franchiseData['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
+    <template v-if="franchiseList['data']">
+        <el-table :data="franchiseList['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
             <el-table-column type="index" />
-            <el-table-column fixed prop="created_at" label="Date Create" width="130" />
-            <el-table-column prop="poster" label="Cover" width="130" >
-                <template v-slot:default="scope">
-                    <el-image :src="scope.row.poster" />
-                </template>
-            </el-table-column>
-            <el-table-column prop="id_movie" label="ID Movie" width="120" />
-            <el-table-column prop="year" label="Year" width="100" />
-            <el-table-column prop="title" label="Title" width="600" />
+            <el-table-column fixed prop="created_at" label="Date Create" width="160" />
+            <el-table-column prop="id" label="ID Franchise" width="120" />
+            <el-table-column prop="value" label="Slug" width="160" />
+            <el-table-column prop="label" label="Title_Eng" width="300" />
+            <el-table-column prop="label_ru" label="Title_Rus" width="300" />
             <el-table-column prop="updated_at" label="Date Update" width="120" />
-            <el-table-column prop="id_movie" property="type_film" fixed="right" label="Operations" width="120">
+            <el-table-column prop="id" fixed="right" label="Remove" width="100">
                 <template v-slot:default="scope">
-                    <el-button type="success" link >
-                        <RouterLink :to="{ name: 'showmovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="View" title="Details"/>
-                        </RouterLink>
-                    </el-button>
-                    <el-button link type="primary" >
-                        <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="EditPen" title="Edit"/>
-                        </RouterLink>
-                    </el-button>
-<!--                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" title="Remove from franchise" />-->
-                 </template>
+                    <el-button link type="danger" @click="handleRemove(scope.row.id,scope.$index)" :icon="Delete" title="Remove from franchise" />
+                </template>
             </el-table-column>
         </el-table>
         <el-backtop :right="20" :bottom="100" />
     </template>
     <template v-else>
-        <p style="text-align: center">Not Found</p>
+        <p style="text-align: center">Not Found Franchise list</p>
     </template>
     <p v-if="error">{{ error }}</p>
 </template>
@@ -107,10 +93,10 @@
     import { ElMessage, ElMessageBox } from 'element-plus'
     import type { FormInstance } from 'element-plus'
     import type { Action } from 'element-plus'
-    import { onMounted,onUpdated, ref, watch, reactive} from "vue";
+    import { ref, watch } from "vue";
 
     const franchiseStore = useFranchiseStore();
-    const { franchiseData, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
+    const { franchiseList, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
 
     const small = ref(false);
     const background = ref(false);
@@ -122,16 +108,16 @@
             label: 'ID',
         },
         {
-            value: 'id_movie',
-            label: 'ID movie',
+            value: 'value',
+            label: 'Slug',
         },
         {
-            value: 'title',
-            label: 'Title',
+            value: 'label',
+            label: 'Title_Eng',
         },
         {
-            value: 'year',
-            label: 'Year',
+            value: 'label_ru',
+            label: 'Title_Rus',
         },
         {
             value: 'created_at',
@@ -152,24 +138,24 @@
     // const handleSelect = (key, keyPath) => {
     //     console.log(key, keyPath)
     // }
-    watch(() => route,  franchiseStore.getDataFranchise,{deep: true, immediate: true,});
+    watch(() => route,  franchiseStore.getListFranchise,{deep: true, immediate: true,});
 
     const handleSizeChange = (val) => {
         franchiseStore.updatePageSize(val);
-        franchiseStore.getDataFranchise();
+        franchiseStore.getListFranchise();
     }
     const handleCurrentChange = (val) => {
         franchiseStore.updateCurrentPage(val);
-        franchiseStore.getDataFranchise();
+        franchiseStore.getListFranchise();
     }
     const handleSelectChange = (val) => {
         franchiseStore.updateSort(val);
-        franchiseStore.getDataFranchise();
+        franchiseStore.getListFranchise();
     }
     const handleSwitchChange = (val) => {
         let spin = val ? "asc" : 'desc';
         franchiseStore.updateSpin(spin);
-        franchiseStore.getDataFranchise();
+        franchiseStore.getListFranchise();
     }
     // const submitSearch = (formEl: FormInstance | undefined) => {
     //     if (!formEl) return
@@ -190,11 +176,11 @@
     //     sectionStore.getMovies();
     // }
     const handleRemove = (id,index) => {
-        ElMessageBox.confirm(`Are you sure? Entries under ID: ${id} will be deleted from collection. Continue?`, 'WARNING', {
-                confirmButtonText: 'OK',
-                cancelButtonText: 'Cancel',
-                type: 'warning',
-            }).then(() => {
+        ElMessageBox.confirm(`Are you sure? All the movies will be unbundled from ID: ${id}. And franchise will be deleted. Continue?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
             franchiseStore.removeItemFromFranchise(id,index);
             ElMessage({
                 type: 'success',

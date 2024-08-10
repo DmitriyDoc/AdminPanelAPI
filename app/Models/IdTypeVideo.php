@@ -34,7 +34,7 @@ class IdTypeVideo extends Model
     }
     public function poster()
     {
-        return $this->hasOne(PostersVideo::class,'id_movie','id_movie')->oldest();
+        return $this->hasMany(PostersVideo::class,'id_movie','id_movie')->oldest();
     }
     public function getCountAttribute(){
         return $this->count();

@@ -103,19 +103,49 @@ class FranchiseController extends Controller
         return [];
     }
 
+    public function list(Request $request): array
+    {
+        $model = convertVariableToModelName('LocalizingFranchise','', ['App', 'Models']);
+        $franchiseCollection =  $model->all();
+        if ($franchiseCollection->isNotEmpty()){
+            $itemsCount = $franchiseCollection->count()??0;
+            $allowedSortFields = ['desc','asc'];
+            $allowedFilterFields = $model->getFillable();
+            $limit = $request->query('limit',50);
+            $page = $request->query('page',1);
+            $sortDir = strtolower($request->query('spin','asc'));
+            $sortBy = $request->query('orderBy','created_at');
+            if (!in_array($sortBy,$allowedFilterFields)){
+                $sortBy = $allowedSortFields[0];
+            }
+            $collectionSort = $franchiseCollection->sortBy($sortBy)->forPage($page,$limit);
+            if (in_array($sortDir,$allowedSortFields)){
+                if ($sortDir == 'asc'){
+                    $collectionSort = $collectionSort->sortByDesc($sortBy);
+                }
+            }
+            $collectionSortArr = $collectionSort->values()->toArray();
+            return [
+                'total' => $itemsCount,
+                'data' => $collectionSortArr
+            ];
+        }
+        return [];
+    }
+
     public function destroy(Request $request)
     {
-//        $data = Validator::make($request->all(),[
-//            'id_movie' => 'required|string|max:10',
-//            'value' => 'required|string|max:50',
-//        ])->safe()->all();
-//
-//        if (!empty($data)){
-//            $collectionArr = CollectionsFranchisesPivot::where('value',$data['value'])->get('id')->toArray();
-//        CollectionsCategoriesPivot::where([
-//            ['id_movie', '=', $data['id_movie']],
-//            ['franchise_id', '=', $collectionArr[0]['id']],
-//        ])->delete();
-//        }
+        $data = Validator::make($request->all(),[
+            'id' => 'required|int',
+        ])->safe()->all();
+        if (!empty($data)){
+            transaction( function () use ($data){
+                CollectionsCategoriesPivot::where('franchise_id',$data['id'])->update([
+                    'franchise_id'=>null
+                ]);
+                CollectionsFranchisesPivot::find($data['id'])->delete();
+                LocalizingFranchise::find($data['id'])->delete();
+            });
+        }
     }
 }

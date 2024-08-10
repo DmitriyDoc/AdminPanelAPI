@@ -58,9 +58,24 @@ class ParserUpdateMovieController extends ParserController
 
     public function update(Request $request)
     {
+        $allowedTableNames = [
+            0=>'MiniSeries',
+            1=>'TvSeries',
+            2=>'TvMovie',
+            3=>'Video',
+            4=>'TvSpecial',
+            5=>'TvShort',
+            6=>'ShortFilm',
+        ];
         if ($data = $request->all()){
-
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
+            if (!$model::where('id_movie',$data['data']['id'])->exists()){
+                foreach ($allowedTableNames as $type){
+                    $model = convertVariableToModelName('IdType', $type, ['App', 'Models']);
+                    if ($model::where('id_movie',$data['data']['id'])->exists()) break;
+                }
+            }
+
             if ($segment = $model->segment ) {
                 $this->signByField = 'id_movie';
                 $this->imgUrlFragment = '/title/';
@@ -85,8 +100,10 @@ class ParserUpdateMovieController extends ParserController
                     }
 
                     $this->linksGetter($this->linksInfo, 'getMoviesInfo');
+
                     $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN);
                     $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN);
+
                     $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
                     $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
 
@@ -96,6 +113,8 @@ class ParserUpdateMovieController extends ParserController
                     $this->idMovies = [];
                 }
             }
+            return ['success'=>true];
+
         }
 
     }

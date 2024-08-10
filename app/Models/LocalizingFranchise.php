@@ -8,7 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class LocalizingFranchise extends Model
 {
     use HasFactory;
-    protected $guarded = false;
     protected $table = 'localizing_franchise';
     public $timestamps = false;
+
+    protected $fillable = [
+        'id',
+        'value',
+        'label',
+        'label_ru',
+        'created_at',
+        'updated_at',
+    ];
 }

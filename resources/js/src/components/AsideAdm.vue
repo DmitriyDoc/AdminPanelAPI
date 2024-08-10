@@ -54,11 +54,13 @@
                         <el-menu-item-group>
                             <template #title><h6>Franchise:</h6></template>
                             <RouterLink to="/categories/franchise/"><el-menu-item index="3-1">Add Franchise</el-menu-item></RouterLink>
+                            <RouterLink to="/categories/franchise/list"><el-menu-item index="3-1">List Franchise</el-menu-item></RouterLink>
 <!--                            <el-menu-item index="3-2">Option 2</el-menu-item>-->
                         </el-menu-item-group>
                         <el-menu-item-group>
                             <template #title><h6>Collection:</h6></template>
                             <RouterLink to="/categories/collection/"><el-menu-item index="3-1">Add Collection</el-menu-item></RouterLink>
+                            <RouterLink to="/categories/collection/list"><el-menu-item index="3-1">List Collection</el-menu-item></RouterLink>
 <!--                            <el-menu-item index="3-2">Option 2</el-menu-item>-->
                         </el-menu-item-group>
 <!--                        <el-menu-item-group title="Group 2">-->

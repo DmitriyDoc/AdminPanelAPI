@@ -34,7 +34,7 @@ class InfoMiniSeries extends Model
     ];
     public function poster()
     {
-        return $this->hasOne(PostersMiniSeries::class,'id_movie','id_movie')->oldest();
+        return $this->hasMany(PostersMiniSeries::class,'id_movie','id_movie')->oldest();
     }
     public function collection()
     {

@@ -34,7 +34,7 @@ class InfoTvShort extends Model
     ];
     public function poster()
     {
-        return $this->hasOne(PostersTvShort::class,'id_movie','id_movie')->oldest();
+        return $this->hasMany(PostersTvShort::class,'id_movie','id_movie')->oldest();
     }
     public function collection()
     {

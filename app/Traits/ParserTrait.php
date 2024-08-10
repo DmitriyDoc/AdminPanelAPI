@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\IdTypeMovies;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -11,7 +12,6 @@ trait ParserTrait
         DB::table($table)->insertOrIgnore($data);
         gc_collect_cycles(); // принудительный вызов встроенного сборщика мусора PHP
     }
-
     public function updateOrInsert($table,$data,$signKey){
         DB::table($table)
             ->updateOrInsert(

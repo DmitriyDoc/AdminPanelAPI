@@ -23,7 +23,7 @@
                             <template v-for="(item, id) in occupation">
                                 <div class="p-1 m-1 border bg-light">
                                     <strong>{{ item.year }}</strong>
-                                    <RouterLink :to="{ name: 'showmovie', params: { slug: 'all', id: id }}">
+                                    <RouterLink :to="{ name: 'showmovie', params: { slug: 'FeatureFilm', id: id }}">
                                         {{ item.title }}
                                     </RouterLink>
                                     <em>{{ item.role  }}</em>
@@ -40,14 +40,13 @@
                             <div style="display: flex; flex-direction: column">
                                 <strong>{{item.type_film}}</strong>
                                 <div style="width: 194px; height: 300px; background-color: rgb(243 243 243); margin-right: 10px">
-                                    <el-image  v-if="item.poster" :src="item.poster.src" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
+                                    <el-image  v-if="item.poster" :src="item.poster[0].src" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
                                 </div>
                                 <div style="width: 194px; margin-right: 10px">
                                     <RouterLink :to="{ name: 'showmovie', params: { slug: item.type_film, id: item.id_movie }}">
                                         {{ item.title }}
                                     </RouterLink>
                                 </div>
-
                             </div>
                         </template>
                     </div>

@@ -8,8 +8,10 @@ import UpdateMovieAdm from "@/pages/UpdateMovieAdm.vue";
 import UpdatePersonAdm from "@/pages/UpdatePersonAdm.vue";
 import MovieDetailsAdm from "@/pages/MovieDetailsAdm.vue";
 import PersonDetailsAdm from "@/pages/PersonDetailsAdm.vue";
-import FranchiseAdm from "@/pages/FranchiseAdm.vue";
-import CollectionAdm from "@/pages/CollectionAdm.vue";
+import FranchiseAddAdm from "@/pages/FranchiseAddAdm.vue";
+import FranchiseListAdm from "@/pages/FranchiseListAdm.vue";
+import CollectionListAdm from "@/pages/CollectionListAdm.vue";
+import CollectionAddAdm from "@/pages/CollectionAddAdm.vue";
 
 const routes = [
     {
@@ -60,13 +62,23 @@ const routes = [
     },
     {
         path: '/categories/franchise/',
-        component: FranchiseAdm,
+        component: FranchiseAddAdm,
         name: 'addFranchise',
     },
     {
+        path: '/categories/franchise/list',
+        component: FranchiseListAdm,
+        name: 'listFranchise',
+    },
+    {
         path: '/categories/collection/',
-        component: CollectionAdm,
+        component: CollectionAddAdm,
         name: 'addCollection',
+    },
+    {
+        path: '/categories/collection/list',
+        component: CollectionListAdm,
+        name: 'listCollection',
     },
 
 ];

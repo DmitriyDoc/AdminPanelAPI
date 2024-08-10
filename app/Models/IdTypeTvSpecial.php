@@ -34,7 +34,7 @@ class IdTypeTvSpecial extends Model
     }
     public function poster()
     {
-        return $this->hasOne(PostersTvSpecial::class,'id_movie','id_movie')->oldest();
+        return $this->hasMany(PostersTvSpecial::class,'id_movie','id_movie')->oldest();
     }
     public function getCountAttribute(){
         return $this->count();

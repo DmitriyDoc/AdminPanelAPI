@@ -34,7 +34,7 @@ Route::put('/updateceleb', [App\Http\Controllers\Parser\ParserUpdateCelebControl
 
 // DASHBOARD QUERY
 Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
-Route::get('/translate',[\App\Http\Controllers\DashboardController::class, 'test']);
+Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
 Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
 
 // MEDIA QUERY
@@ -74,11 +74,13 @@ Route::controller(\App\Http\Controllers\SectionsController::class)->group(functi
 });
 Route::controller(\App\Http\Controllers\CollectionsController::class)->group(function () {
     Route::get('/collections/{slugSect}/{slugColl}', 'index');
-    Route::delete('/collections', 'destroy');
+    Route::get('/collections', 'list');
+    Route::delete('/collections/del', 'destroy');
 });
 Route::controller(\App\Http\Controllers\FranchiseController::class)->group(function () {
     Route::get('/franchise/{slugSect}/{slugFran}', 'index');
-    Route::delete('/franchise', 'destroy');
+    Route::get('/franchise', 'list');
+    Route::delete('/franchise/del', 'destroy');
 });
 // RESOURCES QUERY
 //Route::apiResources([

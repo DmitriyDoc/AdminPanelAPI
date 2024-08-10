@@ -19,6 +19,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
     const loader = ref(true);
     const optionsCats = ref([]);
     const collectionsData = ref([]);
+    const collectionsList = ref([]);
     const route = useRoute();
 
     const getDataCollections = async () =>{
@@ -41,15 +42,31 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
             console.log('error',e);
         }
     }
+    const getListCollections = async () =>{
+        try {
+            axios.get('/api/collections'
+                + '?page=' + state.value.page
+                + '&limit=' + state.value.limit
+                + '&orderBy=' + state.value.sortBy
+                + '&spin=' + state.value.spinParam
+                //+ '&search=' + state.value.searchQuery
+            ).then((response) => {
+                console.log(response);
+                collectionsList.value = response.data;
+                totalCount.value = response.data.total;
+                loader.value = false;
+            });
+        } catch (e) {
+            console.log('error',e);
+        }
+    }
     const removeItemFromCollection = async (id,index) => {
         try {
-
-            axios.delete('/api/collections',{ data: {
-                    id_movie: id,
-                    value: route.params.collName,
+            axios.delete('/api/collections/del',{ data: {
+                    id: id,
                 }}
             ).then((response) => {
-                collectionsData.value.data.splice(index,1);
+                collectionsList.value.data.splice(index,1);
             });
         } catch (e) {
             console.log('error',e);
@@ -76,6 +93,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
     return {
         optionsCats,
         collectionsData,
+        collectionsList,
         totalCount,
         currentPage,
         pageSize,
@@ -84,6 +102,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
         loader,
         removeItemFromCollection,
         getDataCollections,
+        getListCollections,
         //updateSearchQuery,
         updateSpin,
         updateSort,

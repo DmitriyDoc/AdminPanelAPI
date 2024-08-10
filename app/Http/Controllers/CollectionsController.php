@@ -6,6 +6,7 @@ use App\Models\AssignPoster;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
+use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -135,18 +136,48 @@ class CollectionsController extends Controller
         return [];
     }
 
+    public function list(Request $request): array
+    {
+        $model = convertVariableToModelName('Collection','', ['App', 'Models']);
+        $CollectionCol =  $model->all();
+        if ($CollectionCol->isNotEmpty()){
+            $itemsCount = $CollectionCol->count()??0;
+            $allowedSortFields = ['desc','asc'];
+            $allowedFilterFields = $model->getFillable();
+            $limit = $request->query('limit',20);
+            $page = $request->query('page',1);
+            $sortDir = strtolower($request->query('spin','asc'));
+            $sortBy = $request->query('orderBy','created_at');
+            if (!in_array($sortBy,$allowedFilterFields)){
+                $sortBy = $allowedSortFields[0];
+            }
+            $collectionSort = $CollectionCol->sortBy($sortBy)->forPage($page,$limit);
+            if (in_array($sortDir,$allowedSortFields)){
+                if ($sortDir == 'asc'){
+                    $collectionSort = $collectionSort->sortByDesc($sortBy);
+                }
+            }
+            $collectionSortArr = $collectionSort->values()->toArray();
+            return [
+                'total' => $itemsCount,
+                'data' => $collectionSortArr
+            ];
+        }
+        return [];
+
+    }
+
     public function destroy(Request $request)
     {
         $data = Validator::make($request->all(),[
-            'id_movie' => 'required|string|max:10',
-            'value' => 'required|string|max:50',
+            'id' => 'required|int',
         ])->safe()->all();
         if (!empty($data)){
-            $collectionArr = Collection::where('value',$data['value'])->get('id')->toArray();
-        CollectionsCategoriesPivot::where([
-            ['id_movie', '=', $data['id_movie']],
-            ['collection_id', '=', $collectionArr[0]['id']],
-        ])->delete();
+            transaction( function () use ($data){
+                CollectionsCategoriesPivot::where('collection_id',$data['id'])->delete();
+                CollectionsFranchisesPivot::where('collection_id',$data['id'])->delete();
+                Collection::find($data['id'])->delete();
+            });
         }
     }
 }

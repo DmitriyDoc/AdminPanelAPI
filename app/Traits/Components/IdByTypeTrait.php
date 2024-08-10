@@ -44,6 +44,7 @@ trait IdByTypeTrait
 //            }
 
             $this->insertDB($this->insert_id_table,$insertData);
+
             //$this->getIdByType();
         }
     }

@@ -27,34 +27,30 @@ class MediaController extends Controller
             5=>'TvShort',
             6=>'TvSpecial',
             7=>'Video',
-            8=>'Celebs',
         ];
-//        if (!in_array($slug,$allowedTableNames)){
-//            $slug = $allowedTableNames[0];
-//        }
+
 
         if (!in_array($imgType,$allowedTypesNames)){
             $imgType = 'images';
         }
 
-        if (!in_array($slug,$allowedTableNames)){
-            $slug = 'all';
-        }
-
         if (!empty(strip_tags($id))){
-            if ($slug == 'all') {
-                foreach ($allowedTableNames as $type){
-                    $model = convertVariableToModelName(ucfirst($imgType), $type, ['App', 'Models']);
-                    $res = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->simplePaginate(10)->toArray();
-                    if (!empty($res['data'])) break;
-                }
-            } elseif ($slug == 'Celebs')  {
+            if ($slug == 'Celebs') {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
                 $res = $model::select('id','id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$id)->simplePaginate(10)->toArray();
-            } else {
+            } elseif (in_array($slug,$allowedTableNames))  {
+
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
                 $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id);
-                if ($imgType == 'posters'){
+                if ($model->get()->isEmpty()){
+                    foreach ($allowedTableNames as $type){
+                        $model = convertVariableToModelName(ucfirst($imgType),$type, ['App', 'Models']);
+                        $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id);
+                        if ($model->get()->isNotEmpty()) break;
+                    }
+                }
+
+                if ($imgType == 'posters' && $model->get()->isNotEmpty()){
                     $model->with('assignPosters');
                 }
                 $res = $model->simplePaginate(10)->toArray();
@@ -120,7 +116,6 @@ class MediaController extends Controller
             5=>'TvShort',
             6=>'TvSpecial',
             7=>'Video',
-            8=>'Celebs',
         ];
         if (in_array($data['type_film'],$allowedTableNames) && in_array($data['poster_cat'],$allowedPosterAssignNames) ){
             switch ($data['poster_cat']) {
@@ -171,13 +166,20 @@ class MediaController extends Controller
             5=>'TvShort',
             6=>'TvSpecial',
             7=>'Video',
-            8=>'Celebs',
         ];
         $res = [];
         if (in_array($slug,$allowedTableNames) && !empty(strip_tags($id))){
             $model = convertVariableToModelName('Images',$slug, ['App', 'Models']);
             $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->whereNotNull('src',)->get();
+            if ($collection->isEmpty()){
+                foreach ($allowedTableNames as $type){
+                    $model = convertVariableToModelName('Images',$type, ['App', 'Models']);
+                    $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->whereNotNull('src',)->get();
+                    if (!$collection->isEmpty()) break;
+                }
+            }
             $res = $collection->shuffle()->take(50)->toArray();
+
             if (!empty($res)){
                 foreach ($res as &$item){
                     $imagesArr = explode(',',$item['srcset'] ?? '');
@@ -201,7 +203,6 @@ class MediaController extends Controller
         $res = [];
         if (!empty(strip_tags($idMovie))){
             $assignModel = AssignPoster::where('id_movie',$idMovie)->get();
-
             if ($assignModel->isNotEmpty()){
                 $idArr = [];
                 $assignPostersArr = $assignModel[0]->toArray();

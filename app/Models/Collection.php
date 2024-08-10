@@ -8,9 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Collection extends Model
 {
     use HasFactory;
-    protected $guarded = false;
     protected $table = 'collections';
     public $timestamps = false;
+
+    protected $fillable = [
+        'id',
+        'category_id',
+        'value',
+        'label',
+        'label_ru',
+        'created_at',
+        'updated_at',
+    ];
 
     public function category()
     {
