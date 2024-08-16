@@ -121,7 +121,7 @@ class CollectionsController extends Controller
                         if (!empty($collectionResponse['data'])){
                             foreach ($collectionResponse['data'] as $dataMovie){
                                 if (!empty($dataMovie['franchise'])){
-                                    $collectionResponse['franchise'][] = $dataMovie['franchise'][0];
+                                    $collectionResponse['franchise'][] = array_values($dataMovie['franchise'])[0];
                                 }
                             }
                         }
