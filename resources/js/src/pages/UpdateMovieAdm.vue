@@ -1,5 +1,5 @@
 <template>
-    <el-row v-if="singleData.genres && singleData.cast">
+    <el-row v-if="true">
         <el-col :span="24">
             <h1>{{  singleData.original_title }}</h1>
         </el-col>
@@ -18,7 +18,6 @@
                     <h5>Check short:</h5>
                     <el-checkbox v-model="singleData.collection.short" label="Short film" border class="d-block pt-1" />
                 </div>
-
                 <div class="mt-3">
                     <h5>Select section:</h5>
                     <el-cascader v-model="singleData.collection.id" placeholder="select ..." :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
@@ -246,7 +245,6 @@
                         Update
                     </el-button>
                 </el-form-item>
-
             </el-form>
         </el-col>
     </el-row>
@@ -289,9 +287,9 @@
     const ruleFormRef = ref();
     const ruleForm = ref(singleData);
     const propsCascader = {
+        multiple: true,
         checkStrictly: true,
     }
-
 
     const handleCategoryChange = (value) => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
@@ -299,18 +297,24 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            categoryStore.setCategories({
-                id_movie: singleData.value.id_movie,
-                type_film: route.params.slug,
-                collection_id: value[1],
-                franchise_id: value[2],
-                viewed: singleData.value.collection.viewed,
-                short: singleData.value.collection.short,
-            })
-            ElMessage({
-                type: 'success',
-                message: 'Collection selected',
-            })
+            if (value.length <= 4) {
+                categoryStore.setCategories({
+                    id_movie: singleData.value.id_movie,
+                    type_film: route.params.slug,
+                    categories: value??[],
+                    viewed: singleData.value.collection.viewed ?? false,
+                    short: singleData.value.collection.short ?? false,
+                })
+                ElMessage({
+                    type: 'success',
+                    message: value.length !== 0 ?'Collection selected' :'Collection deleted',
+                })
+            } else {
+                ElMessage({
+                    type: 'info',
+                    message: 'No more than 4 collections for one movie!',
+                })
+            }
         }).catch(() => {
             ElMessage({
                 type: 'info',

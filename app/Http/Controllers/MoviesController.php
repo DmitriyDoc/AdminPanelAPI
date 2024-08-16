@@ -104,6 +104,7 @@ class MoviesController extends Controller
 
         $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
         $modelArr = $model::with(['poster','collection','localazing'])->where('id_movie',$id)->get()->toArray();
+
         if (empty($modelArr)){
             foreach ($allowedTableNames as $type){
                 $model = convertVariableToModelName('Info', $type, ['App', 'Models']);
@@ -136,11 +137,12 @@ class MoviesController extends Controller
             $img = explode(',',$posterSrcSet ?? '');
             $infoMovieData['poster'] = $img[0] ?? '';
             if (!empty( $modelArr[0]['collection'])) {
-                $collection = Collection::with('category')->find($modelArr[0]['collection'][0]['collection_id'])->toArray();
-                $infoMovieData['collection']['id'] = $modelArr[0]['collection'][0]['franchise_id'] ? 'fr_'.$modelArr[0]['collection'][0]['collection_id'].$modelArr[0]['collection'][0]['franchise_id'] : $modelArr[0]['collection'][0]['collection_id'];
-
-                $infoMovieData['collection']['label'] = $collection['label'] ?? null;
-                $infoMovieData['collection']['category_value'] = $collection['category'][0]['value'] ?? null;
+                foreach ($modelArr[0]['collection'] as $key => $itemCollection) {
+                    $collection = Collection::with('category')->find($itemCollection['collection_id'])->toArray();
+                    $infoMovieData['collection']['id'][$key] = $itemCollection['franchise_id'] ? 'fr_'.$itemCollection['collection_id'].$itemCollection['franchise_id'] : $itemCollection['collection_id'];
+                    $infoMovieData['collection']['catInfo'][$key]['label'] = $collection['label'] ?? null;
+                    $infoMovieData['collection']['catInfo'][$key]['category_value'] = $collection['category'][0]['value'] ?? null;
+                }
                 $infoMovieData['collection']['viewed'] = (bool) $modelArr[0]['collection'][0]['viewed'] ?? false;
                 $infoMovieData['collection']['short'] = (bool) $modelArr[0]['collection'][0]['short'] ?? false;
                 unset( $infoMovieData['collection'][0]);

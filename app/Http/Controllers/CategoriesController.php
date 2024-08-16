@@ -19,7 +19,6 @@ class CategoriesController extends Controller
         $collectionArray = Category::with((array('children' => function($query)  {
             $query->with('children');
         })))->get()->toArray();
-
         $collectionArray = cascaderStructure($collectionArray);
         return json_encode($collectionArray);
     }
@@ -48,7 +47,8 @@ class CategoriesController extends Controller
             'label' => 'required|string|max:50',
             'value' => 'required|string|max:50',
             'label_ru' => 'required|string|max:50',
-            'collection_id' => 'required|numeric',
+            "collection"    => "required|array",
+            "collection.*"  => "required|numeric",
         ]);
         if ($data->fails()) {
             return response()->json([
@@ -56,17 +56,20 @@ class CategoriesController extends Controller
             ], 422);
         }
 
-        $localModel = LocalizingFranchise::firstOrCreate([
+        transaction( function () use ($data){
+            $localModel = LocalizingFranchise::firstOrCreate([
                 'label' => $data->getValue('label'),
                 'value' => $data->getValue('value'),
                 'label_ru' => $data->getValue('label_ru')
             ]);
-
-        CollectionsFranchisesPivot::updateOrCreate([
-            'id' => $localModel->id,
-            'collection_id' => $data->getValue('collection_id'),
-        ]);
-
+            foreach ($data->getValue('collection') as $collectionId){
+                $dataTable[] = [
+                    'id' => $localModel->id,
+                    'collection_id' => $collectionId,
+                ];
+            }
+            CollectionsFranchisesPivot::insert($dataTable);
+        });
     }
     public function addCollection(Request $request)
     {
@@ -86,21 +89,33 @@ class CategoriesController extends Controller
 }
     public function store(Request $request)
     {
-
         $data = Validator::make($request->all(),[
             'id_movie' => 'required|string|max:10',
             'type_film' => 'required|string|max:12',
-            'collection_id' => 'required|numeric',
-            'franchise_id' => 'string|max:12',
+            'categories' => 'present|array',
             'viewed' => 'boolean',
             'short' => 'boolean',
         ])->safe()->all();
-        if (!empty($data['franchise_id'])){
-            $data['franchise_id'] = str_replace("fr_".$data['collection_id'], '', $data['franchise_id']);;
-        }
         transaction( function () use ($data){
             CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
-            CollectionsCategoriesPivot::create($data);
+            if (!empty($data['categories'])){
+                foreach ( $data['categories'] as $cat){
+                    $franchiseId = null;
+                    if (!empty($cat[2])){
+                        $franchiseId = str_replace("fr_".$cat[1], '', $cat[2]);
+                    }
+                    CollectionsCategoriesPivot::create([
+                        'id_movie' =>$data['id_movie'],
+                        'type_film' => $data['type_film'],
+                        'collection_id' => $cat[1],
+                        'franchise_id' => $franchiseId,
+                        'viewed' => $data['viewed'] ?? null,
+                        'short' => $data['short'] ?? null,
+                    ]);
+                }
+            }
+
         });
+
     }
 }

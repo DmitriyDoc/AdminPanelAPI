@@ -52,11 +52,13 @@
     const categoryStore = useCategoriesStore();
     const { optionsCats } = storeToRefs(categoryStore);
     const propsCascader = {
+        multiple: true,
         checkStrictly: true,
     }
     const nameFranchise = ref('');
     const nameRuFranchise = ref('');
-    const categoryId = ref(null);
+    const categoryId = ref([]);
+    const categoriesArr = ref([]);
 
     const handleAddFranchise = () => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
@@ -65,11 +67,12 @@
             type: 'warning',
         }).then(() => {
             categoryStore.setCategoryFranchise({
-                collection_id: categoryId.value,
+                collection: categoriesArr.value,
                 label: nameFranchise.value,
                 label_ru: nameRuFranchise.value,
             });
-            categoryId.value = null;
+            categoriesArr.value = [];
+            categoryId.value = [];
             nameFranchise.value = '';
             nameRuFranchise.value = '';
             ElMessage({
@@ -84,7 +87,10 @@
         })
     }
     const handleCategoryChange = (value) => {
-        categoryId.value = value[1]
+        categoriesArr.value = [];
+        value.forEach(obj => {
+            categoriesArr.value.push(obj[1]);
+        })
     }
     categoryStore.getCategoriesFranchise();
 

@@ -167,7 +167,6 @@
         if (val[1]){
             (val[1] === 'image') ? mediaStore.getAssignedImages() : mediaStore.getAssignedPosters();
             if (val[1] === 'video') {
-                console.log(route.params.id);
                 var div = document.createElement('div');
                 div.className="kinobox_player";
                 document.getElementById("video").appendChild(div);
