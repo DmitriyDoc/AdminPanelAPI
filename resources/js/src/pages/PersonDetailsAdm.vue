@@ -41,7 +41,7 @@
                 <el-collapse-item title="Known For" name="1">
                     <div class="p-1 m-1 border bg-light" style="display: flex;">
                         <template v-for="(item, id) in singleData.knowfor" >
-                            <div style="display: flex; flex-direction: column">
+                            <div v-if="item.poster.length" style="display: flex; flex-direction: column">
                                 <strong>{{item.type_film}}</strong>
                                 <div style="width: 194px; height: 300px; background-color: rgb(243 243 243); margin-right: 10px">
                                     <el-image  v-if="item.poster" :src="item.poster[0].src" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
