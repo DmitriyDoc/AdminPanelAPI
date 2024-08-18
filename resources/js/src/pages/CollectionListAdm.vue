@@ -63,7 +63,7 @@
     </div>
     <template v-if="collectionsList['data']">
         <el-table :data="collectionsList['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
-            <el-table-column type="index" />
+            <el-table-column type="index" label="№"/>
             <el-table-column fixed prop="created_at" label="Date Create" width="160" />
             <el-table-column prop="id" label="ID Collection" width="120" />
             <el-table-column prop="category_id" label="ID Category" width="120" />

@@ -111,9 +111,19 @@ class CelebsController extends Controller
 
                 $modelArr[0]['knowfor'] = $knownFor;
                 $modelArr[0]['filmography'] = json_decode($modelArr[0]['filmography'],true) ?? [];
-                foreach ($modelArr[0]['filmography'] as &$occupation){
-                    uasort($occupation, function ($a, $b){return ($a['year'] > $b['year']);});
+                $filmographyArr = [];
+                foreach ($modelArr[0]['filmography'] as $k => &$occupation){
+                    uasort($occupation, function ($a, $b){return ($a['year'] < $b['year']);});
+                    foreach ($occupation as $id =>$dataArr){
+                        $filmographyArr[$k][] = [
+                            'id' => $id,
+                            'role' => $dataArr['role'],
+                            'year' => $dataArr['year'],
+                            'title' => $dataArr['title'],
+                        ];
+                    }
                 }
+                $modelArr[0]['filmography'] = $filmographyArr;
                 $modelArr[0]['created_at'] = date('Y-m-d', strtotime($modelArr[0]['created_at'])) ?? '';
                 $modelArr[0]['updated_at'] = date('Y-m-d', strtotime($modelArr[0]['updated_at'])) ?? '';
 

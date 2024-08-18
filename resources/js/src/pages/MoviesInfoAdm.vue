@@ -62,7 +62,7 @@
     </div>
     <template v-if="tableData">
         <el-table :data="tableData" v-loading="loader" style="width: 100%"  ref="multipleTableRef" >
-            <el-table-column type="index" />
+            <el-table-column type="index" label="№"/>
             <el-table-column fixed prop="created_at" label="Date Create" width="130" />
             <el-table-column prop="poster" label="Cover" width="150" >
                 <template v-slot:default="scope">

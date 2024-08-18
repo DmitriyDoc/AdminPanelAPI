@@ -64,7 +64,7 @@
     </div>
     <template v-if="franchiseList['data']">
         <el-table :data="franchiseList['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
-            <el-table-column type="index" />
+            <el-table-column type="index" label="№"/>
             <el-table-column fixed prop="created_at" label="Date Create" width="160" />
             <el-table-column prop="id" label="ID Franchise" width="120" />
             <el-table-column prop="value" label="Slug" width="160" />
