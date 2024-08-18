@@ -24,15 +24,22 @@
                 <template v-for="(occupation, index) in singleData.filmography">
                     <el-tab-pane :label=index :name=index>
                         <li class="list-group-item">
-                            <template v-for="(item, id) in occupation">
-                                <div class="p-1 m-1 border bg-light">
-                                    <strong>{{ item.year }}</strong>
-                                    <RouterLink :to="{ name: 'showmovie', params: { slug: 'FeatureFilm', id: id }}">
-                                         {{ item.title }}
-                                    </RouterLink>
-                                    <em>{{ item.role  }}</em>
-                                </div>
-                            </template>
+                            <el-table
+                                :data="occupation"
+                                style="width: 100%"
+                            >
+                                <el-table-column type="index" label="№"/>
+                                <el-table-column prop="year" label="Year" width="120" />
+                                <el-table-column prop="id" label="Movie ID" width="120" />
+                                <el-table-column prop="title" property="id" label="Title" width="400">
+                                    <template v-slot:default="scope">
+                                        <RouterLink :to="{ name: 'showmovie', params: { slug: 'FeatureFilm', id: scope.row.id }}">
+                                            {{scope.row.title}}
+                                        </RouterLink>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="role" label="Role" fixed="right" width="200"/>
+                            </el-table>
                         </li>
                     </el-tab-pane>
                 </template>
@@ -51,7 +58,6 @@
                                         {{ item.title }}
                                     </RouterLink>
                                 </div>
-
                             </div>
                         </template>
                     </div>
@@ -86,9 +92,9 @@
     import { RouterLink } from 'vue-router'
     import { usePersonsStore } from "../store/personsStore";
     import { useMediaStore } from "../store/mediaStore";
-    import type { TabsPaneContext } from 'element-plus';
+    import { TabsPaneContext, ElTable } from 'element-plus';
     import { ArrowRight } from '@element-plus/icons-vue'
-    import { ref, watch, reactive} from "vue";
+    import { ref } from "vue";
 
     const moviesStore = usePersonsStore();
     const mediaStore = useMediaStore();
