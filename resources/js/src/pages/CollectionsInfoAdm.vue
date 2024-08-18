@@ -81,7 +81,7 @@
     </div>
     <template v-if="collectionsData['data']">
         <el-table :data="collectionsData['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
-            <el-table-column type="index" />
+            <el-table-column type="index" label="№"/>
             <el-table-column fixed prop="created_at" label="Date Create" width="130" />
             <el-table-column prop="poster" label="Cover" width="130" >
                 <template v-slot:default="scope">

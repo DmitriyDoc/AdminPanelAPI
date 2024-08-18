@@ -6,7 +6,7 @@
         <el-col>
             <el-button type="success" link >
                 <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id:  route.params.id }}">
-                    Edit
+                    <el-button  type="danger">Edit</el-button>
                 </RouterLink>
             </el-button>
         </el-col>

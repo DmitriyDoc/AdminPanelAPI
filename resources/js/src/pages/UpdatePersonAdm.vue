@@ -20,15 +20,27 @@
                 <template v-for="(occupation, index) in singleData.filmography">
                     <el-tab-pane :label=index :name=index>
                         <li class="list-group-item">
-                            <template v-for="(item, id) in occupation">
-                                <div class="p-1 m-1 border bg-light">
-                                    <strong>{{ item.year }}</strong>
-                                    <RouterLink :to="{ name: 'showmovie', params: { slug: 'FeatureFilm', id: id }}">
-                                        {{ item.title }}
-                                    </RouterLink>
-                                    <em>{{ item.role  }}</em>
-                                </div>
-                            </template>
+                            <el-table
+                                ref="multipleTableCeleb"
+                                :data="occupation"
+                                style="width: 100%"
+                                @selection-change="handleSelectionChange"
+                            >
+                                <el-table-column type="selection" width="55" />
+                                <el-table-column type="index" label="№"/>
+                                <el-table-column prop="year" label="Year" width="120" />
+                                <el-table-column prop="id" label="Movie ID" width="120" />
+                                <el-table-column prop="title" property="id" label="Title" width="400">
+                                    <template v-slot:default="scope">
+                                        <RouterLink :to="{ name: 'showmovie', params: { slug: 'FeatureFilm', id: scope.row.id }}">
+                                            {{scope.row.title}}
+                                        </RouterLink>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="role" label="Role" fixed="right" width="200"/>
+                            </el-table>
+<!--                            <el-button @click="toggleSelectionCeleb()" type="info">Clear selection</el-button>-->
+                            <el-button type="success" @click="handleSelectedCelebs()" class="mt-3">Assign selected</el-button>
                         </li>
                     </el-tab-pane>
                 </template>
@@ -56,10 +68,10 @@
                 <el-collapse-item title="Images" name="image" >
                     <template v-if="imagesData.length">
                         <el-table
-
+                            ref="multipleTableImage"
                             :data="imagesData"
                             style="width: 100%"
-
+                            @selection-change="handleSelectImageChange"
                         >
                             <el-table-column type="selection" width="55"/>
                             <el-table-column property="id" label="ID" width="100">
@@ -108,7 +120,7 @@
     import type { TabsPaneContext } from 'element-plus';
     import { ArrowRight } from '@element-plus/icons-vue'
     import { ref, watch, reactive} from "vue";
-    import {ElMessage, ElMessageBox} from "element-plus";
+    import {ElMessage, ElMessageBox, ElTable } from "element-plus";
 
     const moviesStore = usePersonsStore();
     const mediaStore = useMediaStore();
@@ -123,6 +135,22 @@
     const multipleTableImage = ref();
     const multipleSelectImage = ref([]);
 
+    const multipleTableCeleb = ref()
+    const multipleSelection = ref([])
+
+    const toggleSelectionCeleb = () => {
+        //console.log(multipleTableCeleb.value);
+        //multipleTableCeleb.value!.clearSelection();
+    }
+    const handleSelectedCelebs = () => {
+        console.log(multipleSelection.value);
+    }
+    const handleSelectionChange = (val) => {
+        multipleSelection.value = val
+        if (multipleSelection.value.length){
+            console.log(multipleSelection.value);
+        }
+    }
     const handleChange = (val: string[]) => {
         //console.log(val[1]);
         mediaStore.flushState();
@@ -135,22 +163,16 @@
     // const handleClick = (tab: TabsPaneContext, event: Event) => {
     //     //console.log(tab, event)
     // }
-    const handleSelectImageChange = (val?: []) => {
+    const handleSelectImageChange = (val) => {
         multipleSelectImage.value = [];
         val.filter(function(arr, i){
             multipleSelectImage.value.push(arr.id)
         });
     }
 
-    const toggleSelectImage = (rows?: []) => {
-        if (rows) {
-            rows.forEach((row) => {
-                multipleTableImage.value!.toggleRowSelection(row, undefined);
-            })
-        } else {
-            multipleTableImage.value!.clearSelection();
-        }
-
+    const toggleSelectImage = () => {
+        console.log(multipleTableImage.value);
+        multipleTableImage.value!.clearSelection();
     }
     const toggleRemoveImage = () => {
         if (multipleSelectImage.value.length){
