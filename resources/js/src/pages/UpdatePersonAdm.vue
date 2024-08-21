@@ -27,7 +27,7 @@
                                 @selection-change="handleSelectionChange"
                             >
                                 <el-table-column type="selection" width="55" />
-                                <el-table-column type="index" label="№"/>
+                                <el-table-column type="index" label="№" width="50"/>
                                 <el-table-column prop="year" label="Year" width="120" />
                                 <el-table-column prop="id" label="Movie ID" width="120" />
                                 <el-table-column prop="title" property="id" label="Title" width="400">

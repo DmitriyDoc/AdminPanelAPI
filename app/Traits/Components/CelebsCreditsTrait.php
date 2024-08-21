@@ -15,39 +15,63 @@ trait CelebsCreditsTrait
                     $document = new Document(trim($page));
                     $this->logErrors($document,"div[class=error_code_404]"," 404-->>",$url);
                     $this->logErrors($document,"div[class=errorPage__container]"," 500-->>",$url);
-                    if ($document->has('#filmography')) {
+
+                    if ($document->has("div[data-testid='Filmography']")) {
+
                         //ID ACTOR
                         $insertData[$this->signByField] = get_id_from_url($url,self::ACTOR_PATTERN)??null;
+
                         //FILMOGRAPHY
-                        foreach ($this->occupations as $occupation){
-                            if ($document->has("div[data-category='{$occupation}']")){
-                                $container = $document->find("div[data-category='{$occupation}']")[0];
-                                foreach ($container->nextSibling('div.filmo-category-section')->find('.filmo-row') as $item){
-                                    $movieID = get_id_from_url($item->find('b a')[0]->attr('href')??null,self::ID_PATTERN);
-                                    $title = $item->find('b')[0]->text()??null;
+                        foreach ($this->occupations as $k => $occupation){
+                            if ($document->has("h3")){
+                                $h3Array = $document->find("h3");
+                                foreach ($h3Array as $h3){
+                                    if ($h3->text() == ucfirst($occupation)){
+                                        $container = $document->find("#accordion-item-".$occupation."-previous-projects")[0];
+                                        if (!empty($container)){
+                                            $ul = $container->find('ul li.ipc-metadata-list-summary-item');
+                                            if (!empty($ul)){
+                                                foreach ($ul as $li){
+                                                    $div = $li->children();
+                                                    if (!empty($div[1])){
+                                                        $a = $div[1]->firstChild()->first('a');
+                                                        $ul = $div[1]->firstChild()->first('ul');
+                                                        $span = $div[1]->lastChild()->first('ul li span.ipc-metadata-list-summary-item__li');
+                                                        if ($a->hasAttribute('href')){
+                                                            $movieID =  get_id_from_url($a->attr('href'),self::ID_PATTERN);
+                                                            $title = $a->text() ?? null;
+                                                        }
+                                                        if (!empty($span)){
+                                                            $str = str_replace('&nbsp;', ' ', htmlentities( $span->text() ?? null));
+                                                            $year = trim(html_entity_decode($str));
+                                                        }
+                                                        if (!empty($ul)){
+                                                            $role = $ul->text() ?? null;
+                                                        }
+                                                        if (!empty($movieID)){
+                                                            $insertData['filmography'][$occupation][$movieID]['role'] = $role ? trim($role) : null;
+                                                            $insertData['filmography'][$occupation][$movieID]['year'] = $year ?? null;
+                                                            $insertData['filmography'][$occupation][$movieID]['title'] = $title ? trim($title) : null;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
 
-                                    if ($year = $item->find('span.year_column')[0]->text()){
-                                        $str = str_replace('&nbsp;', ' ', htmlentities($year));
-                                        $new = trim(html_entity_decode($str));
                                     }
-
-                                    $item->firstInDocument('b')->remove();
-                                    $item->firstInDocument('span')->remove();
-
-                                    $expRoleId = $occupation.'-'.$movieID??'';
-                                    $role = $item->find("//div[@id='{$expRoleId}']/br/following-sibling::text()[1]",Query::TYPE_XPATH)[0]??null;
-
-                                    $insertData['filmography'][$occupation][$movieID]['role'] = $role?trim($role):null;
-                                    $insertData['filmography'][$occupation][$movieID]['year'] = !empty($new) ? $new : null;
-                                    $insertData['filmography'][$occupation][$movieID]['title'] = $title;
                                 }
                             }
                         }
                         if (!empty($insertData['filmography'])){
-                            $insertData['filmography'] = json_encode($insertData['filmography'],JSON_UNESCAPED_UNICODE)??null;
+                            $currentData = $this->selectDB($this->update_info_table, $insertData[$this->signByField], $this->signByField,'filmography');
+                            if (!empty($currentData[0])){
+                                $res = array_replace_recursive(json_decode($currentData[0],true),$insertData['filmography']);
+                                $insertData['filmography'] = json_encode($res);
+                                $this->updateOrInsert($this->update_info_table,$insertData,$this->signByField);
+                                unset($res);
+                                unset($insertData);
+                            }
                         }
-                        $this->updateOrInsert($this->update_info_table,$insertData,$this->signByField);
-                        unset($insertData);
                     }
                 }
             }

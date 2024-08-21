@@ -75,7 +75,7 @@ class ParserUpdateCelebController extends ParserController
             if (!empty($this->idCeleb)){
                 foreach ($this->idCeleb as $id) {
                     array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
-                    array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/fullcredits');
+                    array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/');
                     array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=event'); //publicity event
                 }
             }
