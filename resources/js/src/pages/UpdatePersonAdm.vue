@@ -52,7 +52,7 @@
                             <div style="display: flex; flex-direction: column">
                                 <strong>{{item.type_film}}</strong>
                                 <div style="width: 194px; height: 300px; background-color: rgb(243 243 243); margin-right: 10px">
-                                    <el-image  v-if="item.poster" :src="item.poster[0].src" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
+                                    <el-image  v-if="item.poster[0]" :src="item.poster[0].src" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
                                 </div>
                                 <div style="width: 194px; margin-right: 10px">
                                     <RouterLink :to="{ name: 'showmovie', params: { slug: item.type_film, id: item.id_movie }}">
@@ -122,10 +122,9 @@
     import { ref, watch, reactive} from "vue";
     import {ElMessage, ElMessageBox, ElTable } from "element-plus";
 
-    const moviesStore = usePersonsStore();
     const mediaStore = useMediaStore();
     const personsStore = usePersonsStore();
-    const { singleData, route, error, } = storeToRefs(moviesStore);
+    const { singleData, route, error, } = storeToRefs(personsStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
 
     const activeTabName = ref('actor');

@@ -80,6 +80,24 @@ export const usePersonsStore = defineStore('personsStore',() => {
             }
         });
     }
+    const addCelebById = async (idCeleb) => {
+        axios.put('/api/updateceleb',{ data: {
+                id:idCeleb,
+                type:'Celebs'
+            }}).then((response) => {
+            if (response.status === 200) {
+                ElMessage({
+                    type: 'success',
+                    message: 'Celeb add completed',
+                })
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Celeb add  is not finished',
+                });
+            }
+        });
+    }
     state.value.searchQuery = '';
     getCelebs();
 
@@ -108,6 +126,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         route,
         loader,
         error,
+        addCelebById,
         syncItem,
         showItem,
         removeItem,
