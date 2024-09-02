@@ -3,14 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Parser\CurlConnectorController;
+use App\Http\Controllers\Parser\ParserIdTypeController;
+use App\Http\Controllers\Parser\ParserStartController;
+use App\Http\Controllers\Parser\ParserUpdateCelebController;
+use App\Http\Controllers\Parser\ParserUpdateMovieController;
 use App\Traits\Components\CelebsCreditsTrait;
 use App\Traits\Components\CelebsInfoTrait;
+use App\Traits\Components\IdByTypeTrait;
 use App\Traits\Components\IdImagesTrait;
 use App\Traits\Components\ImagesTrait;
 use App\Traits\Components\MoviesInfoTrait;
 use App\Traits\ParserTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 
 class ParserController extends Controller
@@ -64,6 +71,41 @@ class ParserController extends Controller
 //        30 => 'sound_department',
     ];
 
+    public $allowedTableNames = [
+        'FeatureFilm' => [
+            'segment' => 'feature_film',
+            'type' => 'feature',
+        ],
+        'MiniSeries' => [
+            'segment' => 'mini_series',
+            'type' => 'tv_miniseries',
+        ],
+        'ShortFilm' => [
+            'segment' => 'short_film',
+            'type' => 'short',
+        ],
+        'TvMovie' => [
+            'segment' => 'tv_movie',
+            'type' => 'tv_movie',
+        ],
+        'TvSeries' => [
+            'segment' => 'tv_series',
+            'type' => 'tv_series',
+        ],
+        'TvShort' => [
+            'segment' => 'tv_short',
+            'type' => 'tv_short',
+        ],
+        'TvSpecial' => [
+            'segment' => 'tv_special',
+            'type' => 'tv_special',
+        ],
+        'Video' => [
+            'segment' => 'video',
+            'type' => 'video',
+        ],
+    ];
+
     protected $domen = 'https://www.imdb.com';
     protected $signByField;
     protected $imgUrlFragment;
@@ -71,11 +113,16 @@ class ParserController extends Controller
     protected $localizing;
 
     protected $start = 0;
+    protected $urls = [];
     protected $dateFrom;
     protected $dateTo;
     protected $flagType;//movies=true;celebs=false;
     protected $titleType;
     protected $refine;
+
+    protected $sort;
+    protected $typeImages;
+    protected $typePosters;
 
     protected $idMovies = [];
     protected $idCeleb = [];
@@ -86,10 +133,18 @@ class ParserController extends Controller
     protected $linksPosters = [];
     protected $linksCredits = [];
 
-    use ParserTrait,MoviesInfoTrait,IdImagesTrait,ImagesTrait,CelebsInfoTrait,CelebsCreditsTrait;
+    use ParserTrait,IdByTypeTrait,MoviesInfoTrait,IdImagesTrait,ImagesTrait,CelebsInfoTrait,CelebsCreditsTrait;
 
-    public function __construct()
+    public function __construct($params = [])
     {
+        if (!empty($params)){
+            $this->flagType = $params['flag'];
+            $this->dateFrom = $params['date_from'];
+            $this->dateTo = $params['date_till'];
+            $this->sort = $params['sort'];
+            $this->typeImages = $params['type_images'];
+            $this->typePosters = $params['type_posters'];
+        }
         $this->localizing = new TranslatorController();
     }
 
@@ -127,6 +182,68 @@ class ParserController extends Controller
                 if (is_array($pages)){
                     $this->{$methodName}( $pages, $table, $pattern, $columnKey );
                 }
+            }
+        }
+    }
+
+    public function parseMoviesByPeriod($allowMovieTypes) : void
+    {
+        $period = new \DatePeriod(
+            new \DateTime($this->dateFrom),
+            new \DateInterval('P1D'),
+            new \DateTime($this->dateTo . '23:59')
+        );
+        foreach ($allowMovieTypes as $type){
+            if (array_key_exists($type, $this->allowedTableNames)) {
+                $arg['segment'] = $this->allowedTableNames[$type]['segment'];
+                $arg['typeImages'] = $this->typeImages;
+                $arg['typePosters'] = $this->typePosters;
+                foreach ($period as $key => $day) {
+                    $this->titleType = $this->allowedTableNames[$type]['type'];
+                    $this->insert_id_table = 'movies_id_type_'.$this->allowedTableNames[$type]['segment'];
+                    array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc");
+                    array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},desc");
+                    $this->getIdByType();
+
+                    Log::info(">>> PARSE PERIOD : {$day->format("Y-m-d")} IDS FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
+                }
+                $parserUpdateMovie = new ParserUpdateMovieController();
+                $parserUpdateMovie->parseMovies($arg,date('Y-m-d'));
+                Log::info(">>>  PARSE INFO FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
+            }
+        }
+    }
+
+    public function parsePersons($personsSource) : void
+    {
+        foreach ($personsSource as $group) {
+            $this->titleType = $group;
+            $this->insert_id_table = 'celebs_id';
+            array_push($this->urls,"{$this->domen}/search/name/?groups={$this->titleType}&sort={$this->sort},asc");
+            array_push($this->urls,"{$this->domen}/search/name/?groups={$this->titleType}&sort={$this->sort},desc");
+            $this->getIdByType();
+            Log::info('>>> PARSE CELEBS ID BY:', [$this->titleType]);
+        }
+        $parserUpdateMovie = new ParserUpdateCelebController();
+        $parserUpdateMovie->parseCelebs($this->typeImages,date('Y-m-d'));
+        Log::info('>>> ARTISAN PARSED CELEBS FINISH');
+    }
+    public function actualizeYearTitleForTableIdTyp($allowMovieTypes)
+    {
+        if (!empty($allowMovieTypes)){
+            foreach ($allowMovieTypes as $table){
+                $modelInfo = convertVariableToModelName('Info', $table, ['App', 'Models']);
+                $modelIdType = convertVariableToModelName('IdType', $table, ['App', 'Models']);
+                $modelInfo = $modelInfo::select('id_movie','title','year_release')->limit(50)->orderBy('created_at','desc')->get();
+                foreach ($modelInfo as $key => $item){
+                    if (!empty($item['year_release'])){
+                        $modelIdType::where('id_movie',$item['id_movie'])->update([
+                            'title' => $item['title'],
+                            'year' => $item['year_release']
+                        ]);
+                    }
+                }
+                Log::info(">>> ACTUALIZE ID TYPE FINISH",[$table]);
             }
         }
     }

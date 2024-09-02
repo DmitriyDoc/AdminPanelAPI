@@ -64,6 +64,7 @@ class TranslatorController
         $this->dataMovie['id_movie'] = $dataInfo->id_movie;
         $this->dataMovie['type_film'] = $dataInfo->type_film;
         $this->loclizingTable = new LocalizingInfoMovies();
+        $this->dataMovie['genres'] = null;
         if (!empty($dataInfo->genres)){
             $unpackGenres = unserialize($dataInfo->genres);
             $genres = array_unique($unpackGenres['genres']);
@@ -72,6 +73,7 @@ class TranslatorController
             $resultGenres = str_replace(['«','»'] ,'"',$resultGenres);
             $this->dataMovie['genres'] = str_replace("\u{200B}" ,'',$resultGenres);
         }
+        $this->dataMovie['cast'] = null;
         if (!empty($dataInfo->cast)){
             $resultCast = $this->startTranslate($dataInfo->cast);
             $explodeCast = explode(';',$resultCast);
@@ -104,6 +106,7 @@ class TranslatorController
             $resultCast = json_encode($resultCast ?? null);
             $this->dataMovie['cast'] = json_validate($resultCast) ? $resultCast : null;
         }
+
         if (!empty($dataInfo->directors)){
             $unserializeDirectors = unserialize($dataInfo->directors);
             $directorsKeysArr = [];
@@ -118,6 +121,7 @@ class TranslatorController
             $resultDirectors = str_replace("\u{200B}" ,'',$resultDirectors);
             $this->dataMovie['directors'] = json_validate($resultDirectors) ? $resultDirectors : null;
         }
+
         if (!empty($dataInfo->writers)){
             $unserializeWriters = unserialize($dataInfo->writers);
             $writerKeysArr = [];
@@ -137,6 +141,7 @@ class TranslatorController
             }
             $this->dataMovie['writers'] = json_validate($resultWriters) ? $resultWriters : null;
         }
+
         if (!empty($dataInfo->story_line)){
             $resultStoryLine = $dataInfo->story_line;
             if (strlen($dataInfo->story_line) >= 4500){
@@ -145,6 +150,7 @@ class TranslatorController
             $resultStoryLine = $this->startTranslate($resultStoryLine);
             $this->dataMovie['story_line'] = str_replace("\u{200B}" ,'',$resultStoryLine);
         }
+
         if (!empty($dataInfo->countries)){
             $unpackCountries = unserialize($dataInfo->countries);
             $countries = array_unique($unpackCountries['countries']);
@@ -155,12 +161,14 @@ class TranslatorController
             $resultCountries = str_replace("\u{200B}" ,'',$resultCountries);
             $this->dataMovie['countries'] = json_validate($resultCountries) ? $resultCountries : null;
         }
+
         if (!empty($dataInfo->release_date)){
             if (str_contains($dataInfo->release_date,",")){
                 $this->dataMovie['release_date'] = $this->startTranslate($dataInfo->release_date);
             }
         }
         $this->updateOrCreateLocalizing($this->dataMovie);
+        $this->dataMovie = [];
     }
     public function translateCeleb($dataInfo, $celebId, $columnKey) {
         $this->columnId = $celebId;

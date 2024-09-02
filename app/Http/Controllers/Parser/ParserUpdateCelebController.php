@@ -18,12 +18,11 @@ class ParserUpdateCelebController extends ParserController
     /**
      * Handle the incoming request.
      */
-    public function index($tableDateFrom) : void
+    public function parseCelebs($typeImage,$currentDate) : void
     {
         $this->signByField = 'id_celeb';
         $this->imgUrlFragment = '/name/';
         $this->chunkSize = 10;
-        $this->dateFrom = $tableDateFrom;
 
         $this->insert_id_table = 'celebs_id';
         $this->update_info_table = 'celebs_info';
@@ -31,7 +30,7 @@ class ParserUpdateCelebController extends ParserController
         $this->update_images_table = 'celebs_images';
 
         if (empty($this->idCeleb)){
-            DB::table($this->insert_id_table)->where('created_at','>=', $this->dateFrom)->orderBy('id')->chunk(50, function ($ids) {
+            DB::table($this->insert_id_table)->where('created_at','>=', $currentDate)->orderBy('id')->chunk(50, function ($ids,$typeImage) {
                 foreach ($ids as $id) {
                     array_push($this->idCeleb,$id->actor_id);
                 }
@@ -40,7 +39,7 @@ class ParserUpdateCelebController extends ParserController
                     foreach ($this->idCeleb as $id) {
                         array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
                         array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/fullcredits');
-                        array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=event'); //publicity event
+                        array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine='.$typeImage);
                     }
                 }
                 $this->linksGetter($this->linksInfo,'getCelebsInfo');

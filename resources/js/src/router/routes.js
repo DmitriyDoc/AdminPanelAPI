@@ -1,4 +1,5 @@
 import DashboardAdm from "@/pages/DashboardAdm.vue";
+import ParserAdm from "@/pages/ParserAdm.vue";
 import MoviesInfoAdm from "@/pages/MoviesInfoAdm.vue";
 import SectionsInfoAdm from "@/pages/SectionsInfoAdm.vue";
 import CollectionsInfoAdm from "@/pages/CollectionsInfoAdm.vue";
@@ -17,6 +18,10 @@ const routes = [
     {
         path: '/',
         component: DashboardAdm
+    },
+    {
+        path: '/parser',
+        component: ParserAdm
     },
     {
         path: '/movies/:slug',

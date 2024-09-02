@@ -123,11 +123,11 @@ class Kernel extends ConsoleKernel
 //            foreach ($celebsGroups as $group){
 //                $movieArgs['titleType'] = $group;
 //                $movieArgs['sort'] = 'starmeter'; //birth_date, death_date, starmeter, alpha
-//                (new ParserIdTypeController())->index($movieArgs,'asc');
-//                (new ParserIdTypeController())->index($movieArgs,'desc');
+//                (new ParserIdTypeController())->startIdParse($movieArgs,'asc');
+//                (new ParserIdTypeController())->startIdParse($movieArgs,'desc');
 //                Log::info('>>> ARTISAN PARSED CELEBS ID BY:',[ $movieArgs['titleType'] ]);
 //            }
-//            (new ParserUpdateCelebController())->index(date('Y-m-d'));
+//            (new ParserUpdateCelebController())->parseCelebs(date('Y-m-d'));
 //            Log::info('>>> ARTISAN PARSED CELEBS FINISH');
 //        })->name('parse_start_celebs_id')->withoutOverlapping();//->weekly()
 
@@ -144,8 +144,8 @@ class Kernel extends ConsoleKernel
 //            foreach ($period as $key => $value) {
 //                $movieArgs['dateFrom'] = $value->format('Y-m-d');
 //                $movieArgs['dateTo'] = $value->format('Y-m-d');
-//                (new ParserIdTypeController())->index($movieArgs,'asc');
-//                (new ParserIdTypeController())->index($movieArgs,'desc');
+//                (new ParserIdTypeController())->startIdParse($movieArgs,'asc');
+//                (new ParserIdTypeController())->startIdParse($movieArgs,'desc');
 //                Log::info('>>> START PARSE PERIOD DATE:', [ $value->format('Y-m-d') ]);
 //            }
 //           (new ParserUpdateMovieController())->index('tv_special',date('Y-m-d'));
@@ -187,8 +187,8 @@ class Kernel extends ConsoleKernel
         transaction(function () use ($movieArgs,$segment){
             $parserTypeId = new ParserIdTypeController;
             $parserUpdateMovie = new ParserUpdateMovieController;
-            $parserTypeId->index($movieArgs,'asc');
-            $parserTypeId->index($movieArgs,'desc');
+            $parserTypeId->moviesIdParse('asc');
+            $parserTypeId->moviesIdParse('desc');
             $parserUpdateMovie->index($segment,date('Y-m-d'));
         });
     }

@@ -27,9 +27,10 @@ use Illuminate\Support\Facades\Route;
 //Route::any('/idimages', 'App\Http\Controllers\Parser\ParserIdImagesController');
 //Route::any('/images', 'App\Http\Controllers\Parser\ParserImagesController');
 //
-//Route::any('/updatecelebs', 'App\Http\Controllers\Parser\ParserUpdateCelebController');
-Route::put('/updatemovie', [App\Http\Controllers\Parser\ParserUpdateMovieController::class,'update']);
-Route::put('/updateceleb', [App\Http\Controllers\Parser\ParserUpdateCelebController::class,'update']);
+
+Route::put('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
+Route::put('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
+Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInit']);
 
 
 // DASHBOARD QUERY
