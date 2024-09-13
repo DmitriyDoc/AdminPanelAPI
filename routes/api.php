@@ -34,7 +34,12 @@ Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::clas
 
 
 // DASHBOARD QUERY
-Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
+Route::group(['middleware' => ['api']], function () {
+    Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
+    Route::get('/dashboard/tracking',[\App\Http\Controllers\DashboardController::class, 'trackingProgressBar'])->block();;
+});
+//Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
+//Route::get('/dashboard/tracking',[\App\Http\Controllers\DashboardController::class, 'trackingProgressBar']);
 Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
 Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
 

@@ -6,22 +6,37 @@ export const useDashboardStore = defineStore('dashboardStore',() => {
     const countCard = ref([]);
     const loader = ref(true);
     const error =  ref(null);
+    const percentage = ref(0);
 
-    const getMoviesCount = async () =>{
+    const getMoviesCount =  async () =>{
         try {
-            let response = await axios.get('/api/dashboard')
-            countCard.value = response.data.data
+             await axios.get('/api/dashboard').then((response) => {
+                 countCard.value = response.data.data
+             });
         } catch (error) {
             error.value = error;
             console.log('error',error);
         } finally {
-            loader.value = false;
+            //loader.value = false;
+            setTimeout(() => loader.value = false, 1000);
         }
+    }
+    const getCurrentPercentage =  async () => {
+          await axios.get('/api/dashboard/tracking'
+        ).then((response) => {
+            percentage.value = response.data;
+              //console.log( percentage.value);
+            if (percentage.value < 100){
+                getCurrentPercentage();
+            }
+        });
     }
     return {
         countCard,
+        percentage,
         loader,
         error,
         getMoviesCount,
+        getCurrentPercentage,
     }
 });

@@ -30,7 +30,7 @@ class ParserStartController
         if ($data = $validator->getData()){
             $parserStart = new ParserController($data);
             $data['flag'] ? $parserStart->parseMoviesByPeriod($data['movie_types']) : $parserStart->parsePersons($data['persons_source']);
-            $parserStart->actualizeYearTitleForTableIdTyp($data['movie_types']);
+            $parserStart->actualizeYearTitleForTableIdType($data['movie_types']);
         }
     }
 

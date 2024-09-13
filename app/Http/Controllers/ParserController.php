@@ -204,7 +204,6 @@ class ParserController extends Controller
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc");
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},desc");
                     $this->getIdByType();
-
                     Log::info(">>> PARSE PERIOD : {$day->format("Y-m-d")} IDS FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
                 }
                 $parserUpdateMovie = new ParserUpdateMovieController();
@@ -228,7 +227,7 @@ class ParserController extends Controller
         $parserUpdateMovie->parseCelebs($this->typeImages,date('Y-m-d'));
         Log::info('>>> ARTISAN PARSED CELEBS FINISH');
     }
-    public function actualizeYearTitleForTableIdTyp($allowMovieTypes)
+    public function actualizeYearTitleForTableIdType($allowMovieTypes)
     {
         if (!empty($allowMovieTypes)){
             foreach ($allowMovieTypes as $table){

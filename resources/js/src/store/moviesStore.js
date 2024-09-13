@@ -22,7 +22,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const loader = ref(true);
     const error = ref();
 
-    const getMovies = async () =>{
+    const getMovies = () =>{
         try {
             tableData.value = [];
             axios.get('/api/movies/'
