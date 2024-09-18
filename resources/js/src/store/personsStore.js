@@ -19,6 +19,8 @@ export const usePersonsStore = defineStore('personsStore',() => {
     const pageSize = ref(state.value.limit);
     const currentPage = ref(state.value.page);
     const valueSort = ref(state.value.sortBy);
+    const percentageSync = ref(0);
+    const statusBar = ref('');
     const loader = ref(true);
     const error = ref();
 
@@ -61,10 +63,24 @@ export const usePersonsStore = defineStore('personsStore',() => {
             getCelebs();
         });
     }
-    const syncItem = async () => {
+    const getSyncCurrentPercentage = async () => {
+        statusBar.value = '';
+        await axios.get('/api/updateceleb/tracking'
+        ).then((response) => {
+            percentageSync.value = response.data;
+            if (percentageSync.value < 100){
+                getSyncCurrentPercentage();
+            }
+            if (percentageSync.value === 100){
+                setTimeout(() => statusBar.value = 'success', 1000);
+            }
+        });
+    }
+    const syncItem = async (imageType) => {
         axios.put('/api/updateceleb',{ data: {
             id:singleData.value.id_celeb,
-            type:'Celebs'
+            type:'Celebs',
+            imageType: imageType,
         }}).then((response) => {
             if (response.status === 200) {
                 showItem();
@@ -106,6 +122,8 @@ export const usePersonsStore = defineStore('personsStore',() => {
         pageSize,
         valueSort,
         route,
+        percentageSync,
+        statusBar,
         loader,
         error,
         syncItem,
@@ -117,5 +135,6 @@ export const usePersonsStore = defineStore('personsStore',() => {
         updateSpin,
         updateSearchQuery,
         getCelebs,
+        getSyncCurrentPercentage,
     }
 });

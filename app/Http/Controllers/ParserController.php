@@ -216,15 +216,13 @@ class ParserController extends Controller
     public function parsePersons($personsSource) : void
     {
         foreach ($personsSource as $group) {
-            $this->titleType = $group;
             $this->insert_id_table = 'celebs_id';
-            array_push($this->urls,"{$this->domen}/search/name/?groups={$this->titleType}&sort={$this->sort},asc");
-            array_push($this->urls,"{$this->domen}/search/name/?groups={$this->titleType}&sort={$this->sort},desc");
+            $this->titleType = $group;
+            array_push($this->urls,"{$this->domen}/search/name/{$this->titleType}&sort={$this->sort},asc");
+            array_push($this->urls,"{$this->domen}/search/name/{$this->titleType}&sort={$this->sort},desc");
             $this->getIdByType();
             Log::info('>>> PARSE CELEBS ID BY:', [$this->titleType]);
         }
-        $parserUpdateMovie = new ParserUpdateCelebController();
-        $parserUpdateMovie->parseCelebs($this->typeImages,date('Y-m-d'));
         Log::info('>>> ARTISAN PARSED CELEBS FINISH');
     }
     public function actualizeYearTitleForTableIdType($allowMovieTypes)

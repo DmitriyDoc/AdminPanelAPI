@@ -5,10 +5,20 @@
         </el-col>
         <el-col :span="4"><div class="grid-content ep-bg-purple" />
             <el-image :src="singleData.photo" :fit="cover" style="width: 100%" />
+            <div class="mt-1 mb-2 image-type">
+                <h5>Image type: </h5>
+                <el-radio-group v-model="imageType" size="small">
+                    <el-radio-button label="Event" value="event" />
+                    <el-radio-button label="Publicity" value="publicity"/>
+                </el-radio-group>
+            </div>
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
-            <ul class="list-group">
+            <div v-if="percentageSync" class="mt-1">
+                <el-progress :percentage="percentageSync" :status="statusBar"/>
+            </div>
+            <ul class="list-group mt-2">
                 <li class="list-group-item"><span><strong>Birthday: </strong></span>{{ singleData.birthday ?? 'empty' }}</li>
                 <li class="list-group-item"><span><strong>Birthday Location: </strong></span>{{ singleData.birthdayLocation ?? 'empty' }}</li>
                 <li class="list-group-item" v-if="singleData.died"><span><strong>Died: </strong></span>{{ singleData.died }}</li>
@@ -124,7 +134,7 @@
 
     const mediaStore = useMediaStore();
     const personsStore = usePersonsStore();
-    const { singleData, route, error, } = storeToRefs(personsStore);
+    const { singleData, percentageSync, statusBar, route, error, } = storeToRefs(personsStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
 
     const activeTabName = ref('actor');
@@ -136,6 +146,7 @@
 
     const multipleTableCeleb = ref()
     const multipleSelection = ref([])
+    const imageType = ref('event');
 
     const toggleSelectionCeleb = () => {
         //console.log(multipleTableCeleb.value);
@@ -206,7 +217,8 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            personsStore.syncItem();
+            personsStore.syncItem(imageType.value);
+            personsStore.getSyncCurrentPercentage();
         }).catch(() => {
             ElMessage({
                 type: 'info',
@@ -231,5 +243,13 @@
     .grid-content {
         border-radius: 4px;
         min-height: 36px;
+    }
+    .el-progress :deep(.el-progress__text){
+        min-width: 0;
+    }
+    .image-type {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
     }
 </style>

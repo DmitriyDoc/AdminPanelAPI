@@ -88,13 +88,13 @@
                     </el-select>
                 </div>
                 <div>
-                    <div class="mt-3">Select Source Persons:</div>
+                    <div class="mt-3">Search Persons Filters:</div>
                     <el-select
                         v-model="personsSource"
                         multiple
                         clearable
                         collapse-tags
-                        placeholder="Select Awards..."
+                        placeholder="Select Filters..."
                         popper-class="custom-header"
                         :max-collapse-tags="1"
                         :disabled="disabledPersons"
@@ -110,7 +110,7 @@
                             </el-checkbox>
                         </template>
                         <el-option
-                            v-for="item in awards"
+                            v-for="item in filters"
                             :key="item.value"
                             :label="item.label"
                             :value="item.value"
@@ -235,57 +235,73 @@
             label: 'Product',
         },
     ]);
-    const awards = ref([
+    const filters = ref([
         {
-            value: 'oscar_best_actress_nominees',
+            value: '?gender=male',
+            label: 'Gender Male',
+        },
+        {
+            value: '?gender=female',
+            label: 'Gender Female',
+        },
+        {
+            value: '?gender=non_binary',
+            label: 'Gender Non Binary',
+        },
+        {
+            value: '?gender=other',
+            label: 'Gender Other',
+        },
+        {
+            value: '?groups=oscar_best_actress_nominees',
             label: 'Oscar best actress nominees',
         },
         {
-            value: 'oscar_best_actor_nominees',
+            value: '?groups=oscar_best_actor_nominees',
             label: 'Oscar best actor nominees',
         },
         {
-            value: 'oscar_best_actress_winners',
+            value: '?groups=oscar_best_actress_winners',
             label: 'Oscar best actress winners',
         },
         {
-            value: 'oscar_best_actor_winners',
+            value: '?groups=oscar_best_actor_winners',
             label: 'Oscar best actor winners',
         },
         {
-            value: 'oscar_best_supporting_actress_nominees',
+            value: '?groups=oscar_best_supporting_actress_nominees',
             label: 'Oscar best supporting actress nominees',
         },
         {
-            value: 'oscar_best_director_nominees',
+            value: '?groups=oscar_best_director_nominees',
             label: 'Oscar best director nominees',
         },
         {
-            value: 'best_director_winner',
+            value: '?groups=best_director_winner',
             label: 'Best director winner',
         },
         {
-            value: 'oscar_nominee',
+            value: '?groups=oscar_nominee',
             label: 'Oscar nominee',
         },
         {
-            value: 'emmy_nominee',
+            value: '?groups=emmy_nominee',
             label: 'Emmy nominee',
         },
         {
-            value: 'golden_globe_nominated',
+            value: '?groups=golden_globe_nominated',
             label: 'Golden globe nominated',
         },
         {
-            value: 'oscar_winner',
+            value: '?groups=oscar_winner',
             label: 'Oscar winner',
         },
         {
-            value: 'emmy_winner',
+            value: '?groups=emmy_winner',
             label: 'Emmy winner',
         },
         {
-            value: 'golden_globe_winning',
+            value: '?groups=golden_globe_winning',
             label: 'Golden globe winning',
         },
     ]);
@@ -314,12 +330,14 @@
             disabledPersons.value = true;
             placeholderPicker.value = "Pick a day";
             disabledTypePosters.value = false;
+            sort.value[0]['value'] = 'moviemeter';
         } else {
             disabledPickerType.value = true;
             disabledMovies.value = true;
             disabledPersons.value = false;
             placeholderPicker.value = "Picker DISABLED";
             disabledTypePosters.value = true;
+            sort.value[0]['value'] = 'starmeter';
         }
     };
     const handleSelectsClear = () => {
@@ -345,7 +363,7 @@
         if (val.length === 0) {
             checkAllPersonsSource.value = false
             indeterminatePersonsSource.value = false
-        } else if (val.length === awards.value.length) {
+        } else if (val.length === filters.value.length) {
             checkAllPersonsSource.value = true
             indeterminatePersonsSource.value = false
         } else {
@@ -355,7 +373,7 @@
     const handleCheckAllPersonsSource = (val) => {
         indeterminatePersonsSource.value = false
         if (val) {
-            personsSource.value = awards.value.map((_) => _.value)
+            personsSource.value = filters.value.map((_) => _.value)
         } else {
             personsSource.value = []
         }

@@ -63,6 +63,10 @@ class ParserUpdateMovieController extends ParserController
             6=>'ShortFilm',
         ];
         if ($data = $request->all()){
+            if ($request->session()->missing('syncMoviePercentageBar')) {
+                $request->session()->put('syncMoviePercentageBar', 0);
+                session()->save();
+            }
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
             if (!$model::where('id_movie',$data['data']['id'])->exists()){
                 foreach ($allowedTableNames as $type){
@@ -84,33 +88,41 @@ class ParserUpdateMovieController extends ParserController
                 if (empty($this->idMovies)) {
                     array_push($this->idMovies,  $data['data']['id']);
                 }
-
                 if (!empty($this->idMovies)) {
                     foreach ($this->idMovies as $id) {
                         array_push($this->linksInfo, $this->domen . $this->imgUrlFragment . $id);
                         array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=still_frame');
-                        array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes=poster');
-
+                        array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes='. $data['data']['posterType']);
                     }
-
+                    $request->session()->put('syncMoviePercentageBar', 10);
+                    session()->save();
                     $this->linksGetter($this->linksInfo, 'getMoviesInfo');
 
+                    $request->session()->put('syncMoviePercentageBar', 30);
+                    session()->save();
                     $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN);
+
+                    $request->session()->put('syncMoviePercentageBar', 40);
+                    session()->save();
                     $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN);
 
+                    $request->session()->put('syncMoviePercentageBar', 50);
+                    session()->save();
                     $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
                     $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
 
+                    $request->session()->put('syncMoviePercentageBar', 80);
+                    session()->save();
                     $this->localizing($id);
-
                     $this->touchDB($model, $data['data']['id'],$this->signByField);
                     $this->idMovies = [];
+
+                    $request->session()->put('syncMoviePercentageBar', 100);
+                    session()->save();
                 }
             }
             return ['success'=>true];
-
         }
-
     }
     public function localizing($movieId){
         $updateModel = DB::table($this->update_info_table)->where($this->signByField,$movieId)->get(['genres','cast','directors','writers','story_line','countries','release_date','id_movie','type_film']);

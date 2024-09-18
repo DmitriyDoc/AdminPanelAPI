@@ -18,7 +18,7 @@ class ParserUpdateCelebController extends ParserController
     /**
      * Handle the incoming request.
      */
-    public function parseCelebs($typeImage,$currentDate) : void
+    public function parseCelebs($typeImage,$arrIdCeleb) : void
     {
         $this->signByField = 'id_celeb';
         $this->imgUrlFragment = '/name/';
@@ -29,34 +29,30 @@ class ParserUpdateCelebController extends ParserController
         $this->update_id_images_table = 'celebs_id_images';
         $this->update_images_table = 'celebs_images';
 
-        if (empty($this->idCeleb)){
-            DB::table($this->insert_id_table)->where('created_at','>=', $currentDate)->orderBy('id')->chunk(50, function ($ids,$typeImage) {
-                foreach ($ids as $id) {
-                    array_push($this->idCeleb,$id->actor_id);
-                }
-
-                if (!empty($this->idCeleb)){
-                    foreach ($this->idCeleb as $id) {
-                        array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
-                        array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/fullcredits');
-                        array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine='.$typeImage);
-                    }
-                }
-                $this->linksGetter($this->linksInfo,'getCelebsInfo');
-                $this->linksGetter($this->linksCredits,'credits');
-                $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN);
-
-                $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
-                $this->idCeleb = [];
-            });
-            foreach ($this->idCeleb as $id) {
-                $this->localizing($id);
+        if (!empty($arrIdCeleb)){
+            foreach ($arrIdCeleb as $id) {
+                array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
+                array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/');
+                array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?contentTypes='.$typeImage);
             }
+        }
+        $this->linksGetter($this->linksInfo,'getCelebsInfo');
+        $this->linksGetter($this->linksCredits,'credits');
+        $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN,$this->signByField);
+
+        $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
+
+        foreach ($this->idCeleb as $id) {
+            $this->localizing($id);
         }
     }
 
     public function update(Request $request){
         if ($data = $request->all()){
+            if ($request->session()->missing('syncPersonPercentageBar')) {
+                $request->session()->put('syncPersonPercentageBar', 0);
+                session()->save();
+            }
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
 
             $this->signByField = 'id_celeb';
@@ -75,18 +71,27 @@ class ParserUpdateCelebController extends ParserController
                 foreach ($this->idCeleb as $id) {
                     array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);
                     array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/');
-                    array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?refine=event'); //publicity event
+                    array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?contentTypes='. $data['data']['imageType']);
                 }
             }
+            $request->session()->put('syncPersonPercentageBar', 10);
+            session()->save();
             $this->linksGetter($this->linksInfo,'getCelebsInfo');
+            $request->session()->put('syncPersonPercentageBar', 30);
+            session()->save();
             $this->linksGetter($this->linksCredits,'credits');
+            $request->session()->put('syncPersonPercentageBar', 50);
+            session()->save();
             $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN, $this->signByField);
-
+            $request->session()->put('syncPersonPercentageBar', 70);
+            session()->save();
             $this->localizing($data['data']['id']);
             $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
             $this->touchDB($model, $data['data']['id'],'actor_id');
 
             $this->idCeleb = [];
+            $request->session()->put('syncPersonPercentageBar', 100);
+            session()->save();
         }
     }
     public function localizing($celebId){

@@ -3,6 +3,7 @@
 namespace App\Traits\Components;
 
 
+use App\Http\Controllers\Parser\ParserUpdateCelebController;
 use DiDom\Document;
 use Illuminate\Support\Facades\Log;
 
@@ -43,9 +44,14 @@ trait IdByTypeTrait
 //            } else {
 //                $this->url = null;
 //            }
-
                     $this->insertDB($this->insert_id_table,$insertData);
-
+                    if ($this->insert_id_table == 'celebs_id'){
+                        foreach ($insertData as $id) {
+                            array_push($this->idCeleb,$id['actor_id']);
+                        }
+                        $parserUpdateMovie = new ParserUpdateCelebController();
+                        $parserUpdateMovie->parseCelebs($this->typeImages,$this->idCeleb);
+                    }
                     if ($list->count('a.ipc-title-link-wrapper') < 25){
                         break;
                     }

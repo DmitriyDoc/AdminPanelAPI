@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 trait CelebsCreditsTrait
 {
     protected function credits($pages){
+
         if (!empty($pages)) {
             foreach ($pages as $url => $page) {
                 if (!empty($page)){
@@ -27,8 +28,8 @@ trait CelebsCreditsTrait
                                 $h3Array = $document->find("h3");
                                 foreach ($h3Array as $h3){
                                     if ($h3->text() == ucfirst($occupation)){
-                                        $container = $document->find("#accordion-item-".$occupation."-previous-projects")[0];
-                                        if (!empty($container)){
+                                        if ($document->has("#accordion-item-".$occupation."-previous-projects")){
+                                            $container = $document->find("#accordion-item-".$occupation."-previous-projects")[0];
                                             $ul = $container->find('ul li.ipc-metadata-list-summary-item');
                                             if (!empty($ul)){
                                                 foreach ($ul as $li){
@@ -57,7 +58,6 @@ trait CelebsCreditsTrait
                                                 }
                                             }
                                         }
-
                                     }
                                 }
                             }

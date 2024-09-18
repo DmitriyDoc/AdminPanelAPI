@@ -5,9 +5,19 @@
         </el-col>
         <el-col :span="4">
             <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" />
+            <div class="mt-1 mb-2 image-type">
+                <h5>Poster type: </h5>
+                <el-radio-group v-model="posterType" size="small">
+                    <el-radio-button label="Poster" value="poster" />
+                    <el-radio-button label="Product" value="product"/>
+                </el-radio-group>
+            </div>
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
                 Sync with IMDB
             </el-button>
+            <div v-if="percentageSync" class="mt-1">
+                <el-progress :percentage="percentageSync" :status="statusBar"/>
+            </div>
             <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2 mt-2">After synchronization, all posters must be reassigned.</el-text></div>
             <template v-if="singleData.collection">
                 <div class="mt-3">
@@ -270,7 +280,7 @@
     const moviesStore = useMoviesStore();
     const mediaStore = useMediaStore();
     const categoryStore = useCategoriesStore();
-    const { singleData, error } = storeToRefs(moviesStore);
+    const { singleData, percentageSync,statusBar, error } = storeToRefs(moviesStore);
     const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
     const { optionsCats } = storeToRefs(categoryStore);
 
@@ -290,7 +300,7 @@
         multiple: true,
         checkStrictly: true,
     }
-
+    const posterType = ref('poster');
     const handleCategoryChange = (value) => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
             confirmButtonText: 'OK',
@@ -490,7 +500,8 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            moviesStore.syncItem();
+            moviesStore.syncItem(posterType.value);
+            moviesStore.getSyncCurrentPercentage();
         }).catch(() => {
             ElMessage({
                 type: 'info',
@@ -529,6 +540,14 @@
         z-index: 100;
         padding: 10px;
         background-color: aliceblue;
+    }
+    .el-progress :deep(.el-progress__text){
+        min-width: 0;
+    }
+    .image-type {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
     }
 </style>
 

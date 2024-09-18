@@ -19,6 +19,8 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const pageSize = ref(state.value.limit);
     const currentPage = ref(state.value.page);
     const valueSort = ref(state.value.sortBy);
+    const percentageSync = ref(0);
+    const statusBar = ref('');
     const loader = ref(true);
     const error = ref();
 
@@ -79,11 +81,24 @@ export const useMoviesStore = defineStore('moviesStore',() => {
                 }
         });
     }
-    const syncItem = async () => {
-        //console.log(checkedImages);
+    const getSyncCurrentPercentage = async () => {
+        statusBar.value = '';
+        await axios.get('/api/updatemovie/tracking'
+        ).then((response) => {
+            percentageSync.value = response.data;
+            if (percentageSync.value < 100){
+                getSyncCurrentPercentage();
+            }
+            if (percentageSync.value === 100){
+                setTimeout(() => statusBar.value = 'success', 1000);
+            }
+        });
+    }
+    const syncItem = async (posterType) => {
         axios.put('/api/updatemovie',{ data: {
             id: singleData.value.id_movie??route.params.id,
             type: route.params.slug,
+            posterType: posterType,
         }}).then((response) => {
             if (response.status === 200) {
                 showItem();
@@ -100,7 +115,6 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         });
     }
     state.value.searchQuery = '';
-    //getMovies();
 
     const updateSearchQuery = (q) => {
         state.value.searchQuery = q;
@@ -124,6 +138,8 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         currentPage,
         pageSize,
         valueSort,
+        percentageSync,
+        statusBar,
         route,
         loader,
         error,
@@ -137,5 +153,6 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         updateSpin,
         updateSearchQuery,
         getMovies,
+        getSyncCurrentPercentage,
     }
 });
