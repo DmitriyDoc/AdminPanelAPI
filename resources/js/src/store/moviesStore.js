@@ -87,7 +87,9 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         ).then((response) => {
             percentageSync.value = response.data;
             if (percentageSync.value < 100){
-                getSyncCurrentPercentage();
+                setTimeout(function () {
+                    getSyncCurrentPercentage();
+                }, 1000);
             }
             if (percentageSync.value === 100){
                 setTimeout(() => statusBar.value = 'success', 1000);

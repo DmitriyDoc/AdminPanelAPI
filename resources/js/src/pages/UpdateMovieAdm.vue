@@ -273,7 +273,7 @@
     import type {TabsPaneContext} from 'element-plus';
     import {ElMessage, ElMessageBox, ElTable} from 'element-plus'
     import {ArrowRight} from '@element-plus/icons-vue'
-    import {ref, watch, reactive, computed} from "vue";
+    import {ref, watch, reactive, computed, onMounted} from "vue";
     import {useRoute} from "vue-router";
 
     const route = useRoute();
@@ -301,6 +301,11 @@
         checkStrictly: true,
     }
     const posterType = ref('poster');
+
+    onMounted(  () => {
+        percentageSync.value = 0;
+    });
+
     const handleCategoryChange = (value) => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
             confirmButtonText: 'OK',

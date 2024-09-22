@@ -32,6 +32,7 @@
         { color: '#5cb87a', percentage: 100 },
     ];
      onMounted(  () => {
+         percentage.value = 0;
          if (loader.value){
              dashboardStore.getCurrentPercentage();
              dashboardStore.getMoviesCount();

@@ -129,8 +129,12 @@
     import { useMediaStore } from "../store/mediaStore";
     import type { TabsPaneContext } from 'element-plus';
     import { ArrowRight } from '@element-plus/icons-vue'
-    import { ref, watch, reactive} from "vue";
+    import {ref, watch, reactive, onMounted} from "vue";
     import {ElMessage, ElMessageBox, ElTable } from "element-plus";
+
+    onMounted(() => {
+        percentageSync.value = 0;
+    });
 
     const mediaStore = useMediaStore();
     const personsStore = usePersonsStore();
@@ -212,6 +216,7 @@
         return arr.filter((el, ind) => ind === arr.indexOf(el));
     };
     const submitSync = () => {
+        percentageSync.value = 0;
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
             confirmButtonText: 'OK',
             cancelButtonText: 'Cancel',
