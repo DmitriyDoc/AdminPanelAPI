@@ -29,10 +29,11 @@ use Illuminate\Support\Facades\Route;
 //
 Route::group(['middleware' => ['api']], function () {
     Route::put('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
-    Route::get('/updatemovie/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'trackingSyncMovie']);
+    Route::get('/updatemovie/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
 
     Route::put('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
-    Route::get('/updateceleb/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'trackingSyncPerson']);
+    Route::get('/updateceleb/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
+
     Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInit']);
 
 

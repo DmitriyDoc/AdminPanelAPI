@@ -49,10 +49,10 @@ class ParserUpdateCelebController extends ParserController
 
     public function update(Request $request){
         if ($data = $request->all()){
-            if ($request->session()->missing('syncPersonPercentageBar')) {
-                $request->session()->put('syncPersonPercentageBar', 0);
-                session()->save();
-            }
+            $request->session()->forget('syncPersonPercentageBar');
+            $request->session()->put('syncPersonPercentageBar', 0);
+            session()->save();
+
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
 
             $this->signByField = 'id_celeb';

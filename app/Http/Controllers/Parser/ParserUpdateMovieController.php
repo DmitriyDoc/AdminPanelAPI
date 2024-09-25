@@ -63,10 +63,10 @@ class ParserUpdateMovieController extends ParserController
             6=>'ShortFilm',
         ];
         if ($data = $request->all()){
-            if ($request->session()->missing('syncMoviePercentageBar')) {
-                $request->session()->put('syncMoviePercentageBar', 0);
-                session()->save();
-            }
+            $request->session()->forget('syncMoviePercentageBar');
+            $request->session()->put('syncMoviePercentageBar', 0);
+            session()->save();
+
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
             if (!$model::where('id_movie',$data['data']['id'])->exists()){
                 foreach ($allowedTableNames as $type){

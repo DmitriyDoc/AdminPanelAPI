@@ -23,25 +23,20 @@ class TrackingProgressBarController
         }
         return $currPercent;
     }
-    public function trackingSyncMovie(Request $request)
+    public function trackingProgressBar($key)
     {
-        if ($request->session()->has('syncMoviePercentageBar')) {
-            $currPercent = $request->session()->get('syncMoviePercentageBar');
-            //Log::info('PERCENT--->>',[$currPercent]);
+        if (session()->has($key)) {
+            $currPercent = session()->get($key);
             if ($currPercent >= 100){
-                $request->session()->forget('syncMoviePercentageBar');
+                session()->forget($key);
             }
         }
         return $currPercent ?? 0;
     }
-    public function trackingSyncPerson(Request $request)
-{
-    if ($request->session()->has('syncPersonPercentageBar')) {
-        $currPercent = $request->session()->get('syncPersonPercentageBar');
-        if ($currPercent >= 100){
-            $request->session()->forget('syncPersonPercentageBar');
-        }
+    public function requestSessionKey (Request $request)
+    {
+        $sessionKey = $request->route('sesKey');
+        return $this->trackingProgressBar($sessionKey ?? null);
     }
-    return $currPercent ?? 0;
-}
+
 }

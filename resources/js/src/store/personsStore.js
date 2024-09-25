@@ -65,9 +65,9 @@ export const usePersonsStore = defineStore('personsStore',() => {
     }
     const getSyncCurrentPercentage = async () => {
         statusBar.value = '';
-        await axios.get('/api/updateceleb/tracking'
+        await axios.get('/api/updateceleb/tracking?sesKey=syncPersonPercentageBar'
         ).then((response) => {
-            percentageSync.value = response.data;
+            percentageSync.value = response.data.syncPersonPercentageBar;
             if (percentageSync.value < 100){
                 setTimeout(function () {
                     getSyncCurrentPercentage();
