@@ -67,7 +67,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         statusBar.value = '';
         await axios.get('/api/updateceleb/tracking?sesKey=syncPersonPercentageBar'
         ).then((response) => {
-            percentageSync.value = response.data.syncPersonPercentageBar;
+            percentageSync.value = response.data.syncPersonPercentageBar ?? 0;
             if (percentageSync.value < 100){
                 setTimeout(function () {
                     getSyncCurrentPercentage();

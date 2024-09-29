@@ -11,6 +11,9 @@ class ParserStartController
 {
     public function parseInit(Request $request)
     {
+        session()->forget('tracking.parseMovieReport');
+        session()->put('tracking.parseMovieReport.start', "PARSER START");
+        session()->save();
         $validator = Validator::make($request->all()['data'],[
             'flag' => 'required|boolean',
             'date_from' => 'date_format:"Y-m-d"',
@@ -31,6 +34,7 @@ class ParserStartController
             $parserStart = new ParserController($data);
             $data['flag'] ? $parserStart->parseMoviesByPeriod($data['movie_types']) : $parserStart->parsePersons($data['persons_source']);
             $parserStart->actualizeYearTitleForTableIdType($data['movie_types']);
+            session()->put('tracking.parseMovieReport.stop', "PARSING COMPLETED SUCCESSFULY!");
         }
     }
 

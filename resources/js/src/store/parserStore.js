@@ -7,6 +7,8 @@ export const useParserStore = defineStore('parserStore',() => {
     const state = ref({
 
     });
+    const parserReport = ref({});
+    const toggleButton = ref(true);
     const loader = ref(true);
     const error = ref(null);
 
@@ -44,11 +46,30 @@ export const useParserStore = defineStore('parserStore',() => {
                 }
             });
     };
+    const getReportParser = async () => {
+        await axios.get('/api/updatemovie/tracking?sesKey=parseMovieReport'
+            ).then((response) => {
+                if (Object.keys(response.data).length){
+                    parserReport.value = response.data;
+                }
+                if (parserReport.value.parseMovieReport?.stop){
+                    toggleButton.value = false;
+                }
+                if (toggleButton.value){
+                    setTimeout(function () {
+                        getReportParser();
+                    }, 1000);
+                }
+            });
 
+    }
     return {
+        parserReport,
+        toggleButton,
         loader,
         error,
         addCelebById,
-        parserStart
+        parserStart,
+        getReportParser,
     }
 });

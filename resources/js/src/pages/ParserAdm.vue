@@ -1,10 +1,10 @@
 <template>
-    <h3>Parser settings:</h3>
+    <h3>Parser settings</h3>
     <el-tabs type="border-card">
         <el-tab-pane label="Add Celeb by ID">
             <div class="mt-3">
                 <div class="input-group mb-3">
-                    <span>Celeb ID:</span>
+                    <span>Celeb ID</span>
                     <el-input
                         v-model="celeb_ID"
                         minlength="8"
@@ -22,7 +22,7 @@
         <el-tab-pane label="Parser start">
             <div style="max-width: 1200px">
                 <div style="margin-top: 20px">
-                    <div>Choose parser type:</div>
+                    <div>Choose parser type</div>
                     <el-radio-group v-model="radioTypeToggle" :change="autoChangeRadioType()" @click="handleSelectsClear">
                         <el-radio-button label="Movies" :value=true />
                         <el-radio-button label="Persons" :value=false />
@@ -76,7 +76,7 @@
                     </el-checkbox-group>
                 </div>
                 <div>
-                    <div class="mt-3">Select Sorting:</div>
+                    <div class="mt-3">Select Sorting</div>
                     <el-select v-model="selectSort" placeholder="Sort by..." style="width: 240px">
                         <el-option
                             v-for="item in sort"
@@ -88,7 +88,7 @@
                     </el-select>
                 </div>
                 <div>
-                    <div class="mt-3">Search Persons Filters:</div>
+                    <div class="mt-3">Search Persons Filters</div>
                     <el-select
                         v-model="personsSource"
                         multiple
@@ -118,7 +118,7 @@
                     </el-select>
                 </div>
                 <div>
-                    <div class="mt-3">Select Type Images:</div>
+                    <div class="mt-3">Select Type Images</div>
                     <el-select v-model="selectTypeImages" placeholder="Select type..." style="width: 240px">
                         <el-option
                             v-for="item in typesImages"
@@ -130,7 +130,7 @@
                     </el-select>
                 </div>
                 <div>
-                    <div class="mt-3">Select Type Posters:</div>
+                    <div class="mt-3">Select Type Posters</div>
                     <el-select v-model="selectTypePosters" :disabled ="disabledTypePosters" placeholder="Select type..." style="width: 240px">
                         <el-option
                             v-for="item in typesPosters"
@@ -140,22 +140,77 @@
                         />
                     </el-select>
                 </div>
-                <el-button type="danger" @click="handleParserStart()" class="mt-3">Start</el-button>
+                <el-button type="danger" @click="handleParserStart()" :plain="!toggleButton" :disabled="!toggleButton" class="mt-3">Start</el-button>
+                <el-button type="info" :plain="toggleButton" :disabled="toggleButton" @click="dialogVisible = true" class="mt-3">Report</el-button>
             </div>
         </el-tab-pane>
         <el-tab-pane label="Role">Role</el-tab-pane>
         <el-tab-pane label="Task">Task</el-tab-pane>
     </el-tabs>
+    <el-dialog
+        v-if="Object.keys(parserReport).length"
+        v-model="dialogVisible"
+        title="Report parser process:"
+        width="615"
+        style="overflow-y: scroll;height: calc(100vh - 200px);"
+        :before-close="handleClose"
+    >
+        <template v-if="parserReport.parseMovieReport">
+            <el-result
+                :icon="parserReport.parseMovieReport.stop ? 'success' : 'info'"
+                :title="parserReport.parseMovieReport.stop ?? parserReport.parseMovieReport.start"
+            >
+            </el-result>
+        </template>
+        <template v-if="parserReport.syncMoviePercentageBar">
+            <h4 class="mt-2">Parse Info Progress:</h4>
+            <el-progress :percentage="parserReport.syncMoviePercentageBar" :stroke-width="15" striped />
+        </template>
+        <template v-if="parserReport.parseMovieReport.finishIdsPeriod">
+            <h4 class="mt-2">Finish ID(s) parse by date period:</h4>
+            <ul v-for="(item, index) in parserReport.parseMovieReport.finishIdsPeriod" class="list-group">
+                <li class="list-group-item">{{index+1}}{{'. '}}{{item}}</li>
+            </ul>
+            <template v-if="parserReport.parseMovieReport.finishLocalizing">
+                <el-collapse>
+                    <el-collapse-item >
+                        <template #title>
+                            <el-badge :value="parserReport.parseMovieReport.finishLocalizing.length" :max="1000"class="item">
+                                Parsed and Localizing<el-icon class="header-icon"><info-filled /></el-icon>
+                            </el-badge>
+                        </template>
+                        <span v-for="item in parserReport.parseMovieReport.finishLocalizing" class="flex gap-2">
+                            <el-tag type="success" class="m-1">{{item}}</el-tag>
+                        </span>
+                    </el-collapse-item>
+                </el-collapse>
+            </template>
+            <template v-if="parserReport.parseMovieReport.finishInfo">
+                <h4 class="mt-2">Finish Parse Info for Movie Type(s):</h4>
+                <ul class="list-group-flush">
+                    <template v-for="item in parserReport.parseMovieReport.finishInfo">
+                        <li class="list-group-item"><el-icon color="#67C23A" style=" margin-left: -30px" ><Check /></el-icon>{{item}}</li>
+                    </template>
+                </ul>
+            </template>
+            <template v-if="parserReport.parseMovieReport.finishActualize">
+                <h4 class="mt-2">Finish Actualize Table(s):</h4>
+                <span v-for="item in parserReport.parseMovieReport.finishActualize" class="flex gap-2">
+                    <el-tag type="primary" class="m-1">{{item}}</el-tag>
+                </span>
+            </template>
+        </template>
+    </el-dialog>
 </template>
 
-<script setup >
+<script setup lang="ts">
     import { storeToRefs } from 'pinia';
     import { ref, watch } from "vue";
     import { ElMessage, ElMessageBox } from "element-plus";
     import { useParserStore } from "../store/parserStore";
-
+    import { Check } from '@element-plus/icons-vue'
     const parserStore = useParserStore();
-    const { loader, error } = storeToRefs(parserStore);
+    const { loader, error, parserReport, statusParser } = storeToRefs(parserStore);
     const celeb_ID = ref('nm');
 
     const radioTypeToggle =  ref(true);
@@ -174,6 +229,7 @@
     const selectSort = ref(null);
     const selectTypeImages = ref(null);
     const selectTypePosters = ref(null);
+    const toggleButton = ref(true);
     const types = ['FeatureFilm', 'MiniSeries', 'ShortFilm', 'TvMovie','TvSeries', 'TvShort','TvSpecial','Video'];
     const checkedTypes = ref(types);
     const sort = ref([
@@ -305,6 +361,17 @@
             label: 'Golden globe winning',
         },
     ]);
+
+    const dialogVisible = ref(true);
+    const handleClose = (done: () => void) => {
+        ElMessageBox.confirm('Are you sure to close this report dialog window?')
+            .then(() => {
+                done()
+            })
+            .catch(() => {
+                // catch error
+            })
+    };
     const shortcuts = [
         {
             text: 'Today',
@@ -411,6 +478,8 @@
                     'type_posters': selectTypePosters.value,
                 });
                 handleSelectsClear();
+                parserStore.getReportParser();
+                toggleButton.value = false;
             }
         }).catch(() => {
             ElMessage({
@@ -422,6 +491,9 @@
 </script>
 
 <style  lang="scss" scoped>
+    :deep(.el-badge__content.is-fixed){
+        top: 24px;
+    }
     .demo-date-picker {
         display: flex;
         width: 100%;

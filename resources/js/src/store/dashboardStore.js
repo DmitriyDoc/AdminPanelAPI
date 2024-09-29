@@ -22,11 +22,13 @@ export const useDashboardStore = defineStore('dashboardStore',() => {
         }
     }
     const getCurrentPercentage = async () => {
-          await axios.get('/api/dashboard/tracking'
+          await axios.get('/api/updatemovie/tracking?sesKey=dashboardPercentageBar'
         ).then((response) => {
-            percentage.value = response.data;
+            percentage.value = response.data.dashboardPercentageBar ?? 0;
             if (percentage.value < 100){
-                getCurrentPercentage();
+                setTimeout(function () {
+                    getCurrentPercentage();
+                }, 1000);
             }
         });
     }

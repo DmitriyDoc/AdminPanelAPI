@@ -85,7 +85,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         statusBar.value = '';
         await axios.get('/api/updatemovie/tracking?sesKey=syncMoviePercentageBar'
         ).then((response) => {
-            percentageSync.value = response.data.syncMoviePercentageBar;
+            percentageSync.value = response.data.syncMoviePercentageBar ?? 0;
             if (percentageSync.value < 100){
                 setTimeout(function () {
                     getSyncCurrentPercentage();

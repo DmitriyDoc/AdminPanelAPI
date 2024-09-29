@@ -280,7 +280,7 @@
     const moviesStore = useMoviesStore();
     const mediaStore = useMediaStore();
     const categoryStore = useCategoriesStore();
-    const { singleData, percentageSync,statusBar, error } = storeToRefs(moviesStore);
+    const { singleData, percentageSync, statusBar, error } = storeToRefs(moviesStore);
     const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
     const { optionsCats } = storeToRefs(categoryStore);
 
@@ -301,7 +301,6 @@
         checkStrictly: true,
     }
     const posterType = ref('poster');
-
     onMounted(  () => {
         percentageSync.value = 0;
     });
