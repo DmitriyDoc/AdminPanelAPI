@@ -60,7 +60,6 @@ trait CelebsInfoTrait
                         'actor_id' => $insertData[$this->signByField] ?? null,
                         'name' => $insertData['nameActor'] ?? null,
                     ]);
-                    unset($insertData);
                 }
             }
         }

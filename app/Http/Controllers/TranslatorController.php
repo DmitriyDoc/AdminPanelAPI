@@ -171,6 +171,7 @@ class TranslatorController
         $this->dataMovie = [];
     }
     public function translateCeleb($dataInfo, $celebId, $columnKey) {
+        $this->dataCeleb = [];
         $this->columnId = $celebId;
         $this->columnKey = $columnKey;
         $this->dataCeleb['id_celeb'] = $dataInfo->id_celeb;
@@ -195,11 +196,12 @@ class TranslatorController
             $this->dataCeleb['nameActor'] = $this->startTranslate($dataInfo->nameActor);
         }
         if (!empty($dataInfo->birthdayLocation)){
-            $this->dataCeleb['birthdayLocation'] = $this->startTranslate($dataInfo->birthdayLocation);
+            $this->dataCeleb['birthdayLocation'] = $this->startTranslate($dataInfo->birthdayLocation)??null;
         }
         if (!empty($dataInfo->dieLocation)){
-            $this->dataCeleb['dieLocation'] = $this->startTranslate($dataInfo->dieLocation);
+            $this->dataCeleb['dieLocation'] = $this->startTranslate($dataInfo->dieLocation)??null;
         }
+
         $this->updateOrCreateLocalizing($this->dataCeleb);
     }
 }
