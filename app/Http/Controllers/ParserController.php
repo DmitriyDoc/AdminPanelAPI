@@ -117,6 +117,7 @@ class ParserController extends Controller
     protected $dateFrom;
     protected $dateTo;
     protected $flagType;//movies=true;celebs=false;
+    protected $flagNewUpdate;//new=true; and update=false;
     protected $titleType;
     protected $refine;
 
@@ -204,32 +205,35 @@ class ParserController extends Controller
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc");
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},desc");
                     $this->getIdByType();
-                    session()->push('tracking.parseMovieReport.finishIdsPeriod', $day->format("Y-m-d") . " for movie type: " . $this->allowedTableNames[$type]['type']);
+                    session()->push('tracking.report.finishIdsPeriod', $day->format("Y-m-d") . " for movie type: " . $this->allowedTableNames[$type]['type']);
                     session()->save();
                     Log::info(">>> PARSE PERIOD : {$day->format("Y-m-d")} IDS FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
                 }
                 $parserUpdateMovie = new ParserUpdateMovieController();
                 $parserUpdateMovie->parseMovies($arg,date('Y-m-d'));
-                session()->push('tracking.parseMovieReport.finishInfo',$this->allowedTableNames[$type]['type']);
+                session()->push('tracking.report.finishInfo',$this->allowedTableNames[$type]['type']);
                 session()->save();
                 Log::info(">>>  PARSE INFO FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
             }
         }
     }
 
-    public function parsePersons($personsSource) : void
+    public function parsePersons($personsSource,$switchNewUpdate) : void
     {
         foreach ($personsSource as $group) {
             $this->insert_id_table = 'celebs_id';
             $this->titleType = $group;
+            $this->flagNewUpdate = $switchNewUpdate;
             array_push($this->urls,"{$this->domen}/search/name/{$this->titleType}&sort={$this->sort},asc");
             array_push($this->urls,"{$this->domen}/search/name/{$this->titleType}&sort={$this->sort},desc");
             $this->getIdByType();
+            session()->push('tracking.report.finishInfo',$group);
+            session()->save();
             Log::info('>>> PARSE CELEBS ID BY:', [$this->titleType]);
         }
         Log::info('>>> PARSED CELEBS FINISH');
     }
-    public function actualizeYearTitleForTableIdType($allowMovieTypes)
+    public function actualizeYearTitleForTableIdType($allowMovieTypes = [])
     {
         if (!empty($allowMovieTypes)){
             foreach ($allowMovieTypes as $table){
@@ -244,7 +248,7 @@ class ParserController extends Controller
                         ]);
                     }
                 }
-                session()->push('tracking.parseMovieReport.finishActualize', $table);
+                session()->push('tracking.report.finishActualize', $table);
                 session()->save();
                 Log::info(">>> ACTUALIZE ID TYPE FINISH",[$table]);
             }

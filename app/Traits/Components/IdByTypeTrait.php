@@ -29,10 +29,19 @@ trait IdByTypeTrait
                             }
                         } else {
                             if ($idActor =  get_id_from_url($post->attr('href')??null,self::ACTOR_PATTERN)){
-                                array_push($insertData,[
-                                    'actor_id' => $idActor,
-                                    'name' => clear_string_from_digits($post->text(),self::CLEAR_DIGITS_PATTERN)
-                                ]);
+                                if ($this->flagNewUpdate){
+                                    if (!$this->checkExists($this->insert_id_table,$idActor)) {
+                                        array_push($insertData,[
+                                            'actor_id' => $idActor,
+                                            'name' => clear_string_from_digits($post->text(),self::CLEAR_DIGITS_PATTERN)
+                                        ]);
+                                    }
+                                } else {
+                                    array_push($insertData,[
+                                        'actor_id' => $idActor,
+                                        'name' => clear_string_from_digits($post->text(),self::CLEAR_DIGITS_PATTERN)
+                                    ]);
+                                }
                             }
                         }
                     }
@@ -49,8 +58,8 @@ trait IdByTypeTrait
                         foreach ($insertData as $id) {
                             array_push($this->idCeleb,$id['actor_id']);
                         }
-                        $parserUpdateMovie = new ParserUpdateCelebController();
-                        $parserUpdateMovie->parseCelebs($this->typeImages,$this->idCeleb);
+                        $parserUpdateCeleb = new ParserUpdateCelebController();
+                        $parserUpdateCeleb->parseCelebs($this->typeImages,$this->idCeleb);
                     }
                     if ($list->count('a.ipc-title-link-wrapper') < 25){
                         break;

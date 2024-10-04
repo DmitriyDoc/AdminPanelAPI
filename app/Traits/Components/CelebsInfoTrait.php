@@ -12,6 +12,7 @@ trait CelebsInfoTrait
         if (!empty($pages)) {
             foreach ($pages as $url => $page) {
                 $document = new Document(trim($page));
+                $insertData = [];
                 $this->logErrors($document,"div[class=error_code_404]"," 404-->>",$url);
                 $this->logErrors($document,"div[class=errorPage__container]"," 500-->>",$url);
                 if ($document->has('main h1')) {

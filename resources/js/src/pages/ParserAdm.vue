@@ -15,6 +15,9 @@
                     />
                 </div>
             </div>
+            <div v-if="percentageSync" class="mt-1">
+                <el-progress :percentage="percentageSync" :status="statusBar"/>
+            </div>
             <div>
                 <button @click="handleAddCeleb" class="btn btn-primary" type="submit">Add Celeb</button>
             </div>
@@ -76,6 +79,14 @@
                     </el-checkbox-group>
                 </div>
                 <div>
+                    <div>
+                        <el-switch
+                            v-model="switchAddNewOrUpdate"
+                            class="mb-2"
+                            active-text="Parse Only New Person"
+                            inactive-text="And Update Old"
+                        />
+                    </div>
                     <div class="mt-3">Select Sorting</div>
                     <el-select v-model="selectSort" placeholder="Sort by..." style="width: 240px">
                         <el-option
@@ -155,50 +166,50 @@
         style="overflow-y: scroll;height: calc(100vh - 200px);"
         :before-close="handleClose"
     >
-        <template v-if="parserReport.parseMovieReport">
+        <template v-if="parserReport.report">
             <el-result
-                :icon="parserReport.parseMovieReport.stop ? 'success' : 'info'"
-                :title="parserReport.parseMovieReport.stop ?? parserReport.parseMovieReport.start"
+                :icon="parserReport.report.stop ? 'success' : 'info'"
+                :title="parserReport.report.stop ?? parserReport.report.start"
             >
             </el-result>
         </template>
-        <template v-if="parserReport.syncMoviePercentageBar">
+        <template v-if="parserReport.report">
             <h4 class="mt-2">Parse Info Progress:</h4>
-            <el-progress :percentage="parserReport.syncMoviePercentageBar" :stroke-width="15" striped />
+            <el-progress :percentage="parserReport.report?.finishIdsPeriod ? parserReport.syncMoviePercentageBar : parserReport.syncPersonPercentageBar" :stroke-width="15" striped />
         </template>
-        <template v-if="parserReport.parseMovieReport.finishIdsPeriod">
+        <template v-if="parserReport.report.finishIdsPeriod">
             <h4 class="mt-2">Finish ID(s) parse by date period:</h4>
-            <ul v-for="(item, index) in parserReport.parseMovieReport.finishIdsPeriod" class="list-group">
+            <ul v-for="(item, index) in parserReport.report.finishIdsPeriod" class="list-group">
                 <li class="list-group-item">{{index+1}}{{'. '}}{{item}}</li>
             </ul>
-            <template v-if="parserReport.parseMovieReport.finishLocalizing">
-                <el-collapse>
-                    <el-collapse-item >
-                        <template #title>
-                            <el-badge :value="parserReport.parseMovieReport.finishLocalizing.length" :max="1000"class="item">
-                                Parsed and Localizing<el-icon class="header-icon"><info-filled /></el-icon>
-                            </el-badge>
-                        </template>
-                        <span v-for="item in parserReport.parseMovieReport.finishLocalizing" class="flex gap-2">
-                            <el-tag type="success" class="m-1">{{item}}</el-tag>
-                        </span>
-                    </el-collapse-item>
-                </el-collapse>
-            </template>
-            <template v-if="parserReport.parseMovieReport.finishInfo">
-                <h4 class="mt-2">Finish Parse Info for Movie Type(s):</h4>
-                <ul class="list-group-flush">
-                    <template v-for="item in parserReport.parseMovieReport.finishInfo">
-                        <li class="list-group-item"><el-icon color="#67C23A" style=" margin-left: -30px" ><Check /></el-icon>{{item}}</li>
+        </template>
+        <template v-if="parserReport.report.finishLocalizing">
+            <el-collapse>
+                <el-collapse-item >
+                    <template #title>
+                        <el-badge :value="parserReport.report.finishLocalizing.length" :max="1000"class="item">
+                            Parsed and Localizing<el-icon class="header-icon"><info-filled /></el-icon>
+                        </el-badge>
                     </template>
-                </ul>
-            </template>
-            <template v-if="parserReport.parseMovieReport.finishActualize">
-                <h4 class="mt-2">Finish Actualize Table(s):</h4>
-                <span v-for="item in parserReport.parseMovieReport.finishActualize" class="flex gap-2">
-                    <el-tag type="primary" class="m-1">{{item}}</el-tag>
-                </span>
-            </template>
+                    <span v-for="item in parserReport.report.finishLocalizing" class="flex gap-2">
+                        <el-tag type="success" class="m-1">{{item}}</el-tag>
+                    </span>
+                </el-collapse-item>
+            </el-collapse>
+        </template>
+        <template v-if="parserReport.report.finishInfo">
+            <h4 class="mt-2">Finish Parse Info for Type(s):</h4>
+            <ul class="list-group-flush">
+                <template v-for="item in parserReport.report.finishInfo">
+                    <li class="list-group-item"><el-icon color="#67C23A" style=" margin-left: -30px" ><Check /></el-icon>{{item}}</li>
+                </template>
+            </ul>
+        </template>
+        <template v-if="parserReport.report.finishActualize">
+            <h4 class="mt-2">Finish Actualize Table(s):</h4>
+            <span v-for="item in parserReport.report.finishActualize" class="flex gap-2">
+                <el-tag type="primary" class="m-1">{{item}}</el-tag>
+            </span>
         </template>
     </el-dialog>
 </template>
@@ -210,7 +221,7 @@
     import { useParserStore } from "../store/parserStore";
     import { Check } from '@element-plus/icons-vue'
     const parserStore = useParserStore();
-    const { loader, error, parserReport, statusParser } = storeToRefs(parserStore);
+    const { loader, error, parserReport, statusBar, percentageSync } = storeToRefs(parserStore);
     const celeb_ID = ref('nm');
 
     const radioTypeToggle =  ref(true);
@@ -230,6 +241,7 @@
     const selectTypeImages = ref(null);
     const selectTypePosters = ref(null);
     const toggleButton = ref(true);
+    const switchAddNewOrUpdate = ref(true);
     const types = ['FeatureFilm', 'MiniSeries', 'ShortFilm', 'TvMovie','TvSeries', 'TvShort','TvSpecial','Video'];
     const checkedTypes = ref(types);
     const sort = ref([
@@ -398,6 +410,7 @@
             placeholderPicker.value = "Pick a day";
             disabledTypePosters.value = false;
             sort.value[0]['value'] = 'moviemeter';
+            switchAddNewOrUpdate.value = false;
         } else {
             disabledPickerType.value = true;
             disabledMovies.value = true;
@@ -452,6 +465,7 @@
             type: 'warning',
         }).then(() => {
             parserStore.addCelebById(celeb_ID.value);
+            parserStore.getSyncCurrentPercentage();
             celeb_ID.value = 'nm';
         }).catch(() => {
             ElMessage({
@@ -476,6 +490,7 @@
                     'persons_source': personsSource.value,
                     'type_images': selectTypeImages.value,
                     'type_posters': selectTypePosters.value,
+                    'switch_new_update': switchAddNewOrUpdate.value,
                 });
                 handleSelectsClear();
                 parserStore.getReportParser();
