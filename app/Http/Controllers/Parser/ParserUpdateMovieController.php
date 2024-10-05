@@ -89,7 +89,7 @@ class ParserUpdateMovieController extends ParserController
         $updateModel = DB::table($this->update_info_table)->where($this->signByField,$movieId)->get(['genres','cast','directors','writers','story_line','countries','release_date','id_movie','type_film']);
         if ($updateModel->isNotEmpty()){
             $this->localizing->translateMovie($updateModel[0],$movieId,$this->signByField);
-            session()->push('tracking.parseMovieReport.finishLocalizing', $movieId);
+            session()->push('tracking.report.finishLocalizing', $movieId);
             session()->save();
             Log::info(">>> LOCALIZING MOVIE ID FINISH",[$movieId]);
         }

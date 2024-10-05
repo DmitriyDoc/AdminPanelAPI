@@ -219,9 +219,14 @@
     import { ref, watch } from "vue";
     import { ElMessage, ElMessageBox } from "element-plus";
     import { useParserStore } from "../store/parserStore";
+    import { useProgressBarStore } from "../store/progressBarStore";
     import { Check } from '@element-plus/icons-vue'
+
     const parserStore = useParserStore();
-    const { loader, error, parserReport, statusBar, percentageSync } = storeToRefs(parserStore);
+    const progressBarStore = useProgressBarStore();
+
+    const { loader, error } = storeToRefs(parserStore);
+    const { percentage, statusBar, percentageSync, parserReport } = storeToRefs(progressBarStore);
     const celeb_ID = ref('nm');
 
     const radioTypeToggle =  ref(true);
@@ -465,7 +470,7 @@
             type: 'warning',
         }).then(() => {
             parserStore.addCelebById(celeb_ID.value);
-            parserStore.getSyncCurrentPercentage();
+            rogressBarStore.getSyncCurrentPercentage();
             celeb_ID.value = 'nm';
         }).catch(() => {
             ElMessage({
@@ -493,7 +498,7 @@
                     'switch_new_update': switchAddNewOrUpdate.value,
                 });
                 handleSelectsClear();
-                parserStore.getReportParser();
+                progressBarStore.getReportParser();
                 toggleButton.value = false;
             }
         }).catch(() => {

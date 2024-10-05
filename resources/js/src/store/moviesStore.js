@@ -19,8 +19,6 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const pageSize = ref(state.value.limit);
     const currentPage = ref(state.value.page);
     const valueSort = ref(state.value.sortBy);
-    const percentageSync = ref(0);
-    const statusBar = ref('');
     const loader = ref(true);
     const error = ref();
 
@@ -81,21 +79,6 @@ export const useMoviesStore = defineStore('moviesStore',() => {
                 }
         });
     }
-    const getSyncCurrentPercentage = async () => {
-        statusBar.value = '';
-        await axios.get('/api/updatemovie/tracking?sesKey=syncMoviePercentageBar'
-        ).then((response) => {
-            percentageSync.value = response.data.syncMoviePercentageBar ?? 0;
-            if (percentageSync.value < 100){
-                setTimeout(function () {
-                    getSyncCurrentPercentage();
-                }, 1000);
-            }
-            if (percentageSync.value === 100){
-                setTimeout(() => statusBar.value = 'success', 1000);
-            }
-        });
-    }
     const syncItem = async (posterType) => {
         axios.put('/api/updatemovie',{ data: {
             id: singleData.value.id_movie??route.params.id,
@@ -140,8 +123,6 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         currentPage,
         pageSize,
         valueSort,
-        percentageSync,
-        statusBar,
         route,
         loader,
         error,
@@ -155,6 +136,5 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         updateSpin,
         updateSearchQuery,
         getMovies,
-        getSyncCurrentPercentage,
     }
 });

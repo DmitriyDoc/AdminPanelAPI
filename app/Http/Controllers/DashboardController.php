@@ -26,7 +26,7 @@ use function Ramsey\Uuid\Lazy\toString;
 
 class DashboardController
 {
-    public function index(Request $request)
+    public function index()
     {
         $data = [];
         $allowedTableNames = [
@@ -41,8 +41,8 @@ class DashboardController
             8=>'Celebs',
         ];
 
-        if ($request->session()->missing('dashboardPercentageBar')) {
-            $request->session()->put('dashboardPercentageBar', 0);
+        if (session()->missing('tracking.dashboardPercentageBar')) {
+            session(['tracking.dashboardPercentageBar' => 0]);
             session()->save();
         }
         foreach ($allowedTableNames as $index => $name) {
@@ -51,7 +51,7 @@ class DashboardController
             $data[$index]['title'] = $name;
             $data[$index]['count'] = $model->getCountAttribute();
             $data[$index]['lastAddCount'] = $model->getLastDayCountAttribute();
-            $request->session()->increment('dashboardPercentageBar',1);
+            session()->increment('tracking.dashboardPercentageBar',1);
             session()->save();
         }
         return [
@@ -60,84 +60,74 @@ class DashboardController
             'data' => $data
         ];
     }
-    public function trackingProgressBar(Request $request)
+
+    public function testCelebs()
     {
-        $totalCountTable = 9;
-        $value = $request->session()->get('dashboardPercentageBar');
-        $currPercent = $value ? ceil( ($value * 100) / $totalCountTable): 0;
-        //Log::info('PERCENT--->>',[$currPercent]);
-        if ($currPercent >= 100){
-            $request->session()->forget('dashboardPercentageBar');
+        $source = 'en';
+        $target = 'ru';
+        $attempts = 5;
+        $tr = new GoogleTranslateForFree();
+
+        $model = InfoCelebs::query()->offset(840000)->limit(10000)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
+        foreach ($model->toArray() as $field){
+            $resultFilmography = null;
+            $resultNameActor = null;
+            $resultBirthdayLocation = null;
+            $resultDieLocation = null;
+            if (!empty($field['filmography'])){
+                $filmographyDecode = json_decode($field['filmography'], true);
+                foreach ($filmographyDecode as $keySection => $valSection){
+                    if ($keySection == 'actor' || $keySection == 'actress' || $keySection == 'producer' || $keySection == 'writer' || $keySection == 'director' || $keySection == 'composer' || $keySection == 'soundtrack'){
+                        foreach ($valSection as $keyId => $item) {
+                            $contains_cyrillic_role = (bool) preg_match('/[\p{Cyrillic}]/u',$item['role']);
+                            preg_match('/\d\d\d\d/', $item['year'], $contains_year);;
+                            $contains_cyrillic_title = (bool) preg_match('/[\p{Cyrillic}]/u',$item['title']);
+                            $resultFilmography[$keySection][$keyId]['role'] = $contains_cyrillic_role ? $item['role'] : $tr->translate($source, $target, $item['role']??null, $attempts)??null;
+                            $resultFilmography[$keySection][$keyId]['year'] = $contains_year[0]??null;
+                            $resultFilmography[$keySection][$keyId]['title'] = $contains_cyrillic_title ? $item['title'] : $tr->translate($source, $target, $item['title']??null, $attempts)??null;
+                        }
+
+                    }
+                }
+                $resultFilmography = json_encode($resultFilmography,JSON_UNESCAPED_UNICODE);
+            }
+            if (!empty($field['nameActor'])){
+                $resultNameActor = $tr->translate($source, $target, $field['nameActor'], $attempts);
+            }
+            if (!empty($field['birthdayLocation'])){
+                $resultBirthdayLocation = $tr->translate($source, $target, $field['birthdayLocation'], $attempts);
+            }
+            if (!empty($field['dieLocation'])){
+                $resultDieLocation = $tr->translate($source, $target, $field['dieLocation'], $attempts);
+            }
+            try
+            {
+                $model = LocalizingCelebsInfo::where('id_celeb',$field['id_celeb'])->first();
+                if ($model) {
+                    $model::where('id_celeb',$field['id_celeb'])->update([
+                        'id_celeb'=>$field['id_celeb'],
+                        'filmography'=>$resultFilmography,
+                        'nameActor'=>$resultNameActor,
+                        'birthdayLocation'=>$resultBirthdayLocation,
+                        'dieLocation'=>$resultDieLocation,
+                    ]);
+                } else {
+                    LocalizingCelebsInfo::firstOrCreate([
+                        'id_celeb'=>$field['id_celeb'],
+                        'filmography'=>$resultFilmography,
+                        'nameActor'=>$resultNameActor,
+                        'birthdayLocation'=>$resultBirthdayLocation,
+                        'dieLocation'=>$resultDieLocation,
+                    ]);
+                }
+            }
+            catch (\Exception $e)
+            {
+                Log::info("ID--CELEB>>>{$field['id_celeb']}");
+                Log::info("ERROR-CELEB-EXEPTION>>>{$e}");
+            }
         }
-        return $currPercent;
     }
-//    public function testCelebs()
-//    {
-//        $source = 'en';
-//        $target = 'ru';
-//        $attempts = 5;
-//        $tr = new GoogleTranslateForFree();
-//
-//        $model = InfoCelebs::query()->offset(540000)->limit(10000)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
-//        foreach ($model->toArray() as $field){
-//            $resultFilmography = null;
-//            $resultNameActor = null;
-//            $resultBirthdayLocation = null;
-//            $resultDieLocation = null;
-//            if (!empty($field['filmography'])){
-//                $filmographyDecode = json_decode($field['filmography'], true);
-//                foreach ($filmographyDecode as $keySection => $valSection){
-//                    if ($keySection == 'actor' || $keySection == 'actress' || $keySection == 'producer' || $keySection == 'writer' || $keySection == 'director' || $keySection == 'composer' || $keySection == 'soundtrack'){
-//                        foreach ($valSection as $keyId => $item) {
-//                            $contains_cyrillic_role = (bool) preg_match('/[\p{Cyrillic}]/u',$item['role']);
-//                            preg_match('/\d\d\d\d/', $item['year'], $contains_year);;
-//                            $contains_cyrillic_title = (bool) preg_match('/[\p{Cyrillic}]/u',$item['title']);
-//                            $resultFilmography[$keySection][$keyId]['role'] = $contains_cyrillic_role ? $item['role'] : $tr->translate($source, $target, $item['role']??null, $attempts)??null;
-//                            $resultFilmography[$keySection][$keyId]['year'] = $contains_year[0]??null;
-//                            $resultFilmography[$keySection][$keyId]['title'] = $contains_cyrillic_title ? $item['title'] : $tr->translate($source, $target, $item['title']??null, $attempts)??null;
-//                        }
-//
-//                    }
-//                }
-//                $resultFilmography = json_encode($resultFilmography,JSON_UNESCAPED_UNICODE);
-//            }
-//            if (!empty($field['nameActor'])){
-//                $resultNameActor = $tr->translate($source, $target, $field['nameActor'], $attempts);
-//            }
-//            if (!empty($field['birthdayLocation'])){
-//                $resultBirthdayLocation = $tr->translate($source, $target, $field['birthdayLocation'], $attempts);
-//            }
-//            if (!empty($field['dieLocation'])){
-//                $resultDieLocation = $tr->translate($source, $target, $field['dieLocation'], $attempts);
-//            }
-//            try
-//            {
-//                $model = LocalizingCelebsInfo::where('id_celeb',$field['id_celeb'])->first();
-//                if ($model) {
-//                    $model::where('id_celeb',$field['id_celeb'])->update([
-//                        'id_celeb'=>$field['id_celeb'],
-//                        'filmography'=>$resultFilmography,
-//                        'nameActor'=>$resultNameActor,
-//                        'birthdayLocation'=>$resultBirthdayLocation,
-//                        'dieLocation'=>$resultDieLocation,
-//                    ]);
-//                } else {
-//                    LocalizingCelebsInfo::firstOrCreate([
-//                        'id_celeb'=>$field['id_celeb'],
-//                        'filmography'=>$resultFilmography,
-//                        'nameActor'=>$resultNameActor,
-//                        'birthdayLocation'=>$resultBirthdayLocation,
-//                        'dieLocation'=>$resultDieLocation,
-//                    ]);
-//                }
-//            }
-//            catch (\Exception $e)
-//            {
-//                Log::info("ID--CELEB>>>{$field['id_celeb']}");
-//                Log::info("ERROR-CELEB-EXEPTION>>>{$e}");
-//            }
-//        }
-//    }
     public function test()
     {
 //        $source = 'en';

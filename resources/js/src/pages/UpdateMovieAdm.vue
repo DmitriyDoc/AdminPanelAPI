@@ -270,6 +270,7 @@
     import {useMoviesStore} from "../store/moviesStore";
     import {useMediaStore} from "../store/mediaStore";
     import {useCategoriesStore} from "../store/categoriesStore";
+    import { useProgressBarStore } from "../store/progressBarStore";
     import type {TabsPaneContext} from 'element-plus';
     import {ElMessage, ElMessageBox, ElTable} from 'element-plus'
     import {ArrowRight} from '@element-plus/icons-vue'
@@ -280,8 +281,11 @@
     const moviesStore = useMoviesStore();
     const mediaStore = useMediaStore();
     const categoryStore = useCategoriesStore();
-    const { singleData, percentageSync, statusBar, error } = storeToRefs(moviesStore);
+    const progressBarStore = useProgressBarStore();
+
+    const { singleData, error } = storeToRefs(moviesStore);
     const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
+    const { statusBar, percentageSync } = storeToRefs(progressBarStore);
     const { optionsCats } = storeToRefs(categoryStore);
 
     const activeTabName = ref('first');
@@ -505,7 +509,7 @@
             type: 'warning',
         }).then(() => {
             moviesStore.syncItem(posterType.value);
-            moviesStore.getSyncCurrentPercentage();
+            progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
         }).catch(() => {
             ElMessage({
                 type: 'info',

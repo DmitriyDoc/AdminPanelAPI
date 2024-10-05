@@ -127,6 +127,7 @@
     import { RouterLink } from 'vue-router'
     import { usePersonsStore } from "../store/personsStore";
     import { useMediaStore } from "../store/mediaStore";
+    import { useProgressBarStore } from "../store/progressBarStore";
     import type { TabsPaneContext } from 'element-plus';
     import { ArrowRight } from '@element-plus/icons-vue'
     import {ref, watch, reactive, onMounted} from "vue";
@@ -138,7 +139,10 @@
 
     const mediaStore = useMediaStore();
     const personsStore = usePersonsStore();
-    const { singleData, percentageSync, statusBar, route, error, } = storeToRefs(personsStore);
+    const progressBarStore = useProgressBarStore();
+
+    const { singleData, route, error, } = storeToRefs(personsStore);
+    const { statusBar, percentageSync } = storeToRefs(progressBarStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
 
     const activeTabName = ref('actor');
@@ -223,7 +227,7 @@
             type: 'warning',
         }).then(() => {
             personsStore.syncItem(imageType.value);
-            personsStore.getSyncCurrentPercentage();
+            progressBarStore.getSyncCurrentPercentage('syncPersonPercentageBar');
         }).catch(() => {
             ElMessage({
                 type: 'info',

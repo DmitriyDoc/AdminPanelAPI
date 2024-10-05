@@ -20,10 +20,13 @@
     import { Check } from '@element-plus/icons-vue'
     import { storeToRefs } from 'pinia';
     import { useDashboardStore } from "../store/dashboardStore";
+    import { useProgressBarStore } from "../store/progressBarStore";
     import { onMounted } from "vue";
 
     const dashboardStore = useDashboardStore();
-    const { countCard, percentage, loader, error } = storeToRefs(dashboardStore);
+    const progressBarStore = useProgressBarStore();
+    const { countCard, loader, error } = storeToRefs(dashboardStore);
+    const { percentage } = storeToRefs(progressBarStore);
     const colors = [
         { color: '#f56c6c', percentage: 20 },
         { color: '#e6a23c', percentage: 40 },
@@ -34,8 +37,8 @@
      onMounted(  () => {
          percentage.value = 0;
          if (loader.value){
-             dashboardStore.getCurrentPercentage();
              dashboardStore.getMoviesCount();
+             progressBarStore.getCurrentPercentage();
          }
      });
 
