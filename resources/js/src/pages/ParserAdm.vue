@@ -470,7 +470,7 @@
             type: 'warning',
         }).then(() => {
             parserStore.addCelebById(celeb_ID.value);
-            rogressBarStore.getSyncCurrentPercentage();
+            progressBarStore.getSyncCurrentPercentage();
             celeb_ID.value = 'nm';
         }).catch(() => {
             ElMessage({
