@@ -92,7 +92,7 @@
         <el-backtop :right="100" :bottom="100" />
     </template>
    <template v-else>
-       <p style="text-align: center">Not Found</p>
+       <p style="text-align: center">Data Not Found</p>
    </template>
     <p v-if="error">{{ error }}</p>
 </template>

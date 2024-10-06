@@ -42,13 +42,17 @@ class FranchiseController extends Controller
                 });
                 foreach ($TypeFilmArray as $key => $item){
                     $model = convertVariableToModelName('IdType',$key, ['App', 'Models']);
+                    $allowedFilterFields = $model->getFillable();
+                    if ($request->has('search')){
+                        $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
+                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+                    }
                     $collection->add($model->select('type_film','id_movie','title','year','created_at','updated_at')->whereIn('id_movie',$item)->with('assignPoster')->get()->all());
                 }
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
                 if ($sorted[0]){
                     $allowedSortFields = ['desc','asc'];
-                    $allowedFilterFields = $model->getFillable();
                     $limit = $request->query('limit',50);
                     $sortDir = strtolower($request->query('spin','asc'));
                     $sortBy = $request->query('orderBy','updated_at');
@@ -108,9 +112,15 @@ class FranchiseController extends Controller
         $model = convertVariableToModelName('LocalizingFranchise','', ['App', 'Models']);
         $franchiseCollection =  $model->all();
         if ($franchiseCollection->isNotEmpty()){
+            $allowedFilterFields = $model->getFillable();
+            if ($request->has('search')){
+                $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
+                if (!empty($searchQuery)){
+                    $franchiseCollection = $franchiseCollection->where('value',$searchQuery);
+                }
+            }
             $itemsCount = $franchiseCollection->count()??0;
             $allowedSortFields = ['desc','asc'];
-            $allowedFilterFields = $model->getFillable();
             $limit = $request->query('limit',50);
             $page = $request->query('page',1);
             $sortDir = strtolower($request->query('spin','asc'));

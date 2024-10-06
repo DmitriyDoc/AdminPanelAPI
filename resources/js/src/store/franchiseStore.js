@@ -6,7 +6,7 @@ import { ref }  from "vue";
 
 export const useFranchiseStore = defineStore('franchiseStore',() => {
     const state = ref({
-        //searchQuery: '',
+        searchQuery: '',
         spinParam: 'desc',
         sortBy: 'created_at',
         page: 1,
@@ -32,7 +32,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
-                //+ '&search=' + state.value.searchQuery
+                + '&search=' + state.value.searchQuery
             ).then((response) => {
                 franchiseData.value = response.data;
                 totalCount.value = response.data.total;
@@ -49,7 +49,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
-                //+ '&search=' + state.value.searchQuery
+                + '&search=' + state.value.searchQuery
             ).then((response) => {
                 franchiseList.value = response.data;
                 totalCount.value = response.data.total;
@@ -71,9 +71,9 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
             console.log('error',e);
         }
     }
-    // const updateSearchQuery = (q) => {
-    //     state.value.searchQuery = q;
-    // }
+    const updateSearchQuery = (q) => {
+        state.value.searchQuery = q;
+    }
     const updateSpin = (param) => {
         state.value.spinParam = param;
     }
@@ -100,7 +100,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
         removeItemFromFranchise,
         getDataFranchise,
         getListFranchise,
-        //updateSearchQuery,
+        updateSearchQuery,
         updateSpin,
         updateSort,
         updateCurrentPage,

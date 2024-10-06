@@ -6,7 +6,7 @@ import { ref }  from "vue";
 
 export const useSectionStore = defineStore('sectionStore',() => {
     const state = ref({
-        //searchQuery: '',
+        searchQuery: '',
         spinParam: 'desc',
         sortBy: 'created_at',
         page: 1,
@@ -39,7 +39,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
-                //+ '&search=' + state.value.searchQuery
+                + '&search=' + state.value.searchQuery
             ).then((response) => {
                 sectionsData.value = response.data;
                 totalCount.value = response.data.total;
@@ -61,9 +61,9 @@ export const useSectionStore = defineStore('sectionStore',() => {
             console.log('error',e);
         }
     }
-    // const updateSearchQuery = (q) => {
-    //     state.value.searchQuery = q;
-    // }
+    const updateSearchQuery = (q) => {
+        state.value.searchQuery = q;
+    }
     const updateSpin = (param) => {
         state.value.spinParam = param;
     }
@@ -90,7 +90,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
         removeItemFromSection,
         getSections,
         getDataSections,
-        //updateSearchQuery,
+        updateSearchQuery,
         updateSpin,
         updateSort,
         updateCurrentPage,

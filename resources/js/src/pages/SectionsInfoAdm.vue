@@ -1,27 +1,27 @@
 <template>
     <h3 class="text-center mt-3 mb-3">{{sectionsData['title']??''}}</h3>
-<!--    <el-form-->
-<!--        ref="formRef"-->
-<!--        :model="queryValidateForm"-->
-<!--        class="demo-ruleForm"-->
-<!--    >-->
-<!--        <el-form-item prop="query" :rules="[{}]">-->
-<!--            <el-input-->
-<!--                v-model.query="queryValidateForm.query"-->
-<!--                type="text"-->
-<!--                autocomplete="off"-->
-<!--                placeholder="Search here"-->
-<!--                v-on:keydown.enter.prevent = "submitSearch(formRef)"-->
-<!--            />-->
-<!--        </el-form-item>-->
-<!--        <el-form-item>-->
-<!--            <el-button @click="resetSearch(formRef)">Reset</el-button>-->
-<!--            <el-button @click="submitSearch(formRef)">Go!</el-button>-->
-<!--        </el-form-item>-->
+    <el-form
+        ref="formRef"
+        :model="queryValidateForm"
+        class="demo-ruleForm"
+    >
+        <el-form-item prop="query" :rules="[{}]">
+            <el-input
+                v-model.query="queryValidateForm.query"
+                type="text"
+                autocomplete="off"
+                placeholder="Search here"
+                v-on:keydown.enter.prevent = "submitSearch(formRef)"
+            />
+        </el-form-item>
+        <el-form-item>
+            <el-button @click="resetSearch(formRef)">Reset</el-button>
+            <el-button @click="submitSearch(formRef)">Go!</el-button>
+        </el-form-item>
 <!--        <el-form-item>-->
 <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
 <!--        </el-form-item>-->
-<!--    </el-form>-->
+    </el-form>
 
     <div class="demo-pagination-block"  v-loading="loader">
         <el-menu
@@ -172,9 +172,9 @@
         },
     ]);
     const formRef = ref<FormInstance>();
-    // const queryValidateForm = reactive({
-    //     query: '',
-    // });
+    const queryValidateForm = reactive({
+        query: '',
+    });
     const activeIndex = ref('1')
     const handleSelect = (key, keyPath) => {
         console.log(key, keyPath)
@@ -198,24 +198,24 @@
         sectionStore.updateSpin(spin);
         sectionStore.getDataSections();
     }
-    // const submitSearch = (formEl: FormInstance | undefined) => {
-    //     if (!formEl) return
-    //     formEl.validate((valid) => {
-    //         if (valid) {
-    //             sectionStore.updateSearchQuery( queryValidateForm.query );
-    //             sectionStore.getDataSections();
-    //         } else {
-    //             console.log('error submit!')
-    //             return false
-    //         }
-    //     })
-    // }
-    // const resetSearch = (formEl: FormInstance | undefined) => {
-    //     if (!formEl) return
-    //     formEl.resetFields();
-    //     sectionStore.updateSearchQuery( '' );
-    //     sectionStore.getMovies();
-    // }
+    const submitSearch = (formEl: FormInstance | undefined) => {
+        if (!formEl) return
+        formEl.validate((valid) => {
+            if (valid) {
+                sectionStore.updateSearchQuery( queryValidateForm.query );
+                sectionStore.getDataSections();
+            } else {
+                console.log('error submit!')
+                return false
+            }
+        })
+    }
+    const resetSearch = (formEl: FormInstance | undefined) => {
+        if (!formEl) return
+        formEl.resetFields();
+        sectionStore.updateSearchQuery( '' );
+        sectionStore.getDataSections();
+    }
     const handleRemove = (id,index) => {
         ElMessageBox.confirm(`Are you sure? Entries under ID: ${id} will be deleted from section. Continue?`, 'WARNING', {
                 confirmButtonText: 'OK',

@@ -1,28 +1,28 @@
 <template>
-
     <h3 class="text-center mt-3 mb-3">List Franchise:</h3>
-    <!--    <el-form-->
-    <!--        ref="formRef"-->
-    <!--        :model="queryValidateForm"-->
-    <!--        class="demo-ruleForm"-->
-    <!--    >-->
-    <!--        <el-form-item prop="query" :rules="[{}]">-->
-    <!--            <el-input-->
-    <!--                v-model.query="queryValidateForm.query"-->
-    <!--                type="text"-->
-    <!--                autocomplete="off"-->
-    <!--                placeholder="Search here"-->
-    <!--                v-on:keydown.enter.prevent = "submitSearch(formRef)"-->
-    <!--            />-->
-    <!--        </el-form-item>-->
-    <!--        <el-form-item>-->
-    <!--            <el-button @click="resetSearch(formRef)">Reset</el-button>-->
-    <!--            <el-button @click="submitSearch(formRef)">Go!</el-button>-->
-    <!--        </el-form-item>-->
-    <!--        <el-form-item>-->
-    <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-    <!--        </el-form-item>-->
-    <!--    </el-form>-->
+        <h5>Search by Slug Franchise</h5>
+        <el-form
+            ref="formRef"
+            :model="queryValidateForm"
+            class="demo-ruleForm"
+        >
+            <el-form-item prop="query" :rules="[{}]">
+                <el-input
+                    v-model.query="queryValidateForm.query"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Search here"
+                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
+                />
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="resetSearch(formRef)">Reset</el-button>
+                <el-button @click="submitSearch(formRef)">Go!</el-button>
+            </el-form-item>
+<!--            <el-form-item>-->
+<!--                <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+<!--            </el-form-item>-->
+        </el-form>
 
     <div class="demo-pagination-block"  v-loading="loader">
         <p>Spin by:</p>
@@ -93,7 +93,7 @@
     import { ElMessage, ElMessageBox } from 'element-plus'
     import type { FormInstance } from 'element-plus'
     import type { Action } from 'element-plus'
-    import { ref, watch } from "vue";
+    import { ref, watch, reactive } from "vue";
 
     const franchiseStore = useFranchiseStore();
     const { franchiseList, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
@@ -131,9 +131,9 @@
     ]);
     const formRef = ref<FormInstance>();
     const activeMenuIndex = ref('1')
-    // const queryValidateForm = reactive({
-    //     query: '',
-    // });
+    const queryValidateForm = reactive({
+        query: '',
+    });
 
     // const handleSelect = (key, keyPath) => {
     //     console.log(key, keyPath)
@@ -157,24 +157,24 @@
         franchiseStore.updateSpin(spin);
         franchiseStore.getListFranchise();
     }
-    // const submitSearch = (formEl: FormInstance | undefined) => {
-    //     if (!formEl) return
-    //     formEl.validate((valid) => {
-    //         if (valid) {
-    //             sectionStore.updateSearchQuery( queryValidateForm.query );
-    //             sectionStore.getDataSections();
-    //         } else {
-    //             console.log('error submit!')
-    //             return false
-    //         }
-    //     })
-    // }
-    // const resetSearch = (formEl: FormInstance | undefined) => {
-    //     if (!formEl) return
-    //     formEl.resetFields();
-    //     sectionStore.updateSearchQuery( '' );
-    //     sectionStore.getMovies();
-    // }
+    const submitSearch = (formEl: FormInstance | undefined) => {
+        if (!formEl) return
+        formEl.validate((valid) => {
+            if (valid) {
+                franchiseStore.updateSearchQuery( queryValidateForm.query );
+                franchiseStore.getListFranchise();
+            } else {
+                console.log('error submit!')
+                return false
+            }
+        })
+    }
+    const resetSearch = (formEl: FormInstance | undefined) => {
+        if (!formEl) return
+        formEl.resetFields();
+        franchiseStore.updateSearchQuery( '' );
+        franchiseStore.getListFranchise();
+    }
     const handleRemove = (id,index) => {
         ElMessageBox.confirm(`Are you sure? All the movies will be unbundled from ID: ${id}. And franchise will be deleted. Continue?`, 'WARNING', {
             confirmButtonText: 'OK',

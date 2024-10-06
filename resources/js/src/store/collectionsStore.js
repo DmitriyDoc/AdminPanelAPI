@@ -6,7 +6,7 @@ import { ref }  from "vue";
 
 export const useCollectionsStore = defineStore('collectionsStore',() => {
     const state = ref({
-        //searchQuery: '',
+        searchQuery: '',
         spinParam: 'desc',
         sortBy: 'created_at',
         page: 1,
@@ -32,7 +32,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
-                //+ '&search=' + state.value.searchQuery
+                + '&search=' + state.value.searchQuery
             ).then((response) => {
                 collectionsData.value = response.data;
                 totalCount.value = response.data.total;
@@ -49,9 +49,8 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
-                //+ '&search=' + state.value.searchQuery
+                + '&search=' + state.value.searchQuery
             ).then((response) => {
-                console.log(response);
                 collectionsList.value = response.data;
                 totalCount.value = response.data.total;
                 loader.value = false;
@@ -72,9 +71,9 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
             console.log('error',e);
         }
     }
-    // const updateSearchQuery = (q) => {
-    //     state.value.searchQuery = q;
-    // }
+    const updateSearchQuery = (q) => {
+        state.value.searchQuery = q;
+    }
     const updateSpin = (param) => {
         state.value.spinParam = param;
     }
@@ -103,7 +102,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
         removeItemFromCollection,
         getDataCollections,
         getListCollections,
-        //updateSearchQuery,
+        updateSearchQuery,
         updateSpin,
         updateSort,
         updateCurrentPage,
