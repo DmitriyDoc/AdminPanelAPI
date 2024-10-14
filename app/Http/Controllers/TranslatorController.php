@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Models\LocalizingCelebsInfo;
 use App\Models\LocalizingInfoMovies;
 use \Dejurin\GoogleTranslateForFree;
-use Illuminate\Support\Facades\Log;
 
 class TranslatorController
 {
@@ -201,7 +200,6 @@ class TranslatorController
         if (!empty($dataInfo->dieLocation)){
             $this->dataCeleb['dieLocation'] = $this->startTranslate($dataInfo->dieLocation)??null;
         }
-
         $this->updateOrCreateLocalizing($this->dataCeleb);
     }
 }
