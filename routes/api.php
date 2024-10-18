@@ -65,6 +65,7 @@ Route::group(['middleware' => ['api']], function () {
         Route::get('/persons/{slug}', 'index');
         Route::get('/persons/{slug}/show/{id}', 'show');
         Route::delete('/persons/{slug}/{id}', 'destroy');
+        Route::patch('/persons/remove_items', 'removeFromFilmography');
 
     });
     Route::controller(\App\Http\Controllers\CategoriesController::class)->group(function () {

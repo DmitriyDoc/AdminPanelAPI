@@ -50,7 +50,7 @@
                                 <el-table-column prop="role" label="Role" fixed="right" width="200"/>
                             </el-table>
 <!--                            <el-button @click="toggleSelectionCeleb()" type="info">Clear selection</el-button>-->
-                            <el-button type="success" @click="handleSelectedCelebs()" class="mt-3">Assign selected</el-button>
+                            <el-button type="danger" @click="handleRemoveItems()" class="mt-3">Remove selected</el-button>
                         </li>
                     </el-tab-pane>
                 </template>
@@ -160,14 +160,20 @@
         //console.log(multipleTableCeleb.value);
         //multipleTableCeleb.value!.clearSelection();
     }
-    const handleSelectedCelebs = () => {
-        console.log(multipleSelection.value);
+    const handleRemoveItems = () => {
+        if (multipleSelection.value.length){
+            let dataRemoveKey = [];
+            multipleSelection.value.forEach((item, index) => {
+                dataRemoveKey.push(item.id);
+            });
+            personsStore.removeFilmographyItems(dataRemoveKey,activeTabName.value);
+        }
     }
     const handleSelectionChange = (val) => {
         multipleSelection.value = val
-        if (multipleSelection.value.length){
-            console.log(multipleSelection.value);
-        }
+        // if (multipleSelection.value.length){
+        //     console.log(multipleSelection.value);
+        // }
     }
     const handleChange = (val: string[]) => {
         //console.log(val[1]);
@@ -178,9 +184,10 @@
         mediaStore.updateImagePageSize();
     }
 
-    // const handleClick = (tab: TabsPaneContext, event: Event) => {
-    //     //console.log(tab, event)
-    // }
+    const handleClick = (tab: TabsPaneContext, event: Event) => {
+        //console.log(tab, event)
+        multipleSelection.value = [];
+    }
     const handleSelectImageChange = (val) => {
         multipleSelectImage.value = [];
         val.filter(function(arr, i){
@@ -189,7 +196,7 @@
     }
 
     const toggleSelectImage = () => {
-        console.log(multipleTableImage.value);
+        //console.log(multipleTableImage.value);
         multipleTableImage.value!.clearSelection();
     }
     const toggleRemoveImage = () => {

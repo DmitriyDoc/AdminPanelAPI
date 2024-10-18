@@ -56,7 +56,13 @@ if (!function_exists('unset_serialize_key')) {
         return [];
     }
 }
-
+if (!function_exists('modelByName')) {
+    function modelByName($modelName)
+    {
+        $modelNameWithNameSpace = "App\Models" . '\\'.$modelName;
+        return app($modelNameWithNameSpace);
+    }
+}
 if (!function_exists('convertVariableToModelName')) {
     function convertVariableToModelName($typeSegment,$nameSegment,$nameSpace='App'){
         if (empty($nameSpace) || is_null($nameSpace) || $nameSpace === "")

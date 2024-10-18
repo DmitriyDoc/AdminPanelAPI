@@ -61,6 +61,26 @@ export const usePersonsStore = defineStore('personsStore',() => {
             getCelebs();
         });
     }
+    const removeFilmographyItems = async (idArray,activeTab) => {
+        axios.patch('/api/persons/remove_items',{ data: {
+                id: singleData.value.id_celeb,
+                tab_index: activeTab,
+                id_items: idArray,
+            }}).then((response) => {
+            if (response.status === 200) {
+                showItem();
+                ElMessage({
+                    type: 'success',
+                    message: 'Selected filmography item(s) was removed',
+                })
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Remove filmography item(s)  is not finished',
+                });
+            }
+        });
+    }
     const syncItem = async (imageType) => {
         axios.put('/api/updateceleb',{ data: {
             id:singleData.value.id_celeb,
@@ -112,6 +132,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         syncItem,
         showItem,
         removeItem,
+        removeFilmographyItems,
         updatePageSize,
         updateCurrentPage,
         updateSort,

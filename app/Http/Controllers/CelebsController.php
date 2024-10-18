@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InfoCelebs;
+use App\Models\LocalizingCelebsInfo;
 use Illuminate\Http\Request;
 
 class CelebsController extends Controller
@@ -148,7 +150,38 @@ class CelebsController extends Controller
     {
         //
     }
+    public function removeFromFilmography(Request $request){
+        $data = $request->all();
+        $celebsModelNames = [
+            0 => 'InfoCelebs',
+            1 => 'LocalizingCelebsInfo'
+        ];
 
+        if (!empty($data['data']['id']) && !empty($data['data']['id_items']) && !empty($data['data']['tab_index'])){
+            transaction( function () use ($data,$celebsModelNames){
+                foreach ($celebsModelNames as $name){
+                   $model = modelByName($name)->where('id_celeb',$data['data']['id']);
+                   $collection =  $model->get(['filmography','id']);
+                   if ($collection->isNotEmpty()){
+                       $filmographyDecodeArr = json_decode($collection->first()->filmography,true);
+                       foreach ($filmographyDecodeArr as $occupIndex => $occupation){
+                           foreach ($occupation as $index => $key){
+                               foreach ($data['data']['id_items'] as $delId){
+                                   if ($index == $delId && $occupIndex == $data['data']['tab_index']) {
+                                       unset($filmographyDecodeArr[$occupIndex][$index]);
+                                   }
+                               }
+                           }
+
+                       }
+                       $updateModel = $model->find($collection->first()->id);
+                       $updateModel->filmography = json_encode($filmographyDecodeArr);
+                       $updateModel->save();
+                   }
+                }
+            });
+        }
+    }
     /**
      * Remove the specified resource from storage.
      */
