@@ -87,7 +87,7 @@ class CategoriesController extends Controller
     }
     Collection::create($data->getData());
 }
-    public function store(Request $request)
+    public function store(Request $request):array
     {
         $data = Validator::make($request->all(),[
             'id_movie' => 'required|string|max:10',
@@ -96,6 +96,17 @@ class CategoriesController extends Controller
             'viewed' => 'boolean',
             'short' => 'boolean',
         ])->safe()->all();
+        if (!empty($data['categories'])){
+            foreach ($data['categories'] as $arr){
+                if (array_search(90000,$arr)  === 0 || array_search(1000000 ,$arr) === 0){
+                    if (count($data['categories']) > 1) {
+                        return ['success'=>false];
+                    }
+                    $data['allowed'] = 0;
+                    break;
+                }
+            }
+        }
         transaction( function () use ($data){
             CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
             if (!empty($data['categories'])){
@@ -111,11 +122,11 @@ class CategoriesController extends Controller
                         'franchise_id' => $franchiseId,
                         'viewed' => $data['viewed'] ?? null,
                         'short' => $data['short'] ?? null,
+                        'allowed' => $data['allowed'] ?? 1,
                     ]);
                 }
             }
-
         });
-
+        return ['success'=>true];
     }
 }

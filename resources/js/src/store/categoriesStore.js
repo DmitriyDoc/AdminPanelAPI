@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { ref }  from "vue";
+import {ElMessage} from "element-plus";
 
 export const useCategoriesStore = defineStore('categoriesStore',() => {
     const optionsCats = ref([]);
@@ -35,7 +36,18 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     const setCategories = async (data) => {
         try {
             axios.post('/api/categories',data).then((response) => {
-                });
+                if (response.data.success){
+                    ElMessage({
+                        type: 'success',
+                        message: 'Collection selected',
+                    })
+                } else {
+                    ElMessage({
+                        type: 'warning',
+                        message: 'Warning! This movie must has Russian or USSR collection',
+                    })
+                }
+            });
         } catch (e) {
             console.log('error',e);
         }

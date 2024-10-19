@@ -323,10 +323,12 @@
                     viewed: singleData.value.collection.viewed ?? false,
                     short: singleData.value.collection.short ?? false,
                 })
-                ElMessage({
-                    type: 'success',
-                    message: value.length !== 0 ?'Collection selected' :'Collection deleted',
-                })
+                if (value.length === 0){
+                    ElMessage({
+                        type: 'success',
+                        message: 'Collection deleted',
+                    })
+                }
             } else {
                 ElMessage({
                     type: 'info',
