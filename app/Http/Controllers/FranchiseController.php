@@ -25,6 +25,8 @@ class FranchiseController extends Controller
             5=>'black',
             6=>'brown',
             7=>'red',
+            8=>'silver',
+            9=>'tan',
         ];
 
         if (in_array($slugSect,$allowedSectionsNames)){

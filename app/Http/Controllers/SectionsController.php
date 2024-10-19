@@ -23,6 +23,7 @@ class SectionsController extends Controller
             6=>'brown',
             7=>'red',
             8=>'silver',
+            9=>'tan',
         ];
 
         if (in_array($slug,$allowedSectionsNames)){
