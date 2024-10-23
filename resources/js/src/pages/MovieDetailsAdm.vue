@@ -181,7 +181,7 @@
                 kbox('.kinobox_player', {search: {imdb: route.params.id },})
                 // kbox('.kinobox_player', {
                 //     search: {
-                //         kinopoisk: 1115471,
+                //         kinopoisk: 1204973,
                 //     },
                 //     players: {
                 //         videocdn: {enable: true, position: 1, domain: 'https://12537.svetacdn.in/gzIOdW6ZBYvH'}

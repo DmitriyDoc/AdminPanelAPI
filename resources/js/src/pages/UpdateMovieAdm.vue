@@ -29,6 +29,10 @@
                     <el-checkbox v-model="singleData.collection.short" label="Short film" border class="d-block pt-1" />
                 </div>
                 <div class="mt-3">
+                    <h5>Check type content:</h5>
+                    <el-checkbox v-model="singleData.collection.adult" label="Adult" border class="d-block pt-1" />
+                </div>
+                <div class="mt-3">
                     <h5>Select section:</h5>
                     <el-cascader v-model="singleData.collection.id" placeholder="select ..." :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
                         <template #default="{ node, data }">
@@ -322,6 +326,7 @@
                     categories: value??[],
                     viewed: singleData.value.collection.viewed ?? false,
                     short: singleData.value.collection.short ?? false,
+                    adult: singleData.value.collection.adult ?? false,
                 })
                 if (value.length === 0){
                     ElMessage({

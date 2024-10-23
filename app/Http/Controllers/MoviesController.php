@@ -145,6 +145,7 @@ class MoviesController extends Controller
                 }
                 $infoMovieData['collection']['viewed'] = (bool) $modelArr[0]['collection'][0]['viewed'] ?? false;
                 $infoMovieData['collection']['short'] = (bool) $modelArr[0]['collection'][0]['short'] ?? false;
+                $infoMovieData['collection']['adult'] = (bool) $modelArr[0]['collection'][0]['adult'] ?? false;
                 unset( $infoMovieData['collection'][0]);
                 unset($collection);
             }

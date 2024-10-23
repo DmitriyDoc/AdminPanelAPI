@@ -95,15 +95,16 @@ class CategoriesController extends Controller
             'categories' => 'present|array',
             'viewed' => 'boolean',
             'short' => 'boolean',
+            'adult' => 'boolean',
         ])->safe()->all();
         if (!empty($data['categories'])){
+
             foreach ($data['categories'] as $arr){
                 if (array_search(90000,$arr)  === 0 || array_search(1000000 ,$arr) === 0){
                     if (count($data['categories']) > 1) {
                         return ['success'=>false];
                     }
-                    $data['allowed'] = 0;
-                    break;
+
                 }
             }
         }
@@ -122,7 +123,7 @@ class CategoriesController extends Controller
                         'franchise_id' => $franchiseId,
                         'viewed' => $data['viewed'] ?? null,
                         'short' => $data['short'] ?? null,
-                        'allowed' => $data['allowed'] ?? 1,
+                        'adult' => $data['adult'] ?? null,
                     ]);
                 }
             }
