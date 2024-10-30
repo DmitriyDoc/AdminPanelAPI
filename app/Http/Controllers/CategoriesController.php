@@ -98,13 +98,18 @@ class CategoriesController extends Controller
             'adult' => 'boolean',
         ])->safe()->all();
         if (!empty($data['categories'])){
-
-            foreach ($data['categories'] as $arr){
-                if (array_search(90000,$arr)  === 0 || array_search(1000000 ,$arr) === 0){
-                    if (count($data['categories']) > 1) {
-                        return ['success'=>false];
+            if (count($data['categories']) >= 2) {
+                foreach ($data['categories'] as $arrLeft){
+                    if (array_search(90000,$arrLeft)  === 0 || array_search(1000000 ,$arrLeft) === 0){
+                        if ($arrLeft[0] != 90000 && $arrLeft[0] != 1000000){
+                            return ['success'=>false];
+                        }
+                        foreach ($data['categories'] as $arrRight){
+                            if ($arrRight[0] != $arrLeft[0]){
+                                return ['success'=>false];
+                            }
+                        }
                     }
-
                 }
             }
         }
