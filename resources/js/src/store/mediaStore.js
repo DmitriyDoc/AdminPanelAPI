@@ -38,7 +38,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     });
     const getAssignedImages = async () =>{
         try {
-            axios.get('/api/media/show/images/'
+            axios.get('/media/show/images/'
                 + route.params.slug
                 + '/'
                 + route.params.id
@@ -55,7 +55,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     }
     const getAssignedPosters = async () =>{
         try {
-            axios.get('/api/media/show/posters/'
+            axios.get('/media/show/posters/'
                 + route.params.id
             ).then((response) => {
                 response.data.forEach((item) => {
@@ -70,7 +70,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     }
     const getImages = async () =>{
         try {
-            axios.get('/api/media/images/'
+            axios.get('/media/images/'
                 + route.params.slug
                 + '/'
                 + route.params.id
@@ -91,7 +91,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     }
     const getPosters = async () =>{
         try {
-            axios.get('/api/media/posters/'
+            axios.get('/media/posters/'
                 + route.params.slug
                 + '/'
                 + route.params.id
@@ -117,7 +117,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     }
     const removeImages = async (ids,type) =>{
         try {
-            axios.delete('/api/media/'
+            axios.delete('/media/'
                 + type
                 + '/'
                 + route.params.slug, { data: ids}).then((response) => {
@@ -132,7 +132,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     }
     const setPoster = async (id,cat) =>{
         try {
-            axios.post('/api/media/poster_assign', {
+            axios.post('/media/poster_assign', {
                 type_film: route.params.slug,
                 id_movie: route.params.id,
                 id_poster: id,

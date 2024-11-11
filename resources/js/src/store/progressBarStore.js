@@ -11,7 +11,7 @@ export const useProgressBarStore = defineStore('progressBarStore',() => {
     const toggleButton = ref(true);
 
     const getCurrentPercentage = async () => {
-          await axios.get('/api/updatemovie/tracking?sesKey=dashboardPercentageBar'
+          await axios.get('/updatemovie/tracking?sesKey=dashboardPercentageBar'
         ).then((response) => {
             percentage.value = response.data.dashboardPercentageBar ?? 0;
             if (percentage.value < 100){
@@ -23,7 +23,7 @@ export const useProgressBarStore = defineStore('progressBarStore',() => {
     }
     const getSyncCurrentPercentage = async (key) => {
         statusBar.value = '';
-        await axios.get('/api/updateceleb/tracking?sesKey='+key
+        await axios.get('/updateceleb/tracking?sesKey='+key
         ).then((response) => {
             percentageSync.value = response.data[key] ?? 0;
             if (percentageSync.value < 100){
@@ -37,7 +37,7 @@ export const useProgressBarStore = defineStore('progressBarStore',() => {
         });
     }
     const getReportParser = async () => {
-        await axios.get('/api/updatemovie/tracking?sesKey=report'
+        await axios.get('/updatemovie/tracking?sesKey=report'
         ).then((response) => {
             if (Object.keys(response.data).length){
                 parserReport.value = response.data;

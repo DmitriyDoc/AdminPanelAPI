@@ -156,7 +156,9 @@
             </div>
         </el-tab-pane>
         <el-tab-pane label="Role">Role</el-tab-pane>
-        <el-tab-pane label="Task">Task</el-tab-pane>
+        <el-tab-pane label="Test">
+            <el-button type="danger" @click="handleTestTranslate()" class="mt-3">Translate celebs (test)</el-button>
+        </el-tab-pane>
     </el-tabs>
     <el-dialog
         v-if="Object.keys(parserReport).length"
@@ -508,6 +510,9 @@
             })
         });
     };
+    const  handleTestTranslate = () => {
+        parserStore.test();
+    }
 </script>
 
 <style  lang="scss" scoped>

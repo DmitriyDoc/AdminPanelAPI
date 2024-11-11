@@ -25,7 +25,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const getMovies = () =>{
         try {
             tableData.value = [];
-            axios.get('/api/movies/'
+            axios.get('/movies/'
                 + route.params.slug
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
@@ -45,7 +45,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     }
     const showItem = async () =>{
         try {
-            axios.get('/api/movies/' + route.params.slug + '/show/' + route.params.id
+            axios.get('/movies/' + route.params.slug + '/show/' + route.params.id
             ).then((response) => {
                 singleData.value = response.data;
             });
@@ -57,13 +57,13 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         }
     }
     const removeItem = async (id,index) => {
-        axios.delete('/api/movies/' + route.params.slug + '/' + id).then((response) => {
+        axios.delete('/movies/' + route.params.slug + '/' + id).then((response) => {
             tableData.value.splice(index,1);
             showItem();
         });
     }
     const updateItem = async (dataForm) => {
-        axios.patch('/api/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm })
+        axios.patch('/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm })
             .then((response) => {
                 if (response.status === 200) {
                     showItem();
@@ -80,7 +80,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         });
     }
     const syncItem = async (posterType) => {
-        axios.put('/api/updatemovie',{ data: {
+        axios.put('/updatemovie',{ data: {
             id: singleData.value.id_movie??route.params.id,
             type: route.params.slug,
             posterType: posterType,

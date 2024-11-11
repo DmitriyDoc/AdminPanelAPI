@@ -8,7 +8,7 @@
         active-text-color="#ffd04b"
         @select="handleSelect"
     >
-        <el-menu-item index="1"><router-link to="/">Dashboard</router-link></el-menu-item>
+        <el-menu-item index="1"><router-link to="/dashboard">Dashboard</router-link></el-menu-item>
 <!--        <el-menu-item  index="2"><router-link to="/parser">Parser</router-link></el-menu-item>-->
         <el-menu-item  index="3"><router-link to="/movies/FeatureFilm">Movies Info</router-link></el-menu-item>
         <el-menu-item  index="4"><router-link to="/persons/Celebs">Celebs Info</router-link></el-menu-item>
@@ -20,7 +20,7 @@
     import { ref } from 'vue'
 
     const activeIndex = ref('1')
-    const activeIndex2 = ref('1')
+    const activeIndex2 = ref('2')
     const handleSelect = (key, keyPath) => {
         console.log(key, keyPath)
     }

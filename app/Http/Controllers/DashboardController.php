@@ -40,11 +40,10 @@ class DashboardController
             7=>'Video',
             8=>'Celebs',
         ];
+        session()->forget('tracking.dashboardPercentageBar');
+        session(['tracking.dashboardPercentageBar' => 0]);
+        session()->save();
 
-        if (session()->missing('tracking.dashboardPercentageBar')) {
-            session(['tracking.dashboardPercentageBar' => 0]);
-            session()->save();
-        }
         foreach ($allowedTableNames as $index => $name) {
             $model = convertVariableToModelName('IdType',$name, ['App', 'Models']);
             $data[$index]['key'] = $index.'_'.$name;
@@ -68,7 +67,7 @@ class DashboardController
         $attempts = 5;
         $tr = new GoogleTranslateForFree();
 
-        $model = InfoCelebs::query()->offset(840000)->limit(10000)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
+        $model = InfoCelebs::query()->offset(1560000)->limit(0)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
         foreach ($model->toArray() as $field){
             $resultFilmography = null;
             $resultNameActor = null;

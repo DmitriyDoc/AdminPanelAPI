@@ -24,7 +24,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
 
     const getSections = async () =>{
         try {
-            axios.get('/api/categories/sections').then((response) => {
+            axios.get('/categories/sections').then((response) => {
                 sections.value = response.data;
             });
         } catch (e) {
@@ -33,7 +33,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
     }
     const getDataSections = async () =>{
         try {
-            axios.get('/api/sections/'
+            axios.get('/sections/'
                 + route.params.slug
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
@@ -51,7 +51,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
     }
     const removeItemFromSection = async (id,index) => {
         try {
-            axios.delete('/api/sections',{ data: {
+            axios.delete('/sections',{ data: {
                     id_movie: id,
                 }}
             ).then((response) => {

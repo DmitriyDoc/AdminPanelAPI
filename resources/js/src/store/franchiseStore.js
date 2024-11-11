@@ -24,7 +24,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
 
     const getDataFranchise = async () =>{
         try {
-            axios.get('/api/franchise/'
+            axios.get('/franchise/'
                 + route.params.slug
                 + '/'
                 + route.params.franName
@@ -44,7 +44,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
     }
     const getListFranchise = async () =>{
         try {
-            axios.get('/api/franchise'
+            axios.get('/franchise'
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
@@ -61,7 +61,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
     }
     const removeItemFromFranchise = async (id,index) => {
         try {
-            axios.delete('/api/franchise/del',{ data: {
+            axios.delete('/franchise/del',{ data: {
                     id: id,
                 }}
             ).then((response) => {

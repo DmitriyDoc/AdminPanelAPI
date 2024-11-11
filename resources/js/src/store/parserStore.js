@@ -8,7 +8,7 @@ export const useParserStore = defineStore('parserStore',() => {
     const error = ref(null);
 
     const addCelebById = async (idCeleb) => {
-        axios.put('/api/updateceleb',{ data: {
+        axios.put('/updateceleb',{ data: {
                 id:idCeleb,
                 type:'Celebs',
                 imageType:'event',
@@ -28,7 +28,7 @@ export const useParserStore = defineStore('parserStore',() => {
     };
 
     const parserStart = async (params) => {
-        axios.post('/api/parser',{ data: params
+        axios.post('/parser',{ data: params
             }).then((response) => {
                 if (response.status === 200) {
                     ElMessage({
@@ -43,9 +43,20 @@ export const useParserStore = defineStore('parserStore',() => {
                 }
             });
     };
+    const test = async () =>{
+        try {
+            axios.get('/translate/celebs').then((response) => {
+
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        }
+    }
     return {
         loader,
         error,
+        test,
         addCelebById,
         parserStart,
 

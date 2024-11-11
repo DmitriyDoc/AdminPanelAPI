@@ -24,7 +24,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
 
     const getCelebs = async () =>{
         try {
-            axios.get('/api/persons/'
+            axios.get('/persons/'
                 + route.params.slug
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
@@ -44,7 +44,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
     }
     const showItem = async () =>{
         try {
-            axios.get('/api/persons/' + route.params.slug + '/show/' + route.params.id
+            axios.get('/persons/' + route.params.slug + '/show/' + route.params.id
             ).then((response) => {
                 singleData.value = response.data;
             });
@@ -56,13 +56,13 @@ export const usePersonsStore = defineStore('personsStore',() => {
         }
     }
     const removeItem = async (id,index) => {
-        axios.delete('/api/persons/' + route.params.slug + '/' + id).then((response) => {
+        axios.delete('/persons/' + route.params.slug + '/' + id).then((response) => {
             tableData.value.splice(index,1);
             getCelebs();
         });
     }
     const removeFilmographyItems = async (idArray,activeTab) => {
-        axios.patch('/api/persons/remove_items',{ data: {
+        axios.patch('/persons/remove_items',{ data: {
                 id: singleData.value.id_celeb,
                 tab_index: activeTab,
                 id_items: idArray,
@@ -82,7 +82,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         });
     }
     const syncItem = async (imageType) => {
-        axios.put('/api/updateceleb',{ data: {
+        axios.put('/updateceleb',{ data: {
             id:singleData.value.id_celeb,
             type:'Celebs',
             imageType: imageType,

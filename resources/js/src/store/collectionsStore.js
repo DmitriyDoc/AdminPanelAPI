@@ -24,7 +24,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
 
     const getDataCollections = async () =>{
         try {
-            axios.get('/api/collections/'
+            axios.get('/collections/'
                 + route.params.slug
                 + '/'
                 + route.params.collName
@@ -44,7 +44,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
     }
     const getListCollections = async () =>{
         try {
-            axios.get('/api/collections'
+            axios.get('/collections'
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
@@ -61,7 +61,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
     }
     const removeItemFromCollection = async (id,index) => {
         try {
-            axios.delete('/api/collections/del',{ data: {
+            axios.delete('/collections/del',{ data: {
                     id: id,
                 }}
             ).then((response) => {

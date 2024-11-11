@@ -7,7 +7,7 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     const optionsCats = ref([]);
     const getCategories = async () =>{
         try {
-            axios.get('/api/categories/').then((response) => {
+            axios.get('/categories/').then((response) => {
                 optionsCats.value = response.data;
             });
         } catch (e) {
@@ -17,7 +17,7 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
 
     const getCategoriesFranchise = async () =>{
         try {
-            axios.get('/api/categories/select_franchise').then((response) => {
+            axios.get('/categories/select_franchise').then((response) => {
                 optionsCats.value = response.data;
             });
         } catch (e) {
@@ -26,7 +26,7 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     }
     const getCategoriesCollection = async () =>{
         try {
-            axios.get('/api/categories/select_collection').then((response) => {
+            axios.get('/categories/select_collection').then((response) => {
                 optionsCats.value = response.data;
             });
         } catch (e) {
@@ -35,7 +35,7 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     }
     const setCategories = async (data) => {
         try {
-            axios.post('/api/categories',data).then((response) => {
+            axios.post('/categories',data).then((response) => {
                 if (response.data.success){
                     ElMessage({
                         type: 'success',
@@ -54,7 +54,7 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     }
     const setCategoryFranchise = async (data) => {
         try {
-            axios.post('/api/categories/franchise',data).then((response) => {
+            axios.post('/categories/franchise',data).then((response) => {
             });
         } catch (e) {
             console.log('error',e);
@@ -62,7 +62,7 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     }
     const setCategoryCollection = async (data) => {
         try {
-            axios.post('/api/categories/collection',data).then((response) => {
+            axios.post('/categories/collection',data).then((response) => {
             });
         } catch (e) {
             console.log('error',e);

@@ -9,7 +9,7 @@ export const useDashboardStore = defineStore('dashboardStore',() => {
 
     const getMoviesCount = async () =>{
         try {
-             await axios.get('/api/dashboard').then((response) => {
+             await axios.get('/dashboard').then((response) => {
                  countCard.value = response.data.data
              });
         } catch (error) {

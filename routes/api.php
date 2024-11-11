@@ -13,21 +13,28 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+/**
+ * ------------------------------------------------------------------------
+ * test routes
+ * ------------------------------------------------------------------------
+ */
+//Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
+Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
 
-//Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//    return $request->user();
-//});
+/**
+ * ------------------------------------------------------------------------
+ * auth routes
+ * ------------------------------------------------------------------------
+ */
+Route::post('login', [\App\Http\Controllers\AuthController::class, 'login']);
+Route::get('auth/verify', [\App\Http\Controllers\AuthController::class, 'verify']);
 
-// PARSER QUERY
-//Route::any('/idtype', 'App\Http\Controllers\Parser\ParserIdTypeController');
-//
-//Route::any('/info', 'App\Http\Controllers\Parser\ParserInfoController');
-//Route::any('/infocelebs', 'App\Http\Controllers\Parser\ParserInfoCelebsController');
-//Route::any('/celebscredits', 'App\Http\Controllers\Parser\ParserInfoCelebsCreditsController');
-//Route::any('/idimages', 'App\Http\Controllers\Parser\ParserIdImagesController');
-//Route::any('/images', 'App\Http\Controllers\Parser\ParserImagesController');
-//
-Route::group(['middleware' => ['api']], function () {
+/**
+ * ------------------------------------------------------------------------
+ * sanctum routes
+ * ------------------------------------------------------------------------
+ */
+Route::middleware('auth:sanctum')->group(function () {
     Route::put('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
     Route::get('/updatemovie/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
 
@@ -41,17 +48,13 @@ Route::group(['middleware' => ['api']], function () {
     Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
     Route::get('/dashboard/tracking',[\App\Http\Controllers\TrackingProgressBarController::class, 'trackingDashboard'])->block();;
 
-
-    Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
-    Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
-
     // MEDIA QUERY
     Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
-    Route::get('/media/show/images/{slug}/{id}', 'showImages');
-    Route::get('/media/show/posters/{id}', 'showPosters');
-    Route::get('/media/{type}/{slug}/{id}', 'index');
-    Route::post('/media/poster_assign', 'store');
-    Route::delete('/media/{type}/{slug}', 'destroy');
+        Route::get('/media/show/images/{slug}/{id}', 'showImages');
+        Route::get('/media/show/posters/{id}', 'showPosters');
+        Route::get('/media/{type}/{slug}/{id}', 'index');
+        Route::post('/media/poster_assign', 'store');
+        Route::delete('/media/{type}/{slug}', 'destroy');
     });
     // Resources QUERY
     Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
@@ -91,5 +94,95 @@ Route::group(['middleware' => ['api']], function () {
         Route::get('/franchise', 'list');
         Route::delete('/franchise/del', 'destroy');
     });
+    /**
+     * ------------------------------------------------------------------------
+     * common routes
+     * ------------------------------------------------------------------------
+     */
+    Route::get('logout', [
+        \App\Http\Controllers\AuthController::class,
+        'logout',
+    ]);
+    Route::get('user', function (Request $request) {
+        return $request->user();
+    });
+    /**
+     * ------------------------------------------------------------------------
+     * users routes
+     * ------------------------------------------------------------------------
+     */
+    Route::get('users', [
+        \App\Http\Controllers\UserController::class,
+        'index',
+    ])->middleware('permission:users-all|users-view');
 
+    Route::post('users', [
+        \App\Http\Controllers\UserController::class,
+        'store',
+    ])->middleware('permission:users-all|users-create');
+
+    Route::patch('users/{userId}', [
+        \App\Http\Controllers\UserController::class,
+        'update',
+    ])->middleware('permission:users-all|users-edit');
+
+    Route::delete('users/{userId}', [
+        \App\Http\Controllers\UserController::class,
+        'destroy',
+    ])->middleware('permission:users-all|users-delete');
+
+    /**
+     * ------------------------------------------------------------------------
+     * roles routes
+     * ------------------------------------------------------------------------
+     */
+    Route::get('roles', [
+        \App\Http\Controllers\RoleController::class,
+        'index',
+    ])->middleware('permission:roles-all|roles-view');
+
+    Route::post('roles', [
+        \App\Http\Controllers\RoleController::class,
+        'store',
+    ])->middleware('permission:roles-all|roles-create');
+
+    Route::patch('roles/{roleId}', [
+        \App\Http\Controllers\RoleController::class,
+        'update',
+    ])->middleware('permission:roles-all|roles-edit');
+
+    Route::delete('roles/{roleId}', [
+        \App\Http\Controllers\RoleController::class,
+        'destroy',
+    ])->middleware('permission:roles-all|roles-delete');
+
+    /**
+     * ------------------------------------------------------------------------
+     * permissions routes
+     * ------------------------------------------------------------------------
+     */
+    Route::get('permissions', [
+        \App\Http\Controllers\PermissionController::class,
+        'index',
+    ])->middleware('permission:permissions-all|permissions-view');
+
+    Route::post('permissions', [
+        \App\Http\Controllers\PermissionController::class,
+        'store',
+    ])->middleware('permission:permissions-all|permissions-create');
+
+    Route::patch('permissions/{permissionId}', [
+        \App\Http\Controllers\PermissionController::class,
+        'update',
+    ])->middleware('permission:permissions-all|permissions-edit');
+
+    Route::delete('permissions/{permissionId}', [
+        \App\Http\Controllers\PermissionController::class,
+        'destroy',
+    ])->middleware('permission:permissions-all|permissions-delete');
 });
+
+
+
+
+

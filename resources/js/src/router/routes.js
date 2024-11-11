@@ -13,77 +13,181 @@ import FranchiseAddAdm from "@/pages/FranchiseAddAdm.vue";
 import FranchiseListAdm from "@/pages/FranchiseListAdm.vue";
 import CollectionListAdm from "@/pages/CollectionListAdm.vue";
 import CollectionAddAdm from "@/pages/CollectionAddAdm.vue";
+import LoginAdm from "@/pages/LoginAdm.vue";
 
 const routes = [
     {
         path: '/',
-        component: DashboardAdm
+        name: 'login',
+        component: () => import('../pages/LoginAdm.vue'),
+        meta: {
+            layout: 'sign_in',
+            permissions: [],
+        },
+    },
+    {
+        path: '/users',
+        name: 'users',
+        component: () => import('../pages/Users.vue'),
+        meta: {
+            layout: 'full',
+            permissions: ['users-all', 'users-view'],
+        },
+    },
+
+    {
+        path: '/roles',
+        name: 'roles',
+        component: () => import('../pages/Roles.vue'),
+        meta: {
+            layout: 'full',
+            permissions: ['roles-all', 'roles-view'],
+        },
+    },
+
+    {
+        path: '/permissions',
+        name: 'permissions',
+        component: () => import('../pages/Permissions.vue'),
+        meta: {
+            layout: 'full',
+            permissions: ['permissions-all', 'permissions-view'],
+        },
+    },
+    {
+        path: '/dashboard',
+        name: 'dashboard',
+        component: DashboardAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/parser',
-        component: ParserAdm
+        name: 'parser',
+        component: ParserAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/movies/:slug',
+        name: 'movies',
         component: MoviesInfoAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/persons/:slug',
+        name: 'persons',
         component: PersonsInfoAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/section/:slug',
+        name: 'showSection',
         component: SectionsInfoAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/section/:slug/:collName',
-        component: CollectionsInfoAdm,
         name: 'showCollection',
+        component: CollectionsInfoAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/section/:slug/:collName/:franName',
-        component: FranchisesInfoAdm,
         name: 'showFranchise',
+        component: FranchisesInfoAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/movies/:slug/show/:id',
-        component: MovieDetailsAdm,
         name: 'showmovie',
+        component: MovieDetailsAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/persons/:slug/show/:id',
-        component: PersonDetailsAdm,
         name: 'showperson',
+        component: PersonDetailsAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/movies/:slug/edit/:id',
-        component: UpdateMovieAdm,
         name: 'editMovie',
+        component: UpdateMovieAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/persons/:slug/edit/:id',
-        component: UpdatePersonAdm,
         name: 'editPerson',
+        component: UpdatePersonAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/categories/franchise/',
-        component: FranchiseAddAdm,
         name: 'addFranchise',
+        component: FranchiseAddAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/categories/franchise/list',
-        component: FranchiseListAdm,
         name: 'listFranchise',
+        component: FranchiseListAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/categories/collection/',
-        component: CollectionAddAdm,
         name: 'addCollection',
+        component: CollectionAddAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
     {
         path: '/categories/collection/list',
-        component: CollectionListAdm,
         name: 'listCollection',
+        component: CollectionListAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
     },
 
 ];
