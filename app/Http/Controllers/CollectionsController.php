@@ -163,12 +163,10 @@ class CollectionsController extends Controller
             if (!in_array($sortBy,$allowedFilterFields)){
                 $sortBy = $allowedSortFields[0];
             }
-            $collectionSort = $CollectionCol->sortBy($sortBy)->forPage($page,$limit);
             if (in_array($sortDir,$allowedSortFields)){
-                if ($sortDir == 'asc'){
-                    $collectionSort = $collectionSort->sortByDesc($sortBy);
-                }
+                $sortDir == 'desc' ? $CollectionCol = $CollectionCol->sortByDesc($sortBy) : $CollectionCol->sortBy($sortBy);
             }
+            $collectionSort = $CollectionCol->forPage($page,$limit);
             $collectionSortArr = $collectionSort->values()->toArray();
             return [
                 'total' => $itemsCount,

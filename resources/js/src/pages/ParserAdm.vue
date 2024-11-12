@@ -193,7 +193,7 @@
                             Parsed and Localizing<el-icon class="header-icon"><info-filled /></el-icon>
                         </el-badge>
                     </template>
-                    <span v-for="item in parserReport.report.finishLocalizing" class="flex gap-2">
+                    <span v-for="item in parserReport.report.finishLocalizing">
                         <el-tag type="success" class="m-1">{{item}}</el-tag>
                     </span>
                 </el-collapse-item>
@@ -203,13 +203,13 @@
             <h4 class="mt-2">Finish Parse Info for Type(s):</h4>
             <ul class="list-group-flush">
                 <template v-for="item in parserReport.report.finishInfo">
-                    <li class="list-group-item"><el-icon color="#67C23A" style=" margin-left: -30px" ><Check /></el-icon>{{item}}</li>
+                    <li class="list-group-item"><el-icon color="#67C23A"  ><Check /></el-icon>{{item}}</li>
                 </template>
             </ul>
         </template>
         <template v-if="parserReport.report.finishActualize">
             <h4 class="mt-2">Finish Actualize Table(s):</h4>
-            <span v-for="item in parserReport.report.finishActualize" class="flex gap-2">
+            <span v-for="item in parserReport.report.finishActualize" >
                 <el-tag type="primary" class="m-1">{{item}}</el-tag>
             </span>
         </template>

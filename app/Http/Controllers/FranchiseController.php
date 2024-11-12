@@ -130,12 +130,10 @@ class FranchiseController extends Controller
             if (!in_array($sortBy,$allowedFilterFields)){
                 $sortBy = $allowedSortFields[0];
             }
-            $collectionSort = $franchiseCollection->sortBy($sortBy)->forPage($page,$limit);
             if (in_array($sortDir,$allowedSortFields)){
-                if ($sortDir == 'asc'){
-                    $collectionSort = $collectionSort->sortByDesc($sortBy);
-                }
+                $sortDir == 'desc' ? $franchiseCollection = $franchiseCollection->sortByDesc($sortBy) : $franchiseCollection->sortBy($sortBy);
             }
+            $collectionSort = $franchiseCollection->forPage($page,$limit);
             $collectionSortArr = $collectionSort->values()->toArray();
             return [
                 'total' => $itemsCount,
