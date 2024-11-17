@@ -2,7 +2,9 @@
 
 namespace App\Traits\Components;
 
+use App\Http\Controllers\TranslatorController;
 use DiDom\Document;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 trait MoviesInfoTrait
@@ -79,7 +81,19 @@ trait MoviesInfoTrait
                     if ($document->has(".ipc-chip-list__scroller a")){
                         $genresContainer = $document->find(".ipc-chip-list__scroller a");
                         foreach ($genresContainer as $item){
-                            $genresArray['genres'][] = $item->text();
+                            $tag = $item->text();
+                            $tagExist = DB::table('tags')->where('tag_name','=',$tag)->first();
+                            if (!$tagExist) {
+                                $translator = new TranslatorController();
+                                $tagRus = $translator->translateTag($tag) ?? null;
+                                DB::table('tags')->updateOrInsert([
+                                    ['value' => strtolower(str_ireplace(' ', '_',$item->tag_name))],
+                                    ['tag_name' => $tag],
+                                    ['tag_name_ru' => $tagRus],
+                                ]);
+                            }
+                            $genresArray['genres'][] = $tag;
+                            unset($tag);
                         }
                         $insertData['genres'] = serialize($genresArray)??null;
                         unset($genresArray);

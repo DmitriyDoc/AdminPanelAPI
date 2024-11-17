@@ -40,7 +40,8 @@ class SectionsController extends Controller
 
             if (!empty($moviesIds)){
                 array_walk($moviesIds, function($item, $key) use (&$TypeFilmArray) {
-                    $TypeFilmArray[$item['type_film']][] = $item['id_movie'];
+                    $typeFilm = getTableSegmentOrTypeId($item['type_film']);
+                    $TypeFilmArray[$typeFilm][] = $item['id_movie'];
                 });
                 foreach ($TypeFilmArray as $key => $item){
                     $model = convertVariableToModelName('IdType',$key, ['App', 'Models']);
@@ -70,10 +71,9 @@ class SectionsController extends Controller
                         }
                     }
                     $collectionSortArr = $collectionSort->values()->toArray();
-
                     foreach ($collectionSortArr as $movieItem){
                         if ($movieItem['assign_poster']){
-                            $idsPostersArr[$movieItem['assign_poster']['type_film']][] = $movieItem['assign_poster']['id_poster_original'];
+                            $idsPostersArr[getTableSegmentOrTypeId($movieItem['assign_poster']['type_film'])][] = $movieItem['assign_poster']['id_poster_original'];
                         }
                     }
                     if (!empty($idsPostersArr)){

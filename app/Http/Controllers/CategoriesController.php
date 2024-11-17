@@ -7,7 +7,10 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
+use App\Models\Tag;
+use App\Models\TagsMoviesPivot;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use function Nette\Utils\data;
 
@@ -93,6 +96,7 @@ class CategoriesController extends Controller
             'id_movie' => 'required|string|max:10',
             'type_film' => 'required|string|max:12',
             'categories' => 'present|array',
+            'tags' => 'array',
             'viewed' => 'boolean',
             'short' => 'boolean',
             'adult' => 'boolean',
@@ -115,6 +119,7 @@ class CategoriesController extends Controller
         }
         transaction( function () use ($data){
             CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
+            TagsMoviesPivot::where('id_movie',$data['id_movie'])->delete();
             if (!empty($data['categories'])){
                 foreach ( $data['categories'] as $cat){
                     $franchiseId = null;
@@ -123,13 +128,25 @@ class CategoriesController extends Controller
                     }
                     CollectionsCategoriesPivot::create([
                         'id_movie' =>$data['id_movie'],
-                        'type_film' => $data['type_film'],
+                        'type_film' => getTableSegmentOrTypeId($data['type_film']),
                         'collection_id' => $cat[1],
                         'franchise_id' => $franchiseId,
                         'viewed' => $data['viewed'] ?? null,
                         'short' => $data['short'] ?? null,
                         'adult' => $data['adult'] ?? null,
                     ]);
+                }
+                if (!empty($data['tags'])){
+                    foreach ($data['tags'] as $tag){
+                        $tagExist = DB::table('tags')->where('tag_name','=',$tag)->first();
+                        if ($tagExist){
+                            TagsMoviesPivot::create([
+                                'id_movie' => $data['id_movie'],
+                                'id_tag' => $tagExist->id,
+                                'type_film' => getTableSegmentOrTypeId($data['type_film'])
+                            ]);
+                        }
+                    }
                 }
             }
         });

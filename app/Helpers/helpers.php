@@ -123,4 +123,25 @@ if (!function_exists('cascaderStructure')) {
         }
         return $collectionArray ?? '';
     }
+    if (!function_exists('getTableSegmentOrTypeId')) {
+        function getTableSegmentOrTypeId(mixed $segment)
+        {
+            $allowedTableNames = [
+                1=>'FeatureFilm',
+                2=>'MiniSeries',
+                3=>'ShortFilm',
+                4=>'TvMovie',
+                5=>'TvSeries',
+                6=>'TvShort',
+                7=>'TvSpecial',
+                8=>'Video',
+            ];
+            if (is_string($segment)){
+                return array_search($segment, $allowedTableNames);
+            }
+            if (is_numeric($segment)){
+                return $allowedTableNames[$segment];
+            }
+        }
+    }
 }

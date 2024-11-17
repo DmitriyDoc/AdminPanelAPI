@@ -18,13 +18,13 @@
                             <RouterLink to="/movies/TvSpecial"><el-menu-item index="1-1">Tv Special</el-menu-item></RouterLink>
                             <RouterLink to="/movies/Video"><el-menu-item index="1-1">Video</el-menu-item></RouterLink>
                         </el-menu-item-group>
-                        <el-menu-item-group title="Group 2">
-                            <el-menu-item index="1-3">Option 3</el-menu-item>
-                        </el-menu-item-group>
-                        <el-sub-menu index="1-4">
-                            <template #title>Option4</template>
-                            <el-menu-item index="1-4-1">Option 4-1</el-menu-item>
-                        </el-sub-menu>
+<!--                        <el-menu-item-group title="Group 2">-->
+<!--                            <el-menu-item index="1-3">Option 3</el-menu-item>-->
+<!--                        </el-menu-item-group>-->
+<!--                        <el-sub-menu index="1-4">-->
+<!--                            <template #title>Option4</template>-->
+<!--                            <el-menu-item index="1-4-1">Option 4-1</el-menu-item>-->
+<!--                        </el-sub-menu>-->
                     </el-sub-menu>
                     <el-sub-menu index="2">
                         <template #title>

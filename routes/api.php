@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
 /**
  * ------------------------------------------------------------------------
  * test routes
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Route;
  */
 //Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
 Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
+Route::get('/translate/tags',[\App\Http\Controllers\TagsController::class, 'testTags']);
+
 
 /**
  * ------------------------------------------------------------------------

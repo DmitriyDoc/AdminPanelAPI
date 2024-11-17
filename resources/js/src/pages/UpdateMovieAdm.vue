@@ -324,6 +324,7 @@
                     id_movie: singleData.value.id_movie,
                     type_film: route.params.slug,
                     categories: value??[],
+                    tags: singleData.value.genres??[],
                     viewed: singleData.value.collection.viewed ?? false,
                     short: singleData.value.collection.short ?? false,
                     adult: singleData.value.collection.adult ?? false,

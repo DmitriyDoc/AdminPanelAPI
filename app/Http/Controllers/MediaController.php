@@ -142,13 +142,13 @@ class MediaController extends Controller
             if ($model && !empty($id)){
                 AssignPoster::where('id_movie',$data['id_movie'])->update([
                     $data['poster_cat']=>$id,
-                    'type_film'=>$data['type_film'],
+                    'type_film'=>getTableSegmentOrTypeId($data['type_film']),
                 ]);
             } else {
                 AssignPoster::create([
                     'id_movie'=>$data['id_movie'],
                     $data['poster_cat']=>$id,
-                    'type_film'=>$data['type_film'],
+                    'type_film'=>getTableSegmentOrTypeId($data['type_film']),
                 ]);
             }
         }
@@ -223,7 +223,7 @@ class MediaController extends Controller
 
                 }
                 unset($assignPostersArr);
-                $model = convertVariableToModelName('Posters',$type, ['App', 'Models']);
+                $model = convertVariableToModelName('Posters',getTableSegmentOrTypeId($type), ['App', 'Models']);
                 $res = $model::select('id','id_movie','src','srcset')->whereIn('id',$idArr)->get()->toArray();
 
                 if (!empty($res)){

@@ -50,6 +50,7 @@ class ParserUpdateMovieController extends ParserController
             4=>'TvSpecial',
             5=>'TvShort',
             6=>'ShortFilm',
+            7=>'FeatureFilm',
         ];
         if ($data = $request->all()){
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);

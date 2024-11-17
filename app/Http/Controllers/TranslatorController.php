@@ -56,7 +56,9 @@ class TranslatorController
             Log::info("ERROR--EXEPTION>>>{$e}");
         }
     }
-
+    public function translateTag($inputTag){
+        return $this->startTranslate($inputTag);
+    }
     public function translateMovie($dataInfo, $movieId, $columnKey) {
         $this->columnId = $movieId;
         $this->columnKey = $columnKey;

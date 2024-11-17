@@ -8,7 +8,9 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\IdTypeFeatureFilm;
 use App\Models\InfoFeatureFilm;
+use App\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MoviesController extends Controller
