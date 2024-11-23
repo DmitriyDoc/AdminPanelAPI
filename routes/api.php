@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Route;
  */
 //Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
 Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
-Route::get('/translate/tags',[\App\Http\Controllers\TagsController::class, 'testTags']);
 
 
 /**
@@ -96,6 +95,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/franchise/{slugSect}/{slugFran}', 'index');
         Route::get('/franchise', 'list');
         Route::delete('/franchise/del', 'destroy');
+    });
+    Route::controller(\App\Http\Controllers\TagsController::class)->group(function () {
+        Route::get('/tag/{tagName}', 'index');
+        Route::get('/tags', 'list');
+        //Route::delete('/tags/del', 'destroy');
     });
     /**
      * ------------------------------------------------------------------------

@@ -159,7 +159,6 @@
             Role</el-tab-pane>
         <el-tab-pane label="Test">
             <el-button type="danger" @click="handleTestTranslate()" class="mt-3">Translate celebs (test)</el-button><br>
-            <el-button type="primary" @click="handleTestTag()" class="mt-3">Create tags (test)</el-button>
         </el-tab-pane>
     </el-tabs>
     <el-dialog
@@ -514,9 +513,6 @@
     };
     const  handleTestTranslate = () => {
         parserStore.test();
-    }
-    const  handleTestTag = () => {
-        parserStore.tags();
     }
 </script>
 

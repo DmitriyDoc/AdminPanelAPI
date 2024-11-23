@@ -13,6 +13,8 @@ import FranchiseAddAdm from "@/pages/FranchiseAddAdm.vue";
 import FranchiseListAdm from "@/pages/FranchiseListAdm.vue";
 import CollectionListAdm from "@/pages/CollectionListAdm.vue";
 import CollectionAddAdm from "@/pages/CollectionAddAdm.vue";
+import TagListAdm from "@/pages/TagListAdm.vue";
+import TagsInfoAdm from "@/pages/TagsInfoAdm.vue";
 import LoginAdm from "@/pages/LoginAdm.vue";
 
 const routes = [
@@ -184,6 +186,24 @@ const routes = [
         path: '/categories/collection/list',
         name: 'listCollection',
         component: CollectionListAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/categories/tags/list',
+        name: 'listTag',
+        component: TagListAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/categories/tag/:tagName',
+        name: 'showTags',
+        component: TagsInfoAdm,
         meta: {
             layout: 'full',
             permissions: [],

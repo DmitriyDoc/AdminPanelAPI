@@ -63,6 +63,10 @@
                             <RouterLink to="/categories/collection/list"><el-menu-item index="3-1">List Collection</el-menu-item></RouterLink>
 <!--                            <el-menu-item index="3-2">Option 2</el-menu-item>-->
                         </el-menu-item-group>
+                        <el-menu-item-group>
+                            <template #title><h6>Tags:</h6></template>
+                            <RouterLink to="/categories/tags/list"><el-menu-item index="3-1">List Tags</el-menu-item></RouterLink>
+                        </el-menu-item-group>
 <!--                        <el-menu-item-group title="Group 2">-->
 <!--                            <el-menu-item index="3-3">Option 3</el-menu-item>-->
 <!--                        </el-menu-item-group>-->

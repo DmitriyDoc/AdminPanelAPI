@@ -53,16 +53,6 @@ export const useParserStore = defineStore('parserStore',() => {
             console.log('error',e);
         }
     }
-    const tags = async () =>{
-        try {
-            axios.get('/translate/tags').then((response) => {
-
-            });
-        } catch (e) {
-            error.value = e;
-            console.log('error',e);
-        }
-    }
     return {
         loader,
         error,

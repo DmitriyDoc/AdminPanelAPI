@@ -67,7 +67,7 @@ class DashboardController
         $attempts = 5;
         $tr = new GoogleTranslateForFree();
 
-        $model = InfoCelebs::query()->offset(1910000)->limit(10000)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
+        $model = InfoCelebs::query()->offset(2160000)->limit(30000)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
         foreach ($model->toArray() as $field){
             $resultFilmography = null;
             $resultNameActor = null;
