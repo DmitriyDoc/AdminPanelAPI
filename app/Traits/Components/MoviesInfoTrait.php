@@ -3,6 +3,7 @@
 namespace App\Traits\Components;
 
 use App\Http\Controllers\TranslatorController;
+use App\Models\Tag;
 use DiDom\Document;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -86,11 +87,11 @@ trait MoviesInfoTrait
                             if (!$tagExist) {
                                 $translator = new TranslatorController();
                                 $tagRus = $translator->translateTag($tag) ?? null;
-                                DB::table('tags')->updateOrInsert([
-                                    ['value' => strtolower(str_ireplace(' ', '_',$item->tag_name))],
+                                Tag::updateOrCreate(
+                                    ['value' => strtolower(str_ireplace(' ', '_',$tag))],
                                     ['tag_name' => $tag],
                                     ['tag_name_ru' => $tagRus],
-                                ]);
+                                );
                             }
                             $genresArray['genres'][] = $tag;
                             unset($tag);
