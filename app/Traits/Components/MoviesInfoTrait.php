@@ -88,8 +88,7 @@ trait MoviesInfoTrait
                                 $translator = new TranslatorController();
                                 $tagRus = $translator->translateTag($tag) ?? null;
                                 Tag::updateOrCreate(
-                                    ['value' => strtolower(str_ireplace(' ', '_',$tag))],
-                                    ['tag_name' => $tag],
+                                    ['value' => strtolower(str_ireplace(' ', '_',$tag)), 'tag_name' => $tag],
                                     ['tag_name_ru' => $tagRus],
                                 );
                             }
