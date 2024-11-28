@@ -44,16 +44,18 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         }
     }
     const showItem = async () =>{
-        try {
-            axios.get('/movies/' + route.params.slug + '/show/' + route.params.id
-            ).then((response) => {
-                singleData.value = response.data;
-            });
-        } catch (e) {
-            error.value = e;
-            console.log('error',e);
-        } finally {
-            loader.value = false;
+        if (Object.keys(route.params).length ){
+            try {
+                axios.get('/movies/' + route.params.slug + '/show/' + route.params.id
+                ).then((response) => {
+                    singleData.value = response.data;
+                });
+            } catch (e) {
+                error.value = e;
+                console.log('error',e);
+            } finally {
+                loader.value = false;
+            }
         }
     }
     const removeItem = async (id,index) => {
@@ -79,12 +81,8 @@ export const useMoviesStore = defineStore('moviesStore',() => {
                 }
         });
     }
-    const syncItem = async (posterType) => {
-        axios.put('/updatemovie',{ data: {
-            id: singleData.value.id_movie??route.params.id,
-            type: route.params.slug,
-            posterType: posterType,
-        }}).then((response) => {
+    const syncItem = async (params) => {
+        axios.put('/updatemovie',{ data: params}).then((response) => {
             if (response.status === 200) {
                 showItem();
                 ElMessage({

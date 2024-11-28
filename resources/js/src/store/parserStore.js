@@ -57,7 +57,6 @@ export const useParserStore = defineStore('parserStore',() => {
         loader,
         error,
         test,
-        tags,
         addCelebById,
         parserStart,
     }

@@ -516,7 +516,11 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            moviesStore.syncItem(posterType.value);
+            moviesStore.syncItem({
+                id: route.params.id,
+                type: route.params.slug,
+                posterType: posterType.value,
+            });
             progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
         }).catch(() => {
             ElMessage({

@@ -54,10 +54,12 @@ class ParserUpdateMovieController extends ParserController
         ];
         if ($data = $request->all()){
             $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
+
             if (!$model::where('id_movie',$data['data']['id'])->exists()){
                 foreach ($allowedTableNames as $type){
                     $model = convertVariableToModelName('IdType', $type, ['App', 'Models']);
                     if ($model::where('id_movie',$data['data']['id'])->exists()) break;
+                    $this->insertDB($model->getTable(),['id_movie'=>$data['data']['id']]);
                 }
             }
             if ($segment = $model->segment ) {

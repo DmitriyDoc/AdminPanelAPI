@@ -1,6 +1,43 @@
 <template>
     <h3>Parser settings</h3>
     <el-tabs type="border-card">
+        <el-tab-pane label="Add Movie by ID">
+            <div class="mt-3">
+                <div class="input-group mb-3">
+                    <span>Movie ID</span>
+                    <el-input
+                        v-model="movie_ID"
+                        minlength="8"
+                        maxlength="10"
+                        placeholder="Input ID MOVIE"
+                        show-word-limit
+                        type="text"
+                    />
+                </div>
+                <div class="mt-3">Movie Type</div>
+                <el-select v-model="selectType" placeholder="Type table for this movie" style="width: 240px">
+                    <el-option
+                        v-for="(item, index) in types"
+                        :key="index"
+                        :label="item"
+                        :value="item"
+                    />
+                </el-select>
+                <div class="mt-3 image-type">
+                    <h5>Poster type: </h5>
+                    <el-radio-group v-model="posterType" size="small">
+                        <el-radio-button label="Poster" value="poster" />
+                        <el-radio-button label="Product" value="product"/>
+                    </el-radio-group>
+                </div>
+            </div>
+            <div v-if="percentageSync" class="mt-1">
+                <el-progress :percentage="percentageSync" :status="statusBar"/>
+            </div>
+            <div class="mt-3">
+                <button @click="handleAddMovie" class="btn btn-primary" >Add Movie</button>
+            </div>
+        </el-tab-pane>
         <el-tab-pane label="Add Celeb by ID">
             <div class="mt-3">
                 <div class="input-group mb-3">
@@ -19,7 +56,7 @@
                 <el-progress :percentage="percentageSync" :status="statusBar"/>
             </div>
             <div>
-                <button @click="handleAddCeleb" class="btn btn-primary" type="submit">Add Celeb</button>
+                <button @click="handleAddCeleb" class="btn btn-primary" >Add Celeb</button>
             </div>
         </el-tab-pane>
         <el-tab-pane label="Parser start">
@@ -155,8 +192,6 @@
                 <el-button type="info" :plain="toggleButton" :disabled="toggleButton" @click="dialogVisible = true" class="mt-3">Report</el-button>
             </div>
         </el-tab-pane>
-        <el-tab-pane label="Role">
-            Role</el-tab-pane>
         <el-tab-pane label="Test">
             <el-button type="danger" @click="handleTestTranslate()" class="mt-3">Translate celebs (test)</el-button><br>
         </el-tab-pane>
@@ -223,14 +258,17 @@
     import { ElMessage, ElMessageBox } from "element-plus";
     import { useParserStore } from "../store/parserStore";
     import { useProgressBarStore } from "../store/progressBarStore";
+    import {useMoviesStore} from "../store/moviesStore";
     import { Check } from '@element-plus/icons-vue'
 
     const parserStore = useParserStore();
     const progressBarStore = useProgressBarStore();
+    const moviesStore = useMoviesStore();
 
     const { loader, error } = storeToRefs(parserStore);
     const { percentage, statusBar, percentageSync, parserReport } = storeToRefs(progressBarStore);
     const celeb_ID = ref('nm');
+    const movie_ID = ref('tt');
 
     const radioTypeToggle =  ref(true);
     const pickerFrom  = ref(null);
@@ -246,6 +284,8 @@
     const indeterminatePersonsSource = ref(false)
     const isIndeterminateTypes = ref(true);
     const selectSort = ref(null);
+    const selectType = ref(null);
+    const posterType = ref('poster');
     const selectTypeImages = ref(null);
     const selectTypePosters = ref(null);
     const toggleButton = ref(true);
@@ -474,6 +514,26 @@
         }).then(() => {
             parserStore.addCelebById(celeb_ID.value);
             progressBarStore.getSyncCurrentPercentage();
+            celeb_ID.value = 'nm';
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Add canceled',
+            })
+        });
+    };
+    const handleAddMovie = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            moviesStore.syncItem({
+                id: movie_ID.value,
+                type: selectType.value,
+                posterType: posterType.value,
+            });
+            progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
             celeb_ID.value = 'nm';
         }).catch(() => {
             ElMessage({
