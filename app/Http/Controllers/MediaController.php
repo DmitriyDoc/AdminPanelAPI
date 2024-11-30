@@ -139,6 +139,14 @@ class MediaController extends Controller
             }
             //$id = count($data['id_poster']) > 1 && ($data['poster_cat'] == 'id_posters_characters' || $data['poster_cat']  == 'id_posters_alternative') ? json_encode($data['id_poster']) : $data['id_poster'][0];
             $model = AssignPoster::where('id_movie',$data['id_movie'])->first();
+            foreach ($allowedTableNames as $tableName){
+                $modelType = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
+                $typeCollection = $modelType->where('id_movie','=',$data['id_movie'])->get('type_film');
+                if (!$typeCollection->isEmpty()){
+                    $data['type_film'] = $typeCollection[0]['type_film'];
+                    break;
+                }
+            }
             if ($model && !empty($id)){
                 AssignPoster::where('id_movie',$data['id_movie'])->update([
                     $data['poster_cat']=>$id,
