@@ -7,7 +7,6 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
-use App\Models\Tag;
 use App\Models\TagsMoviesPivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -92,6 +91,16 @@ class CategoriesController extends Controller
 }
     public function store(Request $request):array
     {
+        $allowedTableNames = [
+            0=>'FeatureFilm',
+            1=>'MiniSeries',
+            2=>'ShortFilm',
+            3=>'TvMovie',
+            4=>'TvSeries',
+            5=>'TvShort',
+            6=>'TvSpecial',
+            7=>'Video',
+        ];
         $data = Validator::make($request->all(),[
             'id_movie' => 'required|string|max:10',
             'type_film' => 'required|string|max:12',
@@ -114,6 +123,14 @@ class CategoriesController extends Controller
                             }
                         }
                     }
+                }
+            }
+            foreach ($allowedTableNames as $tableName){
+                $model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
+                $typeCollection = $model->where('id_movie','=',$data['id_movie'])->get('type_film');
+                if (!$typeCollection->isEmpty()){
+                    $data['type_film'] = $typeCollection[0]['type_film'];
+                    break;
                 }
             }
         }
