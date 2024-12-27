@@ -7,6 +7,7 @@ const router = createRouter({
     routes
 
 })
+
 router.beforeEach(async (to, from, next) => {
     const { isUserAuthenticated } = useAuth();
 

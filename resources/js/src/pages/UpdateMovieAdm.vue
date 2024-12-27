@@ -69,12 +69,19 @@
                 <el-tab-pane label="Directors" name="four">
                     <li class="list-group-item">
                         <template v-for="(director, index) in singleData.directors">
-                            <template v-for="(role, name) in director">
+                            <template v-if="typeof director === 'object'" v-for="(role, name) in director">
                                 <div class="p-1 m-1 border bg-light">
                                     <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
                                         <strong>{{name}}</strong>
                                     </RouterLink>
                                     <em>{{role}}</em>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div class="p-1 m-1 border bg-light">
+                                    <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                        <strong>{{director}}</strong>
+                                    </RouterLink>
                                 </div>
                             </template>
                         </template>
@@ -83,18 +90,7 @@
                 <el-tab-pane label="Writers" name="five">
                     <li class="list-group-item">
                         <template v-for="(writer, index) in singleData.writers">
-                            <template v-for="(role, name) in writer">
-                                <div class="p-1 m-1 border bg-light">
-                                    <strong>{{name}}</strong><em>{{role}}</em>
-                                </div>
-                            </template>
-                        </template>
-                    </li>
-                </el-tab-pane>
-                <el-tab-pane label="Cast" name="six">
-                    <li class="list-group-item">
-                        <template v-for="(actor, index) in singleData.cast">
-                            <template v-for="(role, name) in actor">
+                            <template v-if="typeof writer === 'object'" v-for="(role, name) in writer">
                                 <div class="p-1 m-1 border bg-light">
                                     <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
                                         <strong>{{name}}</strong>
@@ -102,6 +98,25 @@
                                     <em>{{role}}</em>
                                 </div>
                             </template>
+                            <template v-else>
+                                <div class="p-1 m-1 border bg-light">
+                                    <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                        <strong>{{writer}}</strong>
+                                    </RouterLink>
+                                </div>
+                            </template>
+                        </template>
+                    </li>
+                </el-tab-pane>
+                <el-tab-pane label="Cast" name="six">
+                    <li class="list-group-item">
+                        <template v-for="(item, index) in singleData.cast">
+                            <div class="p-1 m-1 border bg-light">
+                                <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                    <strong>{{item.actor}}</strong>
+                                </RouterLink>
+                                <em>{{item.role}}</em>
+                            </div>
                         </template>
                     </li>
                 </el-tab-pane>

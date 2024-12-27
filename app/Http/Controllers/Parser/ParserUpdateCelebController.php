@@ -24,7 +24,7 @@ class ParserUpdateCelebController extends ParserController
         $this->imgUrlFragment = '/name/';
         $this->chunkSize = 10;
 
-        $this->insert_id_table = 'celebs_id';
+        //$this->insert_id_table = 'celebs_id';
         $this->update_info_table = 'celebs_info';
         $this->update_id_images_table = 'celebs_id_images';
         $this->update_images_table = 'celebs_images';

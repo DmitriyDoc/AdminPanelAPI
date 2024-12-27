@@ -34,7 +34,7 @@ class ParserStartController
         if ($data = $validator->getData()){
             $parserStart = new ParserController($data);
             $data['flag'] ? $parserStart->parseMoviesByPeriod($data['movie_types']) : $parserStart->parsePersons($data['persons_source'],$data['switch_new_update']);
-            $parserStart->actualizeYearTitleForTableIdType($data['movie_types']);
+            //$parserStart->actualizeYearTitleForTableIdType($data['movie_types']);
             session()->put('tracking.report.stop', "PARSING COMPLETED SUCCESSFULY!");
         }
     }

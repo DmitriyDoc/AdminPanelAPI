@@ -19,14 +19,14 @@ class TagsController
                 $typeFilm = getTableSegmentOrTypeId($item['type_film']);
                 $TypeFilmArray[$typeFilm][] = $item['id_movie'];
             });
+            $model = modelByName('MovieInfo');
+            $allowedFilterFields = $model->getFillable();
             foreach ($TypeFilmArray as $key => $item){
-                $model = convertVariableToModelName('IdType',$key, ['App', 'Models']);
-                $allowedFilterFields = $model->getFillable();
-                if ($request->has('search')){
-                    $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
+                if ($query = $request->query('search')){
+                    $searchQuery = trim(strtolower(strip_tags($query)));
                     $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
                 }
-                $collection->add($model->select('type_film','id_movie','title','year','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
+                $collection->add($model->select('type_film','id_movie','title','year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
             }
             $collapsed = $collection->collapse();
             $sorted = $collapsed->sort();
@@ -71,9 +71,9 @@ class TagsController
                     $tagResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                     $tagResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                     $tagResponse['data'][$k]['title'] = $item['title'] ?? '';
-                    $tagResponse['data'][$k]['year'] = $item['year'] ?? null;
+                    $tagResponse['data'][$k]['year'] = $item['year_release'] ?? null;
                     $tagResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
-                    $tagResponse['data'][$k]['type_film'] = $item['type_film'] ?? '';
+                    $tagResponse['data'][$k]['type_film'] = getTableSegmentOrTypeId($item['type_film']) ?? '';
                 }
                 $tagResponse['title'] = $tagTitle;
                 $tagResponse['total'] = $collapsed->count();

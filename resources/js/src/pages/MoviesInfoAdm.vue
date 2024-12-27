@@ -70,7 +70,7 @@
                 </template>
             </el-table-column>
             <el-table-column prop="id_movie" label="ID Movie" width="120" />
-            <el-table-column prop="year" label="Year" width="100" />
+            <el-table-column prop="year_release" label="Year" width="100" />
             <el-table-column prop="title" label="Title" width="600" />
             <el-table-column prop="updated_at" label="Date Update" width="120" />
             <el-table-column prop="id_movie" fixed="right" label="Operations" width="120">
@@ -124,7 +124,7 @@
             label: 'ID movie',
         },
         {
-            value: 'year',
+            value: 'year_release',
             label: 'Year',
         },
         {

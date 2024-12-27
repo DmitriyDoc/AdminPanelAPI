@@ -144,4 +144,24 @@ if (!function_exists('cascaderStructure')) {
             }
         }
     }
+    if (!function_exists('camelToSnake')) {
+        function camelToSnake($input) {
+            $words = preg_split('/(?=[A-Z])/', $input, -1, PREG_SPLIT_NO_EMPTY);
+            $snakeCase = implode('_', $words);
+            $snakeCase = strtolower($snakeCase);
+
+            return $snakeCase;
+        }
+    }
+    if (!function_exists('snakeToCamel')) {
+        function snakeToCamel($string, $capitalizeFirstCharacter = false)
+        {
+            $str = str_replace(' ', '', ucwords(str_replace('_', ' ', $string)));
+            if (!$capitalizeFirstCharacter) {
+                $str[0] = strtolower($str[0]);
+            }
+            return $str;
+
+        }
+    }
 }

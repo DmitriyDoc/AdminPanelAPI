@@ -33,6 +33,7 @@ class ParserController extends Controller
     protected $update_id_images_table;
     protected $update_id_posters_table;
     protected $update_info_table;
+    protected $update_en_info_table;
     protected $update_images_table;
     protected $update_posters_table;
     protected $select_id_table;
@@ -108,6 +109,7 @@ class ParserController extends Controller
 
     protected $domen = 'https://www.imdb.com';
     protected $signByField;
+    protected $typeFilm;
     protected $imgUrlFragment;
     protected $chunkSize;
     protected $localizing;
@@ -201,16 +203,13 @@ class ParserController extends Controller
                 $arg['typePosters'] = $this->typePosters;
                 foreach ($period as $key => $day) {
                     $this->titleType = $this->allowedTableNames[$type]['type'];
-                    $this->insert_id_table = 'movies_id_type_'.$this->allowedTableNames[$type]['segment'];
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc");
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},desc");
-                    $this->getIdByType();
+                    $this->getIdByType($arg);
                     session()->push('tracking.report.finishIdsPeriod', $day->format("Y-m-d") . " for movie type: " . $this->allowedTableNames[$type]['type']);
                     session()->save();
                     Log::info(">>> PARSE PERIOD : {$day->format("Y-m-d")} IDS FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
                 }
-                $parserUpdateMovie = new ParserUpdateMovieController();
-                $parserUpdateMovie->parseMovies($arg,date('Y-m-d'));
                 session()->push('tracking.report.finishInfo',$this->allowedTableNames[$type]['type']);
                 session()->save();
                 Log::info(">>>  PARSE INFO FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
@@ -233,25 +232,25 @@ class ParserController extends Controller
         }
         Log::info('>>> PARSED CELEBS FINISH');
     }
-    public function actualizeYearTitleForTableIdType($allowMovieTypes = [])
-    {
-        if (!empty($allowMovieTypes)){
-            foreach ($allowMovieTypes as $table){
-                $modelInfo = convertVariableToModelName('Info', $table, ['App', 'Models']);
-                $modelIdType = convertVariableToModelName('IdType', $table, ['App', 'Models']);
-                $modelInfo = $modelInfo::select('id_movie','title','year_release')->limit(50)->orderBy('created_at','desc')->get();
-                foreach ($modelInfo as $key => $item){
-                    if (!empty($item['year_release'])){
-                        $modelIdType::where('id_movie',$item['id_movie'])->update([
-                            'title' => $item['title'],
-                            'year' => $item['year_release']
-                        ]);
-                    }
-                }
-                session()->push('tracking.report.finishActualize', $table);
-                session()->save();
-                Log::info(">>> ACTUALIZE ID TYPE FINISH",[$table]);
-            }
-        }
-    }
+//    public function actualizeYearTitleForTableIdType($allowMovieTypes = [])
+//    {
+//        if (!empty($allowMovieTypes)){
+//            foreach ($allowMovieTypes as $table){
+//                $modelInfo = convertVariableToModelName('Info', $table, ['App', 'Models']);
+//                $modelIdType = convertVariableToModelName('IdType', $table, ['App', 'Models']);
+//                $modelInfo = $modelInfo::select('id_movie','title','year_release')->limit(50)->orderBy('created_at','desc')->get();
+//                foreach ($modelInfo as $key => $item){
+//                    if (!empty($item['year_release'])){
+//                        $modelIdType::where('id_movie',$item['id_movie'])->update([
+//                            'title' => $item['title'],
+//                            'year' => $item['year_release']
+//                        ]);
+//                    }
+//                }
+//                session()->push('tracking.report.finishActualize', $table);
+//                session()->save();
+//                Log::info(">>> ACTUALIZE ID TYPE FINISH",[$table]);
+//            }
+//        }
+//    }
 }

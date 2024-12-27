@@ -4,7 +4,7 @@
             <h1>{{ singleData.nameActor }}</h1>
         </el-col>
         <el-col :span="4"><div class="grid-content ep-bg-purple" />
-            <el-image :src="singleData.photo" :fit="cover" style="width: 100%" />
+            <el-image :src="singleData.info.photo" :fit="cover" style="width: 100%" />
             <div class="mt-1 mb-2 image-type">
                 <h5>Image type: </h5>
                 <el-radio-group v-model="imageType" size="small">
@@ -19,9 +19,9 @@
                 <el-progress :percentage="percentageSync" :status="statusBar"/>
             </div>
             <ul class="list-group mt-2">
-                <li class="list-group-item"><span><strong>Birthday: </strong></span>{{ singleData.birthday ?? 'empty' }}</li>
+                <li class="list-group-item"><span><strong>Birthday: </strong></span>{{ singleData.info.birthday ?? 'empty' }}</li>
                 <li class="list-group-item"><span><strong>Birthday Location: </strong></span>{{ singleData.birthdayLocation ?? 'empty' }}</li>
-                <li class="list-group-item" v-if="singleData.died"><span><strong>Died: </strong></span>{{ singleData.died }}</li>
+                <li class="list-group-item" v-if="singleData.died"><span><strong>Died: </strong></span>{{ singleData.info.died }}</li>
                 <li class="list-group-item" v-if="singleData.dieLocation"><span><strong>Die Location: </strong></span>{{ singleData.dieLocation }}</li>
             </ul>
         </el-col>
@@ -55,14 +55,16 @@
                     </el-tab-pane>
                 </template>
             </el-tabs>
-            <el-collapse v-if="singleData.knowfor.length" v-model="activeAccordionTab" class="m-3" accordion>
+            <el-collapse v-if="singleData.info.knowfor.length" v-model="activeAccordionTab" class="m-3" accordion>
                 <el-collapse-item title="Known For" name="1">
                     <div class="p-1 m-1 border bg-light" style="display: flex;">
-                        <template v-for="(item, id) in singleData.knowfor" >
+
+                        <template v-for="(item, id) in singleData.info.knowfor" >
                             <div style="display: flex; flex-direction: column">
-                                <strong>{{item.type_film}}</strong>
+                                <p><strong>{{item.type_film}}</strong></p>
+                                <p><em>{{item.original_title}}</em></p>
                                 <div style="width: 194px; height: 300px; background-color: rgb(243 243 243); margin-right: 10px">
-                                    <el-image  v-if="item.poster[0]" :src="item.poster[0].src" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
+                                    <el-image  v-if="item.poster" :src="item.poster" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
                                 </div>
                                 <div style="width: 194px; margin-right: 10px">
                                     <RouterLink :to="{ name: 'showmovie', params: { slug: item.type_film, id: item.id_movie }}">
@@ -133,17 +135,15 @@
     import {ref, watch, reactive, onMounted} from "vue";
     import {ElMessage, ElMessageBox, ElTable } from "element-plus";
 
-    onMounted(() => {
-        percentageSync.value = 0;
-    });
-
     const mediaStore = useMediaStore();
     const personsStore = usePersonsStore();
     const progressBarStore = useProgressBarStore();
 
+
     const { singleData, route, error, } = storeToRefs(personsStore);
     const { statusBar, percentageSync } = storeToRefs(progressBarStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
+
 
     const activeTabName = ref('actor');
     const activeAccordionTab = ref('1')
@@ -155,6 +155,11 @@
     const multipleTableCeleb = ref()
     const multipleSelection = ref([])
     const imageType = ref('event');
+
+    onMounted(() => {
+        personsStore.showItem();
+        percentageSync.value = 0;
+    });
 
     const toggleSelectionCeleb = () => {
         //console.log(multipleTableCeleb.value);

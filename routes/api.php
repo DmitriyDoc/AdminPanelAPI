@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -13,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+
 /**
  * ------------------------------------------------------------------------
  * Verify ACCESS
@@ -26,7 +27,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
      * ------------------------------------------------------------------------
      */
     //Route::get('/transfer',[\App\Http\Controllers\DashboardController::class, 'test']);
-    Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'testCelebs']);
+    Route::get('/translate/celebs',[\App\Http\Controllers\DashboardController::class, 'test']);
 
 
     /**
@@ -43,6 +44,10 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
      * ------------------------------------------------------------------------
      */
     Route::middleware('auth:sanctum')->group(function () {
+        // SET LOCALE
+        Route::get('/locale',[\App\Http\Controllers\LangsController::class, 'changeLocale']);
+
+        //PARSER
         Route::put('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
         Route::get('/updatemovie/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
 

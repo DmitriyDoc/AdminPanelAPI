@@ -21,7 +21,7 @@
     import { storeToRefs } from 'pinia';
     import { useDashboardStore } from "../store/dashboardStore";
     import { useProgressBarStore } from "../store/progressBarStore";
-    import { onMounted } from "vue";
+    import { onMounted,ref } from "vue";
 
     const dashboardStore = useDashboardStore();
     const progressBarStore = useProgressBarStore();
@@ -41,6 +41,7 @@
              progressBarStore.getCurrentPercentage();
          }
      });
+
 
 </script>
 

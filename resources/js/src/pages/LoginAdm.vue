@@ -10,7 +10,7 @@
                     <h1
                         class="text-xl font-bold leading-tight tracking-tight text-active md:text-2xl"
                     >
-                        Sign in to your account
+                        {{$t('account_sign_in')}}
                     </h1>
 
                     <div>
@@ -29,7 +29,7 @@
                         <div>
                             <FormInput
                                 v-model="formData.email"
-                                label="Email"
+                                :label="$t('account_email')"
                                 :error="formErrors?.email"
                             />
                         </div>
@@ -37,6 +37,7 @@
                         <div>
                             <FormInput
                                 v-model="formData.password"
+                                :label="$t('account_password')"
                                 label="Password"
                                 type="password"
                                 :error="formErrors?.password"
@@ -58,16 +59,16 @@
                                     <label
                                         for="remember"
                                         class="text-gray-500 dark:text-gray-300"
-                                    >Remember me</label
+                                    >{{$t('account_remember')}}</label
                                     >
                                 </div>
                             </div>
                         </div>
 
                         <Button
-                            title="Sign in"
+                            :title="$t('account_btn_sign_in')"
                             class="!w-full"
-                            loading-title="Signing in..."
+                            :loading-title="$t('account_loading_sign_in')"
                             :loading="loggingIn"
                             @click="onSignIn"
                         />

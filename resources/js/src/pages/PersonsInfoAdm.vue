@@ -56,11 +56,12 @@
             :background="background"
             layout="sizes, prev, pager, next, jumper"
             :total="totalCount"
-            :page-sizes="[20, 50, 100, 300]"
+            :page-sizes="[20, 50]"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
         />
     </div>
+
     <template v-if="tableData">
         <el-table :data="tableData" v-loading="loader" style="width: 100%" >
             <el-table-column type="index" label="№"/>
@@ -70,22 +71,22 @@
                     <el-image :src="scope.row.poster" />
                 </template>
             </el-table-column>
-            <el-table-column prop="actor_id" label="ID Person" width="120" />
-            <el-table-column prop="name" label="Name" width="600" />
-            <el-table-column prop="updated_at" label="Date Update" width="120" />
-            <el-table-column prop="actor_id" fixed="right" label="Operations" width="200">
+            <el-table-column prop="id_celeb" label="ID Person" width="120" />
+            <el-table-column prop="nameActor" label="Name" width="600" />
+<!--            <el-table-column prop="updated_at" label="Date Update" width="120" />-->
+            <el-table-column prop="id_celeb" fixed="right" label="Operations" width="200">
                 <template v-slot:default="scope">
                     <el-button type="success" link >
-                        <RouterLink :to="{ name: 'showperson', params: { slug: route.params.slug, id: scope.row.actor_id }}">
+                        <RouterLink :to="{ name: 'showperson', params: { slug: route.params.slug, id: scope.row.id_celeb }}">
                             <el-button link type="primary" :icon="View" title="Details"/>
                         </RouterLink>
                     </el-button>
                     <el-button link type="primary" >
-                        <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id: scope.row.actor_id }}">
+                        <RouterLink :to="{ name: 'editPerson', params: { slug: route.params.slug, id: scope.row.id_celeb }}">
                             <el-button link type="primary" :icon="EditPen" title="Edit"/>
                         </RouterLink>
                     </el-button>
-                    <el-button link type="danger" @click="handleRemove(scope.row.actor_id,scope.$index)" :icon="Delete"  />
+                    <el-button link type="danger" @click="handleRemove(scope.row.id_celeb,scope.$index)" :icon="Delete"  />
                  </template>
             </el-table-column>
         </el-table>
@@ -118,24 +119,17 @@
         {
             value: 'id',
             label: 'ID',
-        },
-        {
-            value: 'actor_id',
-            label: 'Actor ID',
-        },
-        {
-            value: 'name',
-            label: 'Name',
-        },
-        {
-            value: 'created_at',
-            label: 'Created date',
             disabled: true,
         },
         {
-            value: 'updated_at',
-            label: 'Updated date',
+            value: 'id_celeb',
+            label: 'Actor ID',
         },
+        {
+            value: 'nameActor',
+            label: 'Name',
+        },
+
     ]);
     const formRef = ref<FormInstance>();
     const queryValidateForm = reactive({
@@ -145,7 +139,7 @@
     watch(() => route,  personsStore.getCelebs,{deep: true, immediate: true,});
 
     const handleSizeChange = (val) => {
-        pageSize.value = val;
+        personsStore.updatePageSize(val);
         personsStore.getCelebs();
     }
     const handleCurrentChange = (val) => {

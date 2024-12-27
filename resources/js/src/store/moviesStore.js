@@ -8,7 +8,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const state = ref({
         searchQuery: '',
         spinParam: 'desc',
-        sortBy: 'created_at',
+        sortBy: 'id',
         page: 1,
         limit: 50,
     });

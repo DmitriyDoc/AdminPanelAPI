@@ -6,11 +6,11 @@ use App\Models\AssignPoster;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
-use App\Models\IdTypeFeatureFilm;
-use App\Models\InfoFeatureFilm;
-use App\Models\Tag;
+use App\Models\MovieInfo;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 
 class MoviesController extends Controller
@@ -37,10 +37,14 @@ class MoviesController extends Controller
             $tableName = $allowedTableNames[0];
         }
 
-        $model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
+        $model = modelByName('MovieInfo');
+        $modelPosterName = 'poster'.$tableName;
+        $relationName = camelToSnake($modelPosterName);
+        $typeId = getTableSegmentOrTypeId($tableName);
         $allowedSortFields = ['desc','asc'];
-
         $allowedFilterFields = $model->getFillable();
+
+        $model = $model->select('id_movie', 'title','year_release','created_at','updated_at')->where('type_film',$typeId);
 
         $limit = $request->query('limit',50);
         $sortDir = strtolower($request->query('spin','desc'));
@@ -51,19 +55,22 @@ class MoviesController extends Controller
         if (!in_array($sortDir,$allowedSortFields)){
             $sortDir = $allowedSortFields[0];
         }
-        if ($request->has('search')){
-            $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
-            $model = $model->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+        if ($query = $request->query('search')){
+            $safeQuery = trim(strtolower(strip_tags($query)));
+            $model = $model->where($allowedFilterFields[3],'like','%'.$safeQuery.'%')
+                ->orWhere($allowedFilterFields[1],'like','%'.$safeQuery.'%');
         }
 
-        $modelArr = $model->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+        $modelArr = $model->with($modelPosterName)->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
 
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
                 $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                $img = explode(',',$item['poster'][0]['srcset'] ?? '');
+                $img = explode(',',$item[$relationName][0]['srcset'] ?? '');
+
                 $modelArr['data'][$k]['poster'] = $img[0] ?? '';
+                unset($modelArr['data'][$k][$relationName]);
             }
 
             return $modelArr;
@@ -95,42 +102,60 @@ class MoviesController extends Controller
         $infoMovieData = [];
         $posterSrcSet = null;
         $allowedTableNames = [
-            0=>'MiniSeries',
-            1=>'TvSeries',
-            2=>'TvMovie',
-            3=>'Video',
-            4=>'TvSpecial',
+            0=>'FeatureFilm',
+            1=>'MiniSeries',
+            2=>'ShortFilm',
+            3=>'TvMovie',
+            4=>'TvSeries',
             5=>'TvShort',
-            6=>'ShortFilm',
+            6=>'TvSpecial',
+            7=>'Video',
         ];
-
-        $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-        $modelArr = $model::with(['poster','collection','localazing'])->where('id_movie',$id)->get()->toArray();
+        if (!in_array($slug,$allowedTableNames)){
+            $slug = $slug[0];
+        }
+        $model = modelByName('MovieInfo');
+        $modelPosterName = 'poster'.$slug;
+        $localazingName = 'localazing'.ucfirst(Lang::locale());
+        $relationPosterName = camelToSnake($modelPosterName);
+        $relationLocalizeName = camelToSnake($localazingName);
+        $safeId = trim(strtolower(strip_tags($id)));
+        $typeId = getTableSegmentOrTypeId($slug);
+        $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',$typeId)->where('id_movie',$safeId)->first()->toArray();
 
         if (empty($modelArr)){
             foreach ($allowedTableNames as $type){
-                $model = convertVariableToModelName('Info', $type, ['App', 'Models']);
-                $modelArr = $model::with(['poster','collection','localazing'])->where('id_movie',$id)->get()->toArray();
+                $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$safeId)->first()->toArray();
                 if (!empty($modelArr)) break;
             }
         }
 
         if (!empty($modelArr)){
-            $infoMovieData = $modelArr[0]['info'] ?? $modelArr[0] ?? [];
-            $infoMovieData['genres'] = (object) unset_serialize_key(unserialize($modelArr[0]['genres'] ?? $modelArr[0]['info']['genres'] ?? null)) ?? [];
-            $infoMovieData['cast'] = unset_serialize_key(unserialize($modelArr[0]['cast'] ?? $modelArr[0]['info']['cast'] ?? null)) ?? [];
-            $infoMovieData['directors'] = unset_serialize_key(unserialize($modelArr[0]['directors'] ?? $modelArr[0]['info']['directors'] ?? null)) ?? [];
-            $infoMovieData['writers'] = (object) unset_serialize_key(unserialize($modelArr[0]['writers'] ?? $modelArr[0]['info']['writers'] ?? null)) ?? [];
-            $infoMovieData['countries'] = (object) unset_serialize_key(unserialize($modelArr[0]['countries'] ?? $modelArr[0]['info']['countries'] ?? null))  ?? [];
-            $infoMovieData['companies'] = (object) unset_serialize_key(unserialize($modelArr[0]['companies'] ?? $modelArr[0]['info']['companies'] ?? null)) ?? [];
-            $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr[0]['created_at'] ?? $modelArr[0]['info']['created_at'] ?? null)) ?? '';
-            $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr[0]['updated_at'] ?? $modelArr[0]['info']['updated_at'] ?? null)) ?? '';
-            if (!empty($modelArr[0]['poster'])){
-                $posterSrcSet = $modelArr[0]['poster'][0]['srcset'];
-                $assignPosterId = AssignPoster::where('id_movie',$id)->get('id_poster_original')->toArray();
+            $infoMovieData = $modelArr[$relationLocalizeName] ?? [];
+            $infoMovieData['type_film'] = $slug;
+            $infoMovieData['title'] = $modelArr['title'];
+            $infoMovieData['original_title'] = $modelArr['original_title'];
+            $infoMovieData['year_release'] = $modelArr['year_release'];
+            $infoMovieData['restrictions'] = $modelArr['restrictions'];
+            $infoMovieData['runtime'] = $modelArr['runtime'];
+            $infoMovieData['rating'] = $modelArr['rating'];
+            $infoMovieData['budget'] = $modelArr['budget'];
+            $infoMovieData['genres'] = json_decode($modelArr[$relationLocalizeName]['genres'] ??  null) ?? [];
+            $infoMovieData['cast'] = json_decode($modelArr[$relationLocalizeName]['cast'] ?? null) ?? [];
+            $infoMovieData['directors'] = json_decode( $modelArr[$relationLocalizeName]['directors'] ?? null) ?? [];
+            $infoMovieData['writers'] = json_decode($modelArr[$relationLocalizeName]['writers'] ?? null) ?? [];
+            $infoMovieData['countries'] = json_decode($modelArr[$relationLocalizeName]['countries'] ?? null)  ?? [];
+            $infoMovieData['companies'] = (object) unset_serialize_key(unserialize($modelArr['companies'] ?? null)) ?? [];
+            $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr['created_at']  ?? null)) ?? '';
+            $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr['updated_at']  ?? null)) ?? '';
+            $infoMovieData['collection'] = $modelArr['collection'];
+            if (!empty($modelArr[$relationPosterName])){
+                $posterSrcSet = $modelArr[$relationPosterName][0]['srcset'];
+                $assignPosterId = AssignPoster::where('id_movie',$safeId)->first('id_poster_original');
+
                 if (!empty($assignPosterId)){
-                    foreach ($modelArr[0]['poster'] as $poster){
-                        if ($poster['id'] == $assignPosterId[0]['id_poster_original']){
+                    foreach ($modelArr[$relationPosterName] as $poster){
+                        if ($poster['id'] == $assignPosterId->id_poster_original){
                             $posterSrcSet = $poster['srcset'];
                         }
                     }
@@ -138,21 +163,24 @@ class MoviesController extends Controller
             }
             $img = explode(',',$posterSrcSet ?? '');
             $infoMovieData['poster'] = $img[0] ?? '';
-            if (!empty( $modelArr[0]['collection'])) {
-                foreach ($modelArr[0]['collection'] as $key => $itemCollection) {
+
+            if (!empty( $modelArr['collection'])) {
+                foreach ($modelArr['collection'] as $key => $itemCollection) {
                     $collection = Collection::with('category')->find($itemCollection['collection_id'])->toArray();
                     $infoMovieData['collection']['id'][$key] = $itemCollection['franchise_id'] ? 'fr_'.$itemCollection['collection_id'].$itemCollection['franchise_id'] : $itemCollection['collection_id'];
                     $infoMovieData['collection']['catInfo'][$key]['label'] = $collection['label'] ?? null;
                     $infoMovieData['collection']['catInfo'][$key]['category_value'] = $collection['category'][0]['value'] ?? null;
                 }
-                $infoMovieData['collection']['viewed'] = (bool) $modelArr[0]['collection'][0]['viewed'] ?? false;
-                $infoMovieData['collection']['short'] = (bool) $modelArr[0]['collection'][0]['short'] ?? false;
-                $infoMovieData['collection']['adult'] = (bool) $modelArr[0]['collection'][0]['adult'] ?? false;
+                $infoMovieData['collection']['viewed'] = (bool) $modelArr['collection'][0]['viewed'] ?? false;
+                $infoMovieData['collection']['short'] = (bool) $modelArr['collection'][0]['short'] ?? false;
+                $infoMovieData['collection']['adult'] = (bool) $modelArr['collection'][0]['adult'] ?? false;
                 unset( $infoMovieData['collection'][0]);
                 unset($collection);
+
             }
             unset($modelArr);
         }
+
         return $infoMovieData;
     }
 

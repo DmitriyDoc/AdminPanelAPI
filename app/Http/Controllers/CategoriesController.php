@@ -125,14 +125,15 @@ class CategoriesController extends Controller
                     }
                 }
             }
-            foreach ($allowedTableNames as $tableName){
-                $model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
+            $model = modelByName('MovieInfo');
+            //foreach ($allowedTableNames as $tableName){
+                //$model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
                 $typeCollection = $model->where('id_movie','=',$data['id_movie'])->get('type_film');
                 if (!$typeCollection->isEmpty()){
                     $data['type_film'] = $typeCollection[0]['type_film'];
-                    break;
+                    //break;
                 }
-            }
+            //}
         }
         transaction( function () use ($data){
             CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
@@ -145,7 +146,7 @@ class CategoriesController extends Controller
                     }
                     CollectionsCategoriesPivot::create([
                         'id_movie' =>$data['id_movie'],
-                        'type_film' => getTableSegmentOrTypeId($data['type_film']),
+                        'type_film' => $data['type_film'],
                         'collection_id' => $cat[1],
                         'franchise_id' => $franchiseId,
                         'viewed' => $data['viewed'] ?? null,
@@ -160,7 +161,7 @@ class CategoriesController extends Controller
                             TagsMoviesPivot::create([
                                 'id_movie' => $data['id_movie'],
                                 'id_tag' => $tagExist->id,
-                                'type_film' => getTableSegmentOrTypeId($data['type_film'])
+                                'type_film' => $data['type_film']
                             ]);
                         }
                     }

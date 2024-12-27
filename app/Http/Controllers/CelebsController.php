@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InfoCelebs;
-use App\Models\LocalizingCelebsInfo;
+use App\Models\MovieInfo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 
 class CelebsController extends Controller
 {
@@ -13,49 +13,55 @@ class CelebsController extends Controller
      */
     public function index(Request $request): array
     {
-        $tableName = request()->segment(3) ?? '';
-        $allowedTableNames = [
-            0=>'FeatureFilm',
-            1=>'MiniSeries',
-            2=>'ShortFilm',
-            3=>'TvMovie',
-            4=>'TvSeries',
-            5=>'TvShort',
-            6=>'TvSpecial',
-            7=>'Video',
-            8=>'Celebs',
-        ];
-        if (!in_array($tableName,$allowedTableNames)){
-            $tableName = $allowedTableNames[0];
-        }
+//        $tableName = request()->segment(3) ?? '';
+//        $allowedTableNames = [
+//            0=>'FeatureFilm',
+//            1=>'MiniSeries',
+//            2=>'ShortFilm',
+//            3=>'TvMovie',
+//            4=>'TvSeries',
+//            5=>'TvShort',
+//            6=>'TvSpecial',
+//            7=>'Video',
+//            8=>'Celebs',
+//        ];
+//        if (!in_array($tableName,$allowedTableNames)){
+//            $tableName = $allowedTableNames[0];
+//        }
 
-        $model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
+
+        $model = modelByName('CelebsInfo'.ucfirst(Lang::locale()));
+
+
         $allowedSortFields = ['desc','asc'];
-
         $allowedFilterFields = $model->getFillable();
-        array_push($allowedFilterFields,'id');
-
         $limit = $request->query('limit',50);
         $sortDir = strtolower($request->query('spin','desc'));
-        $sortBy = $request->query('orderBy','created_at');
+        $sortBy = $request->query('orderBy','id');
+
         if (!in_array($sortBy,$allowedFilterFields)){
-            $sortBy = $allowedSortFields[0];
+            $sortBy = $allowedFilterFields[0];
         }
+
         if (!in_array($sortDir,$allowedSortFields)){
             $sortDir = $allowedSortFields[0];
         }
-        if ($request->has('search')){
+
+
+        if ($request->query('search')){
             $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
-            $model = $model->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[0],'like','%'.$searchQuery.'%');
+            $model = $model->where('nameActor','like',"{$searchQuery}%")->orWhere('id_celeb','like',"{$searchQuery}%");
         }
-        $modelArr = $model->with('poster')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+
+        $modelArr = $model->select(['id_celeb', 'nameActor'])->with('info')->orderBy($sortBy,$sortDir)->paginate($limit)->toArray();
+
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
-                $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
-                $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                $modelArr['data'][$k]['poster'] = $item['poster']['photo'] ?? '';
+                if (!empty($item['info'])){
+                    $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['info']['created_at'])) ?? '';
+                    $modelArr['data'][$k]['poster'] = $item['info']['photo'] ?? '';
+                }
             }
-
             return $modelArr;
         }
         return [];
@@ -95,26 +101,36 @@ class CelebsController extends Controller
         ];
 
         if (!empty($slug) &&  $slug == 'Celebs') {
-            $model = convertVariableToModelName('Info', $slug, ['App', 'Models']);
-            $modelArr = $model->where('id_celeb',$id)->get()->toArray();
+            $model = modelByName('CelebsInfo'.ucfirst(Lang::locale()));
+            $modelArr = $model->where('id_celeb',$id)->with('info')->first()->toArray();
+
             if (!empty($modelArr)){
-                if (!empty($modelArr[0]['knowfor'])){
-                    $knownForArr = json_decode($modelArr[0]['knowfor']);
+                if (!empty($modelArr['info']['knowfor'])){
+                    $knownForArr = json_decode($modelArr['info']['knowfor']);
                     foreach ($allowedTableNames as $type){
-                        foreach ($knownForArr as $id) {
-                            $model = convertVariableToModelName('IdType', $type, ['App', 'Models']);
-                            $res = $model::with(['poster'])->where('id_movie',$id)->get()->toArray();
+                        $relationPosterName = 'poster'.$type;
+                        $relationPosterNameSnake = 'poster_'.camelToSnake($type);
+                        foreach ($knownForArr as $index => $id) {
+                            $res = MovieInfo::with($relationPosterName)->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$id)->first();
                             if (!empty($res)){
-                                $knownFor[] = $res[0];
+                                $res = $res->toArray();
+                                $knownFor[$index]['id_movie'] = $res['id_movie'];
+                                $knownFor[$index]['type_film'] = getTableSegmentOrTypeId($res['type_film']);
+                                $knownFor[$index]['title'] = $res['title'];
+                                $knownFor[$index]['original_title'] = $res['original_title'];
+                                $knownFor[$index]['poster'] = '';
+                                if (!empty($res[$relationPosterNameSnake])){
+                                    $knownFor[$index]['poster'] = $res[$relationPosterNameSnake][0]['src']??'';
+                                }
                             }
                         }
                     }
                 }
 
-                $modelArr[0]['knowfor'] = $knownFor;
-                $modelArr[0]['filmography'] = json_decode($modelArr[0]['filmography'],true) ?? [];
+                $modelArr['info']['knowfor'] = $knownFor;
+                $modelArr['filmography'] = json_decode($modelArr['filmography'],true) ?? [];
                 $filmographyArr = [];
-                foreach ($modelArr[0]['filmography'] as $k => &$occupation){
+                foreach ($modelArr['filmography'] as $k => &$occupation){
                     uasort($occupation, function ($a, $b){return ($a['year'] < $b['year']);});
                     foreach ($occupation as $id =>$dataArr){
                         $filmographyArr[$k][] = [
@@ -125,11 +141,11 @@ class CelebsController extends Controller
                         ];
                     }
                 }
-                $modelArr[0]['filmography'] = $filmographyArr;
-                $modelArr[0]['created_at'] = date('Y-m-d', strtotime($modelArr[0]['created_at'])) ?? '';
-                $modelArr[0]['updated_at'] = date('Y-m-d', strtotime($modelArr[0]['updated_at'])) ?? '';
+                $modelArr['filmography'] = $filmographyArr;
+                $modelArr['info']['created_at'] = date('Y-m-d', strtotime($modelArr['info']['created_at'])) ?? '';
+                $modelArr['info']['updated_at'] = date('Y-m-d', strtotime($modelArr['info']['updated_at'])) ?? '';
 
-                return $modelArr[0];
+                return $modelArr;
             }
         }
         return [];

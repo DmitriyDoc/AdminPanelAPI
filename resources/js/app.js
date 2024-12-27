@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import App from './src/App.vue'
+import { i18nVue } from 'laravel-vue-i18n'
 import './app.css';
 import 'vue-select/dist/vue-select.css';
 import './src/assets/css/vue-select-override.css';
@@ -14,7 +15,13 @@ import 'vue-toastification/dist/index.css';
 axios.defaults.baseURL = `/api`;
 axios.defaults.withCredentials = true;
 
-createApp(App).use(createPinia()).use(Router).use(Toast, {
+createApp(App).use(i18nVue, {
+    resolve: async lang => {
+        const langs = import.meta.glob('../../lang_vue/*.json');
+        return await langs[`../../lang_vue/${lang}.json`]();
+    }
+
+}).use(createPinia()).use(Router).use(Toast, {
     pauseOnFocusLoss: false,
     hideProgressBar: true,
     timeout: 10000,

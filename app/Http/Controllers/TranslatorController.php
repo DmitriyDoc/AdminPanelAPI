@@ -4,9 +4,10 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\LocalizingCelebsInfo;
-use App\Models\LocalizingInfoMovies;
+use App\Models\CelebsInfoRu;
+use App\Models\MoviesInfoRu;
 use \Dejurin\GoogleTranslateForFree;
+use Illuminate\Support\Facades\Log;
 
 class TranslatorController
 {
@@ -14,13 +15,12 @@ class TranslatorController
     private $target = 'ru';
     private $attempts = 5;
     private $translator;
-    private $loclizingTable = null;
+    private $localizingTable = null;
     private $columnId = null;
     private $columnKey = null;
 
     private $dataMovie = [
         'id_movie' => null,
-        'type_film' => null,
         'genres' => null,
         'cast' => null,
         'directors' => null,
@@ -47,8 +47,8 @@ class TranslatorController
 
     private function updateOrCreateLocalizing($data){
         try {
-            $localizingModel = $this->loclizingTable::where($this->columnKey,$this->columnId)->first();
-            $localizingModel ? $localizingModel::where($this->columnKey,$this->columnId)->update($data) : $this->loclizingTable::firstOrCreate($data);
+            $localizingModel = $this->localizingTable::where($this->columnKey,$this->columnId)->first();
+            $localizingModel ? $localizingModel::where($this->columnKey,$this->columnId)->update($data) : $this->localizingTable::firstOrCreate($data);
         }
         catch (\Exception $e)
         {
@@ -63,12 +63,11 @@ class TranslatorController
         $this->columnId = $movieId;
         $this->columnKey = $columnKey;
         $this->dataMovie['id_movie'] = $dataInfo->id_movie;
-        $this->dataMovie['type_film'] = $dataInfo->type_film;
-        $this->loclizingTable = new LocalizingInfoMovies();
+        $this->localizingTable = new MoviesInfoRu();
         $this->dataMovie['genres'] = null;
         if (!empty($dataInfo->genres)){
-            $unpackGenres = unserialize($dataInfo->genres);
-            $genres = array_unique($unpackGenres['genres']);
+            $unpackGenres = json_decode($dataInfo->genres);
+            $genres = array_unique($unpackGenres);
             $genres = json_encode($genres,JSON_UNESCAPED_UNICODE);
             $resultGenres = $this->startTranslate($genres);
             $resultGenres = str_replace(['«','»'] ,'"',$resultGenres);
@@ -76,62 +75,27 @@ class TranslatorController
         }
         $this->dataMovie['cast'] = null;
         if (!empty($dataInfo->cast)){
-            $resultCast = $this->startTranslate($dataInfo->cast);
-            $explodeCast = explode(';',$resultCast);
-            unset($explodeCast[0]);
-            unset($resultCast);
-            array_pop($explodeCast);
-            $numericArr = [];
-            foreach ($explodeCast as $expElem){
-                if (preg_match('/"([^"]+)"/', $expElem, $matches)) {
-                    array_push($numericArr,$matches[1]);
-                } else {
-                    //array_push($numericArr,null);
-                }
+            $castDecode = json_decode($dataInfo->cast, true);
+            foreach ( $castDecode as $id => $item ) {
+                $resultCast[$id]['role'] = $this->startTranslate($item['role']);
+                $resultCast[$id]['actor'] = $this->startTranslate($item['actor']);
             }
-            foreach ($numericArr as $keyEl => $numElem){
-                if (preg_match("/nm\d{1,10}/", $numElem, $matches)) {
-                    $keyEl++;
-                    if ($keyEl <= count($numericArr)){
-                        foreach (array_slice($numericArr, $keyEl,2) as $keyGroup => $group) {
-                            if ($keyGroup == 0){
-                                $resultCast[trim($matches[0])]['actor'] = strpos($group, 'nm') !== 0 ? trim($group) : null;
-                            }
-                            if ($keyGroup == 1) {
-                                $resultCast[trim($matches[0])]['role'] = strpos($group, 'nm') !== 0 ? trim($group) : null;
-                            }
-                        }
-                    }
-                }
-            }
-            $resultCast = json_encode($resultCast ?? null);
+
+            $resultCast = json_encode($resultCast ,JSON_UNESCAPED_UNICODE);
             $this->dataMovie['cast'] = json_validate($resultCast) ? $resultCast : null;
         }
 
+        $this->dataMovie['directors'] = null;
         if (!empty($dataInfo->directors)){
-            $unserializeDirectors = unserialize($dataInfo->directors);
-            $directorsKeysArr = [];
-            foreach ($unserializeDirectors['directors'] as $keyDirector => $director){
-                $directorsKeysArr[$keyDirector] = trim(key($director));
-            }
-            $directorsKeysArr = array_unique($directorsKeysArr);
-            $encodeDirectors = json_encode($directorsKeysArr,JSON_UNESCAPED_UNICODE);
-            $resultDirectors = $this->startTranslate($encodeDirectors);
+            $resultDirectors = $this->startTranslate($dataInfo->directors);
             $resultDirectors = str_replace(['«','»'] ,'"',$resultDirectors);
             $resultDirectors = str_replace(':""' ,"\":\"\"",$resultDirectors);
             $resultDirectors = str_replace("\u{200B}" ,'',$resultDirectors);
             $this->dataMovie['directors'] = json_validate($resultDirectors) ? $resultDirectors : null;
         }
-
+        $this->dataMovie['writers'] = null;
         if (!empty($dataInfo->writers)){
-            $unserializeWriters = unserialize($dataInfo->writers);
-            $writerKeysArr = [];
-            foreach ($unserializeWriters['writers'] as $keyWriter => $writer){
-                $writerKeysArr[$keyWriter] = trim(key($writer));
-            }
-            $writerKeysArr = array_unique($writerKeysArr);
-            $encodeWriters = json_encode($writerKeysArr,JSON_UNESCAPED_UNICODE);
-            $resultWriters = $this->startTranslate($encodeWriters);
+            $resultWriters = $this->startTranslate($dataInfo->writers);
             $resultWriters = str_replace(['«','»'] ,'"',$resultWriters);
             $resultWriters = str_replace("\u{200B}" ,'',$resultWriters);
             if (!strpos($resultWriters,'"')){
@@ -142,7 +106,7 @@ class TranslatorController
             }
             $this->dataMovie['writers'] = json_validate($resultWriters) ? $resultWriters : null;
         }
-
+        $this->dataMovie['story_line'] = null;
         if (!empty($dataInfo->story_line)){
             $resultStoryLine = $dataInfo->story_line;
             if (strlen($dataInfo->story_line) >= 4500){
@@ -151,18 +115,15 @@ class TranslatorController
             $resultStoryLine = $this->startTranslate($resultStoryLine);
             $this->dataMovie['story_line'] = str_replace("\u{200B}" ,'',$resultStoryLine);
         }
-
+        $this->dataMovie['countries'] = null;
         if (!empty($dataInfo->countries)){
-            $unpackCountries = unserialize($dataInfo->countries);
-            $countries = array_unique($unpackCountries['countries']);
-            $countries = json_encode($countries,JSON_UNESCAPED_UNICODE);
-            $resultCountries= $this->startTranslate($countries);
+            $resultCountries= $this->startTranslate($dataInfo->countries);
             $resultCountries = str_replace('».' ,'',$resultCountries);
             $resultCountries = str_replace(['«','»'] ,'"',$resultCountries);
             $resultCountries = str_replace("\u{200B}" ,'',$resultCountries);
             $this->dataMovie['countries'] = json_validate($resultCountries) ? $resultCountries : null;
         }
-
+        $this->dataMovie['release_date'] = null;
         if (!empty($dataInfo->release_date)){
             if (str_contains($dataInfo->release_date,",")){
                 $this->dataMovie['release_date'] = $this->startTranslate($dataInfo->release_date);
@@ -172,11 +133,10 @@ class TranslatorController
         $this->dataMovie = [];
     }
     public function translateCeleb($dataInfo, $celebId, $columnKey) {
-        $this->dataCeleb = [];
         $this->columnId = $celebId;
         $this->columnKey = $columnKey;
         $this->dataCeleb['id_celeb'] = $dataInfo->id_celeb;
-        $this->loclizingTable = new LocalizingCelebsInfo();
+        $this->localizingTable = new CelebsInfoRu();
         if (!empty($dataInfo->filmography)){
             $filmographyDecode = json_decode($dataInfo->filmography, true);
             foreach ($filmographyDecode as $keySection => $valSection){
@@ -203,5 +163,6 @@ class TranslatorController
             $this->dataCeleb['dieLocation'] = $this->startTranslate($dataInfo->dieLocation)??null;
         }
         $this->updateOrCreateLocalizing($this->dataCeleb);
+        $this->dataCeleb = [];
     }
 }
