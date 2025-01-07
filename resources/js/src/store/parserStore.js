@@ -4,6 +4,10 @@ import { ref } from "vue";
 import {ElMessage} from "element-plus";
 
 export const useParserStore = defineStore('parserStore',() => {
+    const locale = ref([]);
+    const localeDatePicker = ref({});
+    const filters = ref([]);
+    const types = ref([]);
     const loader = ref(true);
     const error = ref(null);
 
@@ -43,9 +47,22 @@ export const useParserStore = defineStore('parserStore',() => {
                 }
             });
     };
+    const getLocale = async () => {
+        try {
+            axios.get('/parser/locale').then((response) => {
+                locale.value = response.data.parser;
+                filters.value = response.data.filter;
+                types.value = response.data.types;
+                localeDatePicker.value = response.data.datepicker;
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        }
+    };
     const test = async () =>{
         try {
-            axios.get('/translate/celebs').then((response) => {
+            axios.get('/transfer').then((response) => {
 
             });
         } catch (e) {
@@ -54,10 +71,15 @@ export const useParserStore = defineStore('parserStore',() => {
         }
     }
     return {
+        locale,
+        localeDatePicker,
+        filters,
+        types,
         loader,
         error,
         test,
         addCelebById,
+        getLocale,
         parserStart,
     }
 });

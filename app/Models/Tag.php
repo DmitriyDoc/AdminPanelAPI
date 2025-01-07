@@ -12,7 +12,7 @@ class Tag extends Model
     public $timestamps = false;
     protected $fillable = [
         'value',
-        'tag_name',
+        'tag_name_en',
         'tag_name_ru',
         'created_at',
         'updated_at',

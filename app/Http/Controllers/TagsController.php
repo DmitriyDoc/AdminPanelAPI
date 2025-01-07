@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 
 class TagsController
 {
@@ -11,7 +12,8 @@ class TagsController
         $tagData = Tag::where('value',$tagName)->with('children')->get()->toArray();
 
         if (!empty($tagData[0]['children'])){
-            $tagTitle = $tagData[0]['tag_name'];
+            $currentLocaleTagName = 'tag_name_'.Lang::locale();
+            $tagTitle = $tagData[0][$currentLocaleTagName];
             $TypeFilmArray = [];
             $collection = collect();
             $tagResponse = [];
@@ -24,12 +26,13 @@ class TagsController
             foreach ($TypeFilmArray as $key => $item){
                 if ($query = $request->query('search')){
                     $searchQuery = trim(strtolower(strip_tags($query)));
-                    $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+                    $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
                 }
                 $collection->add($model->select('type_film','id_movie','title','year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
             }
             $collapsed = $collection->collapse();
             $sorted = $collapsed->sort();
+
             if ($sorted[0]){
                 $allowedSortFields = ['desc','asc'];
                 $limit = $request->query('limit',50);
@@ -77,6 +80,7 @@ class TagsController
                 }
                 $tagResponse['title'] = $tagTitle;
                 $tagResponse['total'] = $collapsed->count();
+                $tagResponse['locale'] =  LanguageController::localizingMoviesByTagsList();
                 return $tagResponse;
             }
         }
@@ -86,13 +90,14 @@ class TagsController
     {
         $model = convertVariableToModelName('Tag','', ['App', 'Models']);
         $CollectionTag =  $model->all();
+        $allowedFilterFields = $model->getFillable();
 
         if ($CollectionTag->isNotEmpty()){
-            $allowedFilterFields = $model->getFillable();
             if ($request->has('search')){
-                $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
+                $searchQuery = trim(strip_tags($request->query('search')));
                 if (!empty($searchQuery)){
-                    $CollectionTag = $CollectionTag->where('tag_name',$searchQuery);
+                    $currentLocaleTagName = 'tag_name_'.Lang::locale();
+                    $CollectionTag = $CollectionTag->where($currentLocaleTagName,$searchQuery);
                 }
             }
             $itemsCount = $CollectionTag->count()??0;
@@ -111,7 +116,8 @@ class TagsController
             $collectionSortArr = $collectionSort->values()->toArray();
             return [
                 'total' => $itemsCount,
-                'data' => $collectionSortArr
+                'data' => $collectionSortArr,
+                'locale' => LanguageController::localizingTagsInfoList()
             ];
         }
         return [];

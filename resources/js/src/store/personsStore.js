@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
-import { onMounted, onUpdated, ref} from "vue";
+import { ref } from "vue";
 import {ElMessage} from "element-plus";
 
 export const usePersonsStore = defineStore('personsStore',() => {
@@ -24,15 +24,14 @@ export const usePersonsStore = defineStore('personsStore',() => {
 
     const getCelebs = async () =>{
         try {
-            axios.get('/persons/'
-                + route.params.slug
+            axios.get('/persons'
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                tableData.value = response.data.data;
+                tableData.value = response.data;
                 totalCount.value = response.data.total;
             });
         } catch (e) {
@@ -44,7 +43,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
     }
     const showItem = async () =>{
         try {
-            axios.get('/persons/' + route.params.slug + '/show/' + route.params.id
+            axios.get('/persons/show/' + route.params.id
             ).then((response) => {
                 singleData.value = response.data;
             });
@@ -56,7 +55,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         }
     }
     const removeItem = async (id,index) => {
-        axios.delete('/persons/' + route.params.slug + '/' + id).then((response) => {
+        axios.delete('/persons/' + id).then((response) => {
             tableData.value.splice(index,1);
             getCelebs();
         });

@@ -10,13 +10,14 @@ use App\Models\LocalizingFranchise;
 use App\Models\TagsMoviesPivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
 use function Nette\Utils\data;
 
 class CategoriesController extends Controller
 {
 
-    public function index():string
+    public function index() : string
     {
         $collectionArray = Category::with((array('children' => function($query)  {
             $query->with('children');
@@ -24,11 +25,19 @@ class CategoriesController extends Controller
         $collectionArray = cascaderStructure($collectionArray);
         return json_encode($collectionArray);
     }
-
-    public function getSections():string
+    public function getLocalizing() : array
     {
-        $sections = Category::get()->toArray();
-        return json_encode($sections ?? '');
+        return [
+          'collection'=> LanguageController::localizingCollectionInfo(),
+          'franchise'=> LanguageController::localizingFranchiseInfo(),
+        ];
+    }
+    public function getSections() : array
+    {
+        $titleFieldName = 'title_'.Lang::locale();;
+        $sections = Category::get(['id','label','value',$titleFieldName])->toArray();
+
+        return $sections?? [] ;
     }
 
     public function showSelectFranchise()
@@ -44,25 +53,25 @@ class CategoriesController extends Controller
     }
     public function addFranchise(Request $request)
     {
-        request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label))]);
+        request()->merge(['value' => strtolower(str_ireplace(' ', '_',$request->label_en))]);
         $data = Validator::make($request->all(),[
-            'label' => 'required|string|max:50',
-            'value' => 'required|string|max:50',
+            'label_en' => 'required|string|max:50',
             'label_ru' => 'required|string|max:50',
-            "collection"    => "required|array",
-            "collection.*"  => "required|numeric",
+            'value' => 'required|string|max:50',
+            "collection" => "required|array",
+            "collection.*" => "required|numeric",
         ]);
         if ($data->fails()) {
             return response()->json([
                 'errors' => $data->errors()
-            ], 422);
+            ]);
         }
 
         transaction( function () use ($data){
             $localModel = LocalizingFranchise::firstOrCreate([
-                'label' => $data->getValue('label'),
-                'value' => $data->getValue('value'),
-                'label_ru' => $data->getValue('label_ru')
+                'label_en' => $data->getValue('label_en'),
+                'label_ru' => $data->getValue('label_ru'),
+                'value' => $data->getValue('value')
             ]);
             foreach ($data->getValue('collection') as $collectionId){
                 $dataTable[] = [
@@ -75,21 +84,22 @@ class CategoriesController extends Controller
     }
     public function addCollection(Request $request)
     {
-    request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label))]);
-    $data = Validator::make($request->all(),[
-        'label' => 'required|string|max:50',
-        'label_ru' => 'required|string|max:50',
-        'value' => 'required|string|max:50',
-        'category_id' => 'required|numeric',
-    ]);
-    if ($data->fails()) {
-        return response()->json([
-            'errors' => $data->errors()
-        ], 422);
+        request()->merge([ 'value' => strtolower(str_ireplace(' ', '_',$request->label_en))]);
+        $data = Validator::make($request->all(),[
+            'label_en' => 'required|string|max:50',
+            'label_ru' => 'required|string|max:50',
+            'value' => 'required|string|max:50',
+            'category_id' => 'required|numeric',
+        ]);
+        if ($data->fails()) {
+            return response()->json([
+                'errors' => $data->errors()
+            ]);
+        }
+
+        Collection::insert($data->getData());
     }
-    Collection::create($data->getData());
-}
-    public function store(Request $request):array
+    public function store(Request $request) : array
     {
         $allowedTableNames = [
             0=>'FeatureFilm',
@@ -156,7 +166,7 @@ class CategoriesController extends Controller
                 }
                 if (!empty($data['tags'])){
                     foreach ($data['tags'] as $tag){
-                        $tagExist = DB::table('tags')->where('tag_name','=',$tag)->first();
+                        $tagExist = DB::table('tags')->where('tag_name_en','=',$tag)->first();
                         if ($tagExist){
                             TagsMoviesPivot::create([
                                 'id_movie' => $data['id_movie'],

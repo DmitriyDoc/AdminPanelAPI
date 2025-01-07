@@ -25,7 +25,7 @@
                             </template>
                         </RouterView>
                     </div>
-                    <el-footer class="container mt-3">&copy;2024 Spectrum Admin Panel</el-footer>
+                    <el-footer class="container mt-3">&copy;2025 Spectrum Admin Panel</el-footer>
                 </main>
             </el-container>
 

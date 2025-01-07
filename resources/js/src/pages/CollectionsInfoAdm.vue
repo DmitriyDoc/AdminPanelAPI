@@ -1,96 +1,93 @@
 <template>
-    <h3 class="text-center mt-3 mb-3">{{collectionsData['title']??''}}</h3>
-    <el-form
-        ref="formRef"
-        :model="queryValidateForm"
-        class="demo-ruleForm"
-    >
-        <el-form-item prop="query" :rules="[{}]">
-            <el-input
-                v-model.query="queryValidateForm.query"
-                type="text"
-                autocomplete="off"
-                placeholder="Search here"
-                v-on:keydown.enter.prevent = "submitSearch(formRef)"
-            />
-        </el-form-item>
-        <el-form-item>
-            <el-button @click="resetSearch(formRef)">Reset</el-button>
-            <el-button @click="submitSearch(formRef)">Go!</el-button>
-        </el-form-item>
-<!--        <el-form-item>-->
-<!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-<!--        </el-form-item>-->
-    </el-form>
+    <template v-if="collectionsData.data">
+        <h3 class="text-center mt-3 mb-3">{{collectionsData.title}}</h3>
+        <p>{{collectionsData.locale.search_by_title_id}}</p>
+        <el-form
+            ref="formRef"
+            :model="queryValidateForm"
+            class="demo-ruleForm"
+        >
+            <el-form-item prop="query" :rules="[{}]">
+                <el-input
+                    v-model.query="queryValidateForm.query"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="collectionsData.locale.search_here"
+                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
+                />
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="resetSearch(formRef)">{{collectionsData.locale.reset}}</el-button>
+                <el-button @click="submitSearch(formRef)">{{collectionsData.locale.go}}</el-button>
+            </el-form-item>
+        </el-form>
 
-    <div class="demo-pagination-block"  v-loading="loader">
-        <el-menu
-            v-if="collectionsData['franchise']"
-            :default-active="activeMenuIndex"
-             class="el-menu-demo mb-4"
-            mode="horizontal"
-            :ellipsis="false"
-            @select="handleSelect"
-        >
-            <div class="flex-grow" />
-            <el-sub-menu index="1" :popper-append-to-body="false">
-                <template #title>Franchise</template>
-                <template v-for="(item, index) in collectionsData['franchise']">
-                    <el-menu-item :index="'1-' + index" >
-                        <RouterLink :to="{ name: 'showFranchise', params: { slug: route.params.slug, collName: route.params.collName, franName:  item.value }}">{{item.label}}</RouterLink>
-                    </el-menu-item>
-                </template>
-            </el-sub-menu>
-        </el-menu>
-        <p>Spin by:</p>
-        <el-switch
-            v-model="defaultSpin"
-            class="mb-2"
-            active-text="ASC"
-            inactive-text="DESC"
-            @change="handleSwitchChange"
-        />
-        <p>Sort by:</p>
-        <el-select
-            v-model="valueSort"
-            filterable
-            @change="handleSelectChange"
-            placeholder="Select"
-            style="width: 240px"
-        >
-            <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+        <div class="demo-pagination-block"  v-loading="loader">
+            <el-menu
+                v-if="collectionsData.franchise"
+                :default-active="activeMenuIndex"
+                 class="el-menu-demo mb-4"
+                mode="horizontal"
+                :ellipsis="false"
+                @select="handleSelect"
+            >
+                <div class="flex-grow" />
+                <el-sub-menu index="1" :popper-append-to-body="false">
+                    <template #title>{{$t('franchise')}}</template>
+                    <template v-for="(item, index) in collectionsData.franchise">
+                        <el-menu-item :index="'1-' + index" >
+                            <RouterLink :to="{ name: 'showFranchise', params: { slug: route.params.slug, collName: route.params.collName, franName:  item.value }}">{{item.label}}</RouterLink>
+                        </el-menu-item>
+                    </template>
+                </el-sub-menu>
+            </el-menu>
+            <p>{{collectionsData.locale.spin_by}}</p>
+            <el-switch
+                v-model="defaultSpin"
+                class="mb-2"
+                active-text="&#8595;"
+                inactive-text="&#8593;"
+                @change="handleSwitchChange"
             />
-        </el-select>
-        <div class="demonstration">Jump to</div>
-        <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :small="small"
-            :disabled="disabled"
-            :background="background"
-            layout="sizes, prev, pager, next, jumper"
-            :total="collectionsData['total']"
-            :page-sizes="[20, 50, 100, 300]"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-        />
-    </div>
-    <template v-if="collectionsData['data']">
-        <el-table :data="collectionsData['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
+            <p>{{collectionsData.locale.sort_by}}</p>
+            <el-select
+                v-model="valueSort"
+                filterable
+                @change="handleSelectChange"
+                style="width: 240px"
+            >
+                <el-option
+                    v-for="field in collectionsData.locale.collection_sort_fields"
+                    :key="field.value"
+                    :label="field.label"
+                    :value="field.value"
+                />
+            </el-select>
+            <div class="demonstration">{{collectionsData.locale.jump_to}}</div>
+            <el-pagination
+                v-model:current-page="currentPage"
+                v-model:page-size="pageSize"
+                :small="small"
+                :disabled="disabled"
+                :background="background"
+                layout="sizes, prev, pager, next, jumper"
+                :total="collectionsData['total']"
+                :page-sizes="[20, 50, 100, 300]"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+            />
+        </div>
+        <el-table :data="collectionsData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
             <el-table-column type="index" label="№"/>
-            <el-table-column fixed prop="created_at" label="Date Create" width="130" />
-            <el-table-column prop="poster" label="Cover" width="130" >
+            <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
+            <el-table-column prop="poster" :label="$t('poster')" width="130" >
                 <template v-slot:default="scope">
                     <el-image :src="scope.row.poster" />
                 </template>
             </el-table-column>
-            <el-table-column prop="id_movie" label="ID Movie" width="120" />
-            <el-table-column prop="year" label="Year" width="100" />
-            <el-table-column prop="franchise" label="Franchise" width="200" >
+            <el-table-column prop="id_movie" :label="$t('id_movie')" width="120" />
+            <el-table-column prop="year" :label="$t('year_release')" width="100" />
+            <el-table-column prop="franchise" :label="$t('franchise')" width="200" >
                 <template v-slot:default="scope">
                     <template v-if="scope.row.franchise">
                         <div v-for="fran in scope.row.franchise" :key="fran" >
@@ -99,28 +96,28 @@
                     </template>
                 </template>
             </el-table-column>
-            <el-table-column prop="title" label="Title" width="600" />
-            <el-table-column prop="updated_at" label="Date Update" width="120" />
-            <el-table-column prop="id_movie" property="type_film" fixed="right" label="Operations" width="120">
+            <el-table-column prop="title" :label="$t('title')" width="600" />
+            <el-table-column prop="updated_at" :label="$t('updated_at')" width="120" />
+            <el-table-column prop="id_movie" property="type_film" fixed="right" :label="$t('actions')" width="120">
                 <template v-slot:default="scope">
                     <el-button type="success" link >
-                        <RouterLink :to="{ name: 'showmovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="View" title="Details"/>
+                        <RouterLink :to="{ name: 'showMovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
+                            <el-button link type="primary" :icon="View" :title="$t('details')"/>
                         </RouterLink>
                     </el-button>
                     <el-button link type="primary" >
                         <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="EditPen" title="Edit"/>
+                            <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
                         </RouterLink>
                     </el-button>
-                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" title="Remove from collection" />
+                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" :title="$t('remove_from_collection')" />
                  </template>
             </el-table-column>
         </el-table>
         <el-backtop :right="20" :bottom="100" />
     </template>
     <template v-else>
-        <p style="text-align: center">Not Found</p>
+        <p style="text-align: center">{{$t('data_not_found')}}</p>
     </template>
     <p v-if="error">{{ error }}</p>
 </template>
@@ -128,47 +125,23 @@
 <script lang="ts" setup >
     import { storeToRefs } from 'pinia';
     import { useCollectionsStore } from "../store/collectionsStore";
+    import { useLanguageStore } from "../store/languageStore";
     import { RouterLink } from 'vue-router'
     import { Delete,View,EditPen } from '@element-plus/icons-vue';
     import { ElMessage, ElMessageBox } from 'element-plus'
     import type { FormInstance } from 'element-plus'
     import type { Action } from 'element-plus'
-    import { onMounted,onUpdated, ref, watch, reactive} from "vue";
+    import { onMounted, ref, watch, reactive} from "vue";
 
+    const languageStore = useLanguageStore();
     const collectionsStore = useCollectionsStore();
+    const { watcherLang } = storeToRefs( languageStore );
     const { collectionsData, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(collectionsStore);
 
     const small = ref(false);
     const background = ref(false);
     const disabled = ref(false);
     const defaultSpin = ref(false);
-    const options = ref([
-        {
-            value: 'id',
-            label: 'ID',
-        },
-        {
-            value: 'id_movie',
-            label: 'ID movie',
-        },
-        {
-            value: 'title',
-            label: 'Title',
-        },
-        {
-            value: 'year',
-            label: 'Year',
-        },
-        {
-            value: 'created_at',
-            label: 'Created date',
-            disabled: true,
-        },
-        {
-            value: 'updated_at',
-            label: 'Updated date',
-        },
-    ]);
     const formRef = ref<FormInstance>();
     const activeMenuIndex = ref('1')
     const queryValidateForm = reactive({
@@ -178,7 +151,9 @@
     // const handleSelect = (key, keyPath) => {
     //     console.log(key, keyPath)
     // }
-    watch(() => route,  collectionsStore.getDataCollections,{deep: true, immediate: true,});
+
+    watch(() => [route, watcherLang.value],  collectionsStore.getDataCollections,{deep: true, immediate: true,});
+
 
     const handleSizeChange = (val) => {
         collectionsStore.updatePageSize(val);

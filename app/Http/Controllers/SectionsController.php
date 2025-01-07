@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\CollectionsCategoriesPivot;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -25,33 +26,34 @@ class SectionsController extends Controller
             8=>'silver',
             9=>'tan',
         ];
-
+        $currentLocale = Lang::locale();
         if (in_array($slug,$allowedSectionsNames)){
-            $section = Category::where('value',$slug)->with('children')->get()->toArray();
-            foreach ($section[0]['children'] as $collection) {
+            $section = Category::where('value',$slug)->with('children')->first()->toArray();
+            foreach ($section['children'] as $collection) {
                 $collectionIds[] = $collection['id'];
             }
             $pivot = CollectionsCategoriesPivot::query();
             $moviesIds = $pivot->whereIn('collection_id',$collectionIds)->get(['id_movie','type_film'])->toArray();
 
-            $TypeFilmArray = [];
+            $typeFilmArray = [];
             $collection = collect();
             $collectionResponse = [];
 
             if (!empty($moviesIds)){
-                array_walk($moviesIds, function($item, $key) use (&$TypeFilmArray) {
+                array_walk($moviesIds, function($item, $key) use (&$typeFilmArray) {
                     $typeFilm = getTableSegmentOrTypeId($item['type_film']);
-                    $TypeFilmArray[$typeFilm][] = $item['id_movie'];
+                    $typeFilmArray[$typeFilm][] = $item['id_movie'];
                 });
 
                 $model = modelByName('MovieInfo');
                 $allowedFilterFields = $model->getFillable();
-                foreach ($TypeFilmArray as $key => $item){
+                $titleFieldName = transformTitleByLocale();
+                foreach ($typeFilmArray as $key => $item){
                     if ($query = $request->query('search')){
                         $searchQuery = trim(strtolower(strip_tags($query)));
-                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[3],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
                     }
-                    $collection->add($model->select('type_film','id_movie','title','year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
+                    $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
                 }
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
@@ -86,12 +88,12 @@ class SectionsController extends Controller
                         $collapsedPosters = $posterCollection->collapse()->toArray();
                     }
                     foreach ($collectionSort->values()->toArray() as $k => $item) {
-                        if (!empty($section[0])){
-                            foreach ($section[0]['children'] as $col){
+                        if (!empty($section)){
+                            foreach ($section['children'] as $col){
                                 foreach ($item['categories'] as $key => $cat){
                                     if (!empty($cat['collection_id'] )){
                                         if ($cat['collection_id'] == $col['id'] ){
-                                            $collectionResponse['data'][$k]['collection'][$key]['label'] = $col['label'];
+                                            $collectionResponse['data'][$k]['collection'][$key]['label'] = $col['label_'.$currentLocale];
                                             $collectionResponse['data'][$k]['collection'][$key]['value'] = $col['value'];
                                         }
                                     }
@@ -106,18 +108,23 @@ class SectionsController extends Controller
                                 }
                             }
                         }
+                        $collectionResponse['data'][$k]['title'] = $item['title']??$item['original_title'];
                         $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                         $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                        $collectionResponse['data'][$k]['title'] = $item['title'] ?? '';
                         $collectionResponse['data'][$k]['year'] = $item['year_release'] ?? null;
                         $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                         $collectionResponse['data'][$k]['type_film'] = getTableSegmentOrTypeId($item['type_film']) ?? '';
                     }
-                    $collectionResponse['collections'] = $section[0]['children'];
+                    foreach ($section['children'] as $k => $item){
+                        $collectionResponse['collections'][$k]['label'] = $item['label_'.$currentLocale];
+                        $collectionResponse['collections'][$k]['value'] = $item['value'];
+                    }
+
                     $collectionResponse['total'] = $collapsed->count();
+                    $collectionResponse['locale'] = LanguageController::localizingSectionsList();
                 }
             }
-            $collectionResponse['title'] = $section[0]['title'];
+            $collectionResponse['title'] = $section['title_'.$currentLocale];
             return $collectionResponse;
         }
         return [];

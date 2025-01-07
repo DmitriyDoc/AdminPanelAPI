@@ -75,7 +75,7 @@ const routes = [
         },
     },
     {
-        path: '/movies/:slug',
+        path: '/movies',
         name: 'movies',
         component: MoviesInfoAdm,
         meta: {
@@ -84,7 +84,7 @@ const routes = [
         },
     },
     {
-        path: '/persons/:slug',
+        path: '/persons',
         name: 'persons',
         component: PersonsInfoAdm,
         meta: {
@@ -121,17 +121,8 @@ const routes = [
     },
     {
         path: '/movies/:slug/show/:id',
-        name: 'showmovie',
+        name: 'showMovie',
         component: MovieDetailsAdm,
-        meta: {
-            layout: 'full',
-            permissions: [],
-        },
-    },
-    {
-        path: '/persons/:slug/show/:id',
-        name: 'showperson',
-        component: PersonDetailsAdm,
         meta: {
             layout: 'full',
             permissions: [],
@@ -147,7 +138,16 @@ const routes = [
         },
     },
     {
-        path: '/persons/:slug/edit/:id',
+        path: '/persons/show/:id',
+        name: 'showPerson',
+        component: PersonDetailsAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/persons/edit/:id',
         name: 'editPerson',
         component: UpdatePersonAdm,
         meta: {

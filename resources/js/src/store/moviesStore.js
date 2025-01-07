@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
-import { onMounted, onUpdated, ref} from "vue";
+import { ref } from "vue";
 import {ElMessage} from "element-plus";
 
 export const useMoviesStore = defineStore('moviesStore',() => {
@@ -22,18 +22,18 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const loader = ref(true);
     const error = ref();
 
-    const getMovies = () =>{
+    const getMovies = (type) =>{
         try {
             tableData.value = [];
             axios.get('/movies/'
-                + route.params.slug
+                + type
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
                 + '&orderBy=' + state.value.sortBy
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                tableData.value = response.data.data;
+                tableData.value = response.data;
                 totalCount.value = response.data.total;
             });
         } catch (e) {

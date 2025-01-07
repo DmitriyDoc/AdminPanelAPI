@@ -9,6 +9,7 @@ use App\Models\CollectionsCategoriesPivot;
 use App\Models\MovieInfo;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
@@ -43,8 +44,8 @@ class MoviesController extends Controller
         $typeId = getTableSegmentOrTypeId($tableName);
         $allowedSortFields = ['desc','asc'];
         $allowedFilterFields = $model->getFillable();
-
-        $model = $model->select('id_movie', 'title','year_release','created_at','updated_at')->where('type_film',$typeId);
+        $titleFieldName = transformTitleByLocale();
+        $model = $model->select('id_movie', $titleFieldName,'year_release','created_at','updated_at')->where('type_film',$typeId);
 
         $limit = $request->query('limit',50);
         $sortDir = strtolower($request->query('spin','desc'));
@@ -65,6 +66,7 @@ class MoviesController extends Controller
 
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
+                $modelArr['data'][$k]['title'] = $item['title']??$item['original_title'];
                 $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                 $img = explode(',',$item[$relationName][0]['srcset'] ?? '');
@@ -72,6 +74,7 @@ class MoviesController extends Controller
                 $modelArr['data'][$k]['poster'] = $img[0] ?? '';
                 unset($modelArr['data'][$k][$relationName]);
             }
+            $modelArr['locale'] = LanguageController::localizingMoviesList();
 
             return $modelArr;
         }
@@ -116,7 +119,9 @@ class MoviesController extends Controller
         }
         $model = modelByName('MovieInfo');
         $modelPosterName = 'poster'.$slug;
+        $titleFieldName = transformTitleByLocale();
         $localazingName = 'localazing'.ucfirst(Lang::locale());
+        $currentLocaleLabel = 'label_'.Lang::locale();
         $relationPosterName = camelToSnake($modelPosterName);
         $relationLocalizeName = camelToSnake($localazingName);
         $safeId = trim(strtolower(strip_tags($id)));
@@ -132,8 +137,8 @@ class MoviesController extends Controller
 
         if (!empty($modelArr)){
             $infoMovieData = $modelArr[$relationLocalizeName] ?? [];
-            $infoMovieData['type_film'] = $slug;
-            $infoMovieData['title'] = $modelArr['title'];
+            $infoMovieData['type_film'] = __('movies.type_movies.'.$slug) ?? '';
+            $infoMovieData['title'] = $modelArr[$titleFieldName];
             $infoMovieData['original_title'] = $modelArr['original_title'];
             $infoMovieData['year_release'] = $modelArr['year_release'];
             $infoMovieData['restrictions'] = $modelArr['restrictions'];
@@ -163,12 +168,12 @@ class MoviesController extends Controller
             }
             $img = explode(',',$posterSrcSet ?? '');
             $infoMovieData['poster'] = $img[0] ?? '';
-
+            $infoMovieData['locale'] = LanguageController::localizingMovieShow();
             if (!empty( $modelArr['collection'])) {
                 foreach ($modelArr['collection'] as $key => $itemCollection) {
                     $collection = Collection::with('category')->find($itemCollection['collection_id'])->toArray();
                     $infoMovieData['collection']['id'][$key] = $itemCollection['franchise_id'] ? 'fr_'.$itemCollection['collection_id'].$itemCollection['franchise_id'] : $itemCollection['collection_id'];
-                    $infoMovieData['collection']['catInfo'][$key]['label'] = $collection['label'] ?? null;
+                    $infoMovieData['collection']['catInfo'][$key]['label'] = $collection[$currentLocaleLabel] ?? null;
                     $infoMovieData['collection']['catInfo'][$key]['category_value'] = $collection['category'][0]['value'] ?? null;
                 }
                 $infoMovieData['collection']['viewed'] = (bool) $modelArr['collection'][0]['viewed'] ?? false;

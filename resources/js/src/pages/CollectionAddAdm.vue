@@ -1,10 +1,10 @@
 <template>
-    <h3>Add Collection:</h3>
+    <h3 class="text-center mt-3 mb-3">{{$t('add_collection')}}</h3>
     <el-row>
         <el-col :span="6">
             <div class="mt-3">
-                <h5>Select section:</h5>
-                <el-cascader  v-model="categoryId" placeholder="select ..." :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
+                <h5>{{collectionLocale.select_section}}</h5>
+                <el-cascader  v-model="categoryId" :placeholder="collectionLocale.select" :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
                     <template #default="{ data }">
                         <span>{{ data.label }}</span>
                     </template>
@@ -12,11 +12,11 @@
             </div>
             <div class="mt-3">
                 <div class="input-group mb-3">
-                    <span>The name of the new collection</span>
+                    <span>{{collectionLocale.name_of_the_new_collection}}</span>
                     <el-input
                         v-model="nameCollection"
                         maxlength="50"
-                        placeholder="Input collection ..."
+                        :placeholder="collectionLocale.enter_name"
                         show-word-limit
                         type="text"
                     />
@@ -24,18 +24,18 @@
             </div>
             <div class="mt-3">
                 <div class="input-group mb-3">
-                    <span>Ru_ru name of the new collection</span>
+                    <span>{{collectionLocale.ru_name_of_the_new_collection}}</span>
                     <el-input
                         v-model="nameRuCollection"
                         maxlength="50"
-                        placeholder="Input Ru_ru collection ..."
+                        :placeholder="collectionLocale.enter_name"
                         show-word-limit
                         type="text"
                     />
                 </div>
             </div>
             <div>
-                <button @click="handleAddFranchise" class="btn btn-primary" type="submit">Add New</button>
+                <button @click="handleAddFranchise" class="btn btn-primary">{{collectionLocale.btn_add_new}}</button>
             </div>
         </el-col>
     </el-row>
@@ -44,12 +44,15 @@
 
 <script setup>
     import { storeToRefs } from 'pinia';
-    import { ref } from "vue";
-    import { ElMessage, ElMessageBox} from "element-plus";
+    import { onMounted, ref, watch } from "vue";
+    import { ElMessage, ElMessageBox } from "element-plus";
     import { useCategoriesStore } from "../store/categoriesStore";
+    import { useLanguageStore } from "../store/languageStore";
 
+    const languageStore = useLanguageStore();
     const categoryStore = useCategoriesStore();
-    const { optionsCats } = storeToRefs(categoryStore);
+    const { optionsCats, collectionLocale } = storeToRefs(categoryStore);
+    const { watcherLang } = storeToRefs(languageStore);
 
     const nameCollection = ref('');
     const nameRuCollection = ref('');
@@ -58,30 +61,22 @@
         checkStrictly: true,
     }
 
+    onMounted(  () => {
+        categoryStore.getCategoriesCollection();
+        categoryStore.getLocale();
+    });
+    watch(() => watcherLang.value, (newLang) => {
+        categoryStore.getLocale();
+    });
     const handleAddFranchise = () => {
-        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
-            confirmButtonText: 'OK',
-            cancelButtonText: 'Cancel',
-            type: 'warning',
-        }).then(() => {
-            categoryStore.setCategoryCollection({
-                category_id: categoryId.value,
-                label: nameCollection.value,
-                label_ru: nameRuCollection.value,
-            });
-            categoryId.value = null;
-            nameCollection.value = '';
-            nameRuCollection.value = '';
-            ElMessage({
-                type: 'success',
-                message: 'Collection added',
-            })
-        }).catch(() => {
-            ElMessage({
-                type: 'info',
-                message: 'Addition of a new collection has been canceled',
-            })
-        })
+        categoryStore.setCategoryCollection({
+            label_en: nameCollection.value,
+            label_ru: nameRuCollection.value,
+            category_id: categoryId.value,
+        });
+        categoryId.value = null;
+        nameCollection.value = '';
+        nameRuCollection.value = '';
     }
     const handleCategoryChange = (value) => {
         for (var el of optionsCats.value) {
@@ -90,8 +85,6 @@
             }
         }
     }
-    categoryStore.getCategoriesCollection();
-
 </script>
 
 <style scoped>

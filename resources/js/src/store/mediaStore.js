@@ -68,10 +68,10 @@ export const useMediaStore = defineStore('mediaStore',() => {
             console.log('error',e);
         } finally {}
     }
-    const getImages = async () =>{
+    const getImages = async (slug) =>{
         try {
             axios.get('/media/images/'
-                + route.params.slug
+                + slug
                 + '/'
                 + route.params.id
                 + '?page=' + pageImg.value
@@ -102,7 +102,9 @@ export const useMediaStore = defineStore('mediaStore',() => {
                     srcListPosters.value.push(item.src);
                 });
                 if (response.data.poster_count){
+                    console.log(response.data);
                     for (var item in response.data.poster_count) {
+                        postersAssignInfo[item].locale = reactive(response.data.locale[item]);
                         postersAssignInfo[item].count = reactive(response.data.poster_count[item]);
                     }
                 }
@@ -148,9 +150,9 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
-    const updateImagePageSize = () => {
+    const updateImagePageSize = (slug) => {
         pageImg.value =  pageImg.value + 1;
-        getImages();
+        getImages(slug);
     }
     const updatePosterPageSize = () => {
         pagePoster.value =  pagePoster.value + 1;

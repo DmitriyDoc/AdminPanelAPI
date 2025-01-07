@@ -2,6 +2,7 @@
 
 
 namespace App\Http\Controllers\Parser;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -9,10 +10,10 @@ use Illuminate\Support\Facades\Validator;
 
 class ParserStartController
 {
-    public function parseInit(Request $request)
+    public function parseInitStore(Request $request)
     {
         session()->forget('tracking.report');
-        session()->put('tracking.report.start', "PARSER START");
+        session()->put('tracking.report.start', __('parser.start_parser'));
         session()->save();
         $validator = Validator::make($request->all()['data'],[
             'flag' => 'required|boolean',
@@ -35,14 +36,20 @@ class ParserStartController
             $parserStart = new ParserController($data);
             $data['flag'] ? $parserStart->parseMoviesByPeriod($data['movie_types']) : $parserStart->parsePersons($data['persons_source'],$data['switch_new_update']);
             //$parserStart->actualizeYearTitleForTableIdType($data['movie_types']);
-            session()->put('tracking.report.stop', "PARSING COMPLETED SUCCESSFULY!");
+            session()->put('tracking.report.stop',  __('parser.completed_parser'));
         }
     }
 
-    public function parseMovieUpdate(Request $request){
+    public function parseMovieUpdate(Request $request)
+    {
         (new ParserUpdateMovieController())->update($request);
     }
-    public function parseCelebUpdate(Request $request){
+    public function parseCelebUpdate(Request $request)
+    {
         (new ParserUpdateCelebController())->update($request);
+    }
+    public function parseLocalization()
+    {
+        return LanguageController::localizingParserInfo();
     }
 }

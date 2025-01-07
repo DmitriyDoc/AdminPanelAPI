@@ -1,67 +1,68 @@
 <template>
-    <el-row v-if="singleData.genres && singleData.cast">
+    <el-row v-if="singleData.cast">
         <el-col :span="24">
             <h1>{{ singleData.title }}</h1>
             <span>{{ singleData.original_title }}</span>
         </el-col>
-        <el-col>
+        <el-col >
             <el-button type="success" link >
-                <RouterLink :to="{ name: 'editMovie', params: { slug: routeParams.slug, id:  routeParams.id }}">
-                    <el-button  type="danger">Edit</el-button>
+                <RouterLink :to="{ name: 'editMovie', params: { slug: routeParams.slug, id: routeParams.id }}">
+                    <el-button type="danger">{{ singleData.locale.edit }}</el-button>
                 </RouterLink>
             </el-button>
         </el-col>
         <el-col :span="4">
             <el-image :src="singleData.poster" fit="cover" />
             <ul class="list-group">
-                <li class="list-group-item bg-light"><span><strong>Type: </strong></span>{{ singleData.type_film ?? 'empty' }}</li>
-                <template v-if="singleData.collection">
+                <li class="list-group-item bg-light"><strong>{{ singleData.type_film ?? singleData.locale.empty }}</strong></li>
+
+                <template v-if="singleData.collection.catInfo">
                     <li v-for="item in singleData.collection.catInfo" class="list-group-item" :style="{ backgroundColor: item.category_value + '!important'}">
-                    <span :class="['text-white']"><strong>{{ item.label }}</strong></span>
+                        <span :class="['text-white']"><strong>{{ item.label }}</strong></span>
                     </li>
                 </template>
                 <template v-else>
                     <li class="list-group-item">
-                        <strong><el-text class="mx-1" type="danger" size="large">UNSELECTED</el-text></strong>
+                        <strong><el-text class="mx-1" type="danger" size="large">{{ singleData.locale.unselected }}</el-text></strong>
                     </li>
                 </template>
-                <li class="list-group-item"><span><strong>Year release: </strong></span>{{ singleData.year_release ?? 'empty' }}</li>
-                <li class="list-group-item"><span><strong>Release Date: </strong></span>{{ singleData.release_date ?? 'empty' }}</li>
-                <li class="list-group-item"><span><strong>Restriction: </strong></span>{{ singleData.restrictions ?? 'empty' }}</li>
-                <li class="list-group-item"><span><strong>Runtime: </strong></span>{{ singleData.runtime ?? 'empty' }}</li>
-                <li class="list-group-item"><span><strong>Rating: </strong></span>{{ singleData.rating ?? 'empty' }}</li>
-                <li class="list-group-item"><span><strong>Budget Movie: </strong></span>{{ singleData.budget ?? 'empty' }}</li>
+                <li class="list-group-item"><span><strong>{{ singleData.locale.year_release }}</strong></span> {{ singleData.year_release ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{ singleData.locale.release_date }}</strong></span> {{ singleData.release_date ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{ singleData.locale.restriction }}</strong></span> {{ singleData.restrictions ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{ singleData.locale.runtime }} </strong></span> {{ singleData.runtime ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{ singleData.locale.rating }}</strong></span> {{ singleData.rating ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{ singleData.locale.budget }}</strong></span> {{ singleData.budget ?? singleData.locale.empty }}</li>
             </ul>
         </el-col>
         <el-col :span="20" >
             <el-tabs v-model="activeTabName" class="demo-tabs m-3">
-                <el-tab-pane label="Genres" name="first">
+                <el-tab-pane :label="singleData.locale.genres" name="first">
                     <li class="list-group-item">
                         <template v-for="(genre, index) in singleData.genres">
                             <div class="p-1 m-1 border bg-light"> {{ genre }} </div>
                         </template>
                     </li>
                 </el-tab-pane>
-                <el-tab-pane label="Countries" name="second">
+                <el-tab-pane :label="singleData.locale.countries" name="second">
                     <li class="list-group-item">
                         <template v-for="(country, index) in singleData.countries">
                             <div class="p-1 m-1 border bg-light"> {{ country }} </div>
                         </template>
                     </li>
                 </el-tab-pane>
-                <el-tab-pane label="Companies" name="third">
+                <el-tab-pane :label="singleData.locale.companies" name="third">
                     <li class="list-group-item">
                         <template v-for="(company, index) in singleData.companies">
                             <div class="p-1 m-1 border bg-light"> {{ company }} </div>
                         </template>
                     </li>
                 </el-tab-pane>
-                <el-tab-pane label="Directors" name="four">
+                <el-tab-pane :label="singleData.locale.directors" name="four">
                     <li class="list-group-item">
                         <template v-for="(director, index) in singleData.directors">
                             <template v-if="typeof director === 'object'" v-for="(role, name) in director">
                                 <div class="p-1 m-1 border bg-light">
-                                    <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
                                         <strong>{{name}}</strong>
                                     </RouterLink>
                                     <em>{{role}}</em>
@@ -69,7 +70,7 @@
                             </template>
                             <template v-else>
                                 <div class="p-1 m-1 border bg-light">
-                                    <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
                                         <strong>{{director}}</strong>
                                     </RouterLink>
                                 </div>
@@ -77,12 +78,12 @@
                         </template>
                     </li>
                 </el-tab-pane>
-                <el-tab-pane label="Writers" name="five">
+                <el-tab-pane :label="singleData.locale.writers" name="five">
                     <li class="list-group-item">
                         <template v-for="(writer, index) in singleData.writers">
                             <template v-if="typeof writer === 'object'" v-for="(role, name) in writer">
                                 <div class="p-1 m-1 border bg-light">
-                                    <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
                                         <strong>{{name}}</strong>
                                     </RouterLink>
                                     <em>{{role}}</em>
@@ -90,7 +91,7 @@
                             </template>
                             <template v-else>
                                 <div class="p-1 m-1 border bg-light">
-                                    <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
                                         <strong>{{writer}}</strong>
                                     </RouterLink>
                                 </div>
@@ -98,11 +99,11 @@
                         </template>
                     </li>
                 </el-tab-pane>
-                <el-tab-pane label="Cast" name="six">
+                <el-tab-pane :label="singleData.locale.cast" name="six">
                     <li class="list-group-item">
                         <template v-for="(item, index) in singleData.cast">
                             <div class="p-1 m-1 border bg-light">
-                                <RouterLink :to="{ name: 'showperson', params: { slug: 'Celebs', id: index }}">
+                                <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
                                     <strong>{{item.actor}}</strong>
                                 </RouterLink>
                                 <em>{{item.role}}</em>
@@ -112,12 +113,12 @@
                 </el-tab-pane>
             </el-tabs>
             <el-collapse v-if="singleData.story_line" v-model="activeAccordionTab" class="m-3" accordion>
-                <el-collapse-item title="Story" name="1">
+                <el-collapse-item :title="singleData.locale.story" name="1">
                     <div class="p-1 m-1 border bg-light">{{ singleData.story_line }}</div>
                 </el-collapse-item>
             </el-collapse>
             <el-collapse v-model="activeCollapseTab" class="m-3" @change="handleChange">
-                <el-collapse-item title="Images" name="image" >
+                <el-collapse-item :title="singleData.locale.images" name="image" >
                     <template v-for="(image, index) in imagesData" :key="index">
                         <el-image
                             style="width: 150px; height: 150px; margin: 5px"
@@ -130,9 +131,9 @@
                             fit="cover"
                         />
                     </template>
-                    <div v-if="countImg" class="el-image" style="width: 150px; height: 150px; text-align: center;"><el-button :type="info" link @click="handleImageLoadMore" style="padding-top: 55px"> Next Page <el-icon class="el-icon--right" ><ArrowRight /></el-icon></el-button></div>
+                    <div v-if="countImg" class="el-image" style="width: 150px; height: 150px; text-align: center;"><el-button :type="info" link @click="handleImageLoadMore" style="padding-top: 55px">{{singleData.locale.next_page}}<el-icon class="el-icon--right" ><ArrowRight /></el-icon></el-button></div>
                 </el-collapse-item>
-                <el-collapse-item title="Posters" name="poster" >
+                <el-collapse-item :title="singleData.locale.posters" name="poster" >
                     <template v-for="(poster, index) in postersData" :key="index">
                         <el-image
                             style="width: 150px; height: 150px; margin: 5px"
@@ -145,16 +146,16 @@
                             fit="cover"
                         />
                     </template>
-                    <div v-if="countPoster" class="el-image" style="width: 150px; height: 150px; text-align: center;"><el-button :type="info" link @click="handlePosterLoadMore" style="padding-top: 55px"> Next Page <el-icon class="el-icon--right" ><ArrowRight /></el-icon></el-button></div>
+                    <div v-if="countPoster" class="el-image" style="width: 150px; height: 150px; text-align: center;"><el-button :type="info" link @click="handlePosterLoadMore" style="padding-top: 55px">{{singleData.locale.next_page}}<el-icon class="el-icon--right" ><ArrowRight /></el-icon></el-button></div>
                 </el-collapse-item>
-                <el-collapse-item title="Video" name="video" >
+                <el-collapse-item :title="singleData.locale.video" name="video" >
                     <section id="video"></section>
                 </el-collapse-item>
             </el-collapse>
         </el-col>
     </el-row>
-    <el-row v-else>
-        <el-col> <h2>Not Enough Data ...</h2> </el-col>
+    <el-row v-else v-if="singleData.locale">
+        <el-col><h2>{{$t('not_enough_data')}}</h2> </el-col>
     </el-row>
 </template>
 
@@ -162,22 +163,31 @@
     import { storeToRefs } from 'pinia';
     import { useMoviesStore } from "../store/moviesStore";
     import { useMediaStore } from "../store/mediaStore";
+    import { useLanguageStore } from "../store/languageStore";
     import type { TabsPaneContext } from 'element-plus';
     import { ArrowRight } from '@element-plus/icons-vue'
-    import {ref, watch, reactive,onMounted } from "vue";
+    import { ref, watch, reactive, onMounted } from "vue";
     import useAppRouter from '../composables/useAppRouter';
 
     const { routeParams } = useAppRouter();
+
     const moviesStore = useMoviesStore();
     const mediaStore = useMediaStore();
-    const { singleData, error, } = storeToRefs(moviesStore);
+    const languageStore = useLanguageStore();
+    const { watcherLang } = storeToRefs( languageStore );
+    const { singleData, locale, error, } = storeToRefs(moviesStore);
     const { imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
 
     const activeTabName = ref('first');
     const activeAccordionTab = ref('1')
     const activeCollapseTab = ref(['1']);
 
+    watch(() => watcherLang.value, (newLang) => {
+        moviesStore.showItem();
+    });
+
     onMounted(() => {
+        moviesStore.showItem();
         const script = document.createElement('script');
         script.src = 'https://kinobox.tv/kinobox.min.js';
         document.head.appendChild(script);
@@ -202,7 +212,7 @@
     const handlePosterLoadMore = () => {
         mediaStore.updatePosterPageSize();
     }
-    moviesStore.showItem();
+
 </script>
 
 <style lang="scss" scoped>

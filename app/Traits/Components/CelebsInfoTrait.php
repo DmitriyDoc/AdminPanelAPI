@@ -55,12 +55,23 @@ trait CelebsInfoTrait
                             $insertData['dieLocation'] = $elementsBirthday->lastChild()->find('a')[0]->text()??null;
                         }
                     }
+                    transaction( function () use ($insertData){
+                        $this->updateOrInsert( $this->update_info_table, [
+                            'id_celeb' => $insertData['id_celeb'],
+                            'photo' => $insertData['photo'] ?? null,
+                            'knowfor' => $insertData['knowfor'] ?? null,
+                            'birthday' => $insertData['birthday'] ?? null,
+                            'died' => $insertData['died'] ?? null]
+                        ,$this->signByField);
+                        $this->updateOrInsert('localizing_celebs_info_en', [
+                            'id_celeb' => $insertData['id_celeb'],
+                            'nameActor' => $insertData['nameActor'] ?? null,
+                            'birthdayLocation' => $insertData['birthdayLocation'] ?? null,
+                            'dieLocation' => $insertData['dieLocation'] ?? null]
+                        ,$this->signByField);
+                        $this->localizing($insertData);
+                    });
 
-                    $this->updateOrInsert( $this->update_info_table,$insertData,$this->signByField);
-                    $this->insertDB('celebs_id',[
-                        'actor_id' => $insertData[$this->signByField] ?? null,
-                        'name' => $insertData['nameActor'] ?? null,
-                    ]);
                 }
             }
         }

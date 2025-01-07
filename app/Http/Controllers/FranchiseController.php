@@ -8,6 +8,7 @@ use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -32,10 +33,12 @@ class FranchiseController extends Controller
         if (in_array($slugSect,$allowedSectionsNames)){
             $collectionFranchise = [];
             $collectionTitle = null;
-            $franchiseArr = LocalizingFranchise::where('value',$slugFran)->get(['id','label'])->toArray();
+            $titleFieldName = transformTitleByLocale();
+            $currentLocaleLabel = 'label_'.Lang::locale();
+            $franchiseArr = LocalizingFranchise::where('value',$slugFran)->first(['id',$currentLocaleLabel])->toArray();
             if (!empty($franchiseArr)){
-                $collectionTitle = $franchiseArr[0]['label'];
-                $moviesIds = CollectionsCategoriesPivot::where('franchise_id',$franchiseArr[0]['id'])->get(['id_movie','type_film'])->toArray();
+                $collectionTitle = $franchiseArr[$currentLocaleLabel];
+                $moviesIds = CollectionsCategoriesPivot::where('franchise_id',$franchiseArr['id'])->get(['id_movie','type_film'])->toArray();
                 $TypeFilmArray = [];
                 $collection = collect();
                 $collectionResponse = [];
@@ -50,7 +53,7 @@ class FranchiseController extends Controller
                         $searchQuery = trim(strtolower(strip_tags($query)));
                         $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
                     }
-                    $collection->add($model->select('type_film','id_movie','title','year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
+                    $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
                 }
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
@@ -84,6 +87,7 @@ class FranchiseController extends Controller
                         $collapsedPosters = $posterCollection->collapse()->toArray();
                     }
                     foreach ($collectionSort->values()->toArray() as $k => $item) {
+                        $typeKey = getTableSegmentOrTypeId($item['type_film']);
                         if (!empty($collapsedPosters)){
                             foreach ($collapsedPosters as $posterItem){
                                 if ($item['id_movie'] == $posterItem['id_movie']){
@@ -94,14 +98,15 @@ class FranchiseController extends Controller
                         }
                         $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                         $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                        $collectionResponse['data'][$k]['title'] = $item['title'] ?? '';
+                        $collectionResponse['data'][$k]['title'] = $item['title']??$item['original_title'];
                         $collectionResponse['data'][$k]['year'] = $item['year_release'] ?? null;
                         $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
-                        $collectionResponse['data'][$k]['type_film'] = getTableSegmentOrTypeId($item['type_film'] ?? '');
+                        $collectionResponse['data'][$k]['type_film'] = __('movies.type_movies.'.$typeKey) ?? '';
+                        $collectionResponse['data'][$k]['type_film_link'] = $typeKey;
                     }
                     $collectionResponse['title'] = $collectionTitle;
                     $collectionResponse['total'] = $collapsed->count();
-
+                    $collectionResponse['locale'] = LanguageController::localizingFranchisesList();
                     return $collectionResponse;
                 }
             }
@@ -138,7 +143,8 @@ class FranchiseController extends Controller
             $collectionSortArr = $collectionSort->values()->toArray();
             return [
                 'total' => $itemsCount,
-                'data' => $collectionSortArr
+                'data' => $collectionSortArr,
+                'locale' => LanguageController::localizingFranchisesInfoList()
             ];
         }
         return [];

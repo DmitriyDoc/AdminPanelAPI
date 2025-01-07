@@ -33,7 +33,6 @@ export const useTagsStore = defineStore('tagsStore',() => {
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
                 tagsData.value = response.data;
-                totalCount.value = response.data.total;
                 loader.value = false;
             });
         } catch (e) {
@@ -50,7 +49,6 @@ export const useTagsStore = defineStore('tagsStore',() => {
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
                 tagsList.value = response.data;
-                totalCount.value = response.data.total;
                 loader.value = false;
             });
         } catch (e) {

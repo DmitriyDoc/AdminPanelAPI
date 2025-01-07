@@ -62,6 +62,7 @@ class CelebsController extends Controller
                     $modelArr['data'][$k]['poster'] = $item['info']['photo'] ?? '';
                 }
             }
+            $modelArr['locale'] = LanguageController::localizingPersonsList();
             return $modelArr;
         }
         return [];
@@ -86,7 +87,7 @@ class CelebsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $slug, string $id)
+    public function show(string $id)
     {
         $knownFor = [];
         $allowedTableNames = [
@@ -100,7 +101,7 @@ class CelebsController extends Controller
             7=>'Video',
         ];
 
-        if (!empty($slug) &&  $slug == 'Celebs') {
+        if (!empty($id)) {
             $model = modelByName('CelebsInfo'.ucfirst(Lang::locale()));
             $modelArr = $model->where('id_celeb',$id)->with('info')->first()->toArray();
 
@@ -114,8 +115,10 @@ class CelebsController extends Controller
                             $res = MovieInfo::with($relationPosterName)->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$id)->first();
                             if (!empty($res)){
                                 $res = $res->toArray();
+                                $type = getTableSegmentOrTypeId($res['type_film']);
                                 $knownFor[$index]['id_movie'] = $res['id_movie'];
-                                $knownFor[$index]['type_film'] = getTableSegmentOrTypeId($res['type_film']);
+                                $knownFor[$index]['type_film'] = __('movies.type_movies.'.$type);
+                                $knownFor[$index]['type_film_slug'] = $type;
                                 $knownFor[$index]['title'] = $res['title'];
                                 $knownFor[$index]['original_title'] = $res['original_title'];
                                 $knownFor[$index]['poster'] = '';
@@ -144,7 +147,7 @@ class CelebsController extends Controller
                 $modelArr['filmography'] = $filmographyArr;
                 $modelArr['info']['created_at'] = date('Y-m-d', strtotime($modelArr['info']['created_at'])) ?? '';
                 $modelArr['info']['updated_at'] = date('Y-m-d', strtotime($modelArr['info']['updated_at'])) ?? '';
-
+                $modelArr['locale'] = LanguageController::localizingPersonShow();
                 return $modelArr;
             }
         }
@@ -201,21 +204,23 @@ class CelebsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $slug, string $id)
+    public function destroy(string $id)
     {
         dd($id);
         $types = [
-            0=>'IdType',
-            1=>'Info',
-            2=>'Images',
-            3=>'IdImages',
+            0=>'CelebsInfo',
+            1=>'CelebsInfoEn',
+            2=>'CelebsInfoRu',
+            3=>'ImagesCelebs',
+            4=>'IdImagesCelebs',
         ];
-        //$tableName = request()->segment(3) ?? '';
-        if (!empty($slug)) {
-            foreach ($types as $type){
-                $model = convertVariableToModelName($type,$slug, ['App', 'Models']);
-                $model::where('id_celeb',$id)->delete();
-            }
+        if (!empty($id)) {
+            transaction( function () use ($id,$types){
+                foreach ($types as $type){
+                    $model = convertVariableToModelName($type,'', ['App', 'Models']);
+                    $model::where('id_celeb',$id)->delete();
+                }
+            });
         }
     }
 }

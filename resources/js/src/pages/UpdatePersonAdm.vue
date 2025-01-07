@@ -5,30 +5,30 @@
         </el-col>
         <el-col :span="4"><div class="grid-content ep-bg-purple" />
             <el-image :src="singleData.info.photo" :fit="cover" style="width: 100%" />
-            <div class="mt-1 mb-2 image-type">
-                <h5>Image type: </h5>
+            <div class="mt-1 mb-2">
+                <h5>{{singleData.locale.image_type}}</h5>
                 <el-radio-group v-model="imageType" size="small">
-                    <el-radio-button label="Event" value="event" />
-                    <el-radio-button label="Publicity" value="publicity"/>
+                    <el-radio value="event">[event]</el-radio>
+                    <el-radio value="publicity">[publicity]</el-radio>
                 </el-radio-group>
             </div>
             <el-button type="danger" style="width: 100%;" @click="submitSync()">
-                Sync with IMDB
+                {{singleData.locale.sync_imdb}}
             </el-button>
             <div v-if="percentageSync" class="mt-1">
                 <el-progress :percentage="percentageSync" :status="statusBar"/>
             </div>
             <ul class="list-group mt-2">
-                <li class="list-group-item"><span><strong>Birthday: </strong></span>{{ singleData.info.birthday ?? 'empty' }}</li>
-                <li class="list-group-item"><span><strong>Birthday Location: </strong></span>{{ singleData.birthdayLocation ?? 'empty' }}</li>
-                <li class="list-group-item" v-if="singleData.died"><span><strong>Died: </strong></span>{{ singleData.info.died }}</li>
-                <li class="list-group-item" v-if="singleData.dieLocation"><span><strong>Die Location: </strong></span>{{ singleData.dieLocation }}</li>
+                <li class="list-group-item"><span><strong>{{singleData.locale.birthday}}</strong></span> {{ singleData.info.birthday ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{singleData.locale.birthday_location}}</strong></span> {{ singleData.birthdayLocation ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><span><strong>{{singleData.locale.died}}</strong></span> {{ singleData.info.died ?? singleData.locale.empty}}</li>
+                <li class="list-group-item"><span><strong>{{singleData.locale.died_location}}</strong></span> {{ singleData.dieLocation ?? singleData.locale.empty}}</li>
             </ul>
         </el-col>
         <el-col :span="20" ><div class="grid-content ep-bg-purple-light" />
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
                 <template v-for="(occupation, index) in singleData.filmography">
-                    <el-tab-pane :label=index :name=index>
+                    <el-tab-pane :label=$t(index) :name=index>
                         <li class="list-group-item">
                             <el-table
                                 ref="multipleTableCeleb"
@@ -38,46 +38,46 @@
                             >
                                 <el-table-column type="selection" width="55" />
                                 <el-table-column type="index" label="№" width="50"/>
-                                <el-table-column prop="year" label="Year" width="120" />
-                                <el-table-column prop="id" label="Movie ID" width="120" />
-                                <el-table-column prop="title" property="id" label="Title" width="400">
+                                <el-table-column prop="year" :label="singleData.locale.year" width="120" />
+                                <el-table-column prop="id" :label="singleData.locale.id_movie" width="120" />
+                                <el-table-column prop="title" property="id" :label="singleData.locale.title" width="400">
                                     <template v-slot:default="scope">
-                                        <RouterLink :to="{ name: 'showmovie', params: { slug: 'FeatureFilm', id: scope.row.id }}">
+                                        <RouterLink :to="{ name: 'showMovie', params: { slug: 'FeatureFilm', id: scope.row.id }}">
                                             {{scope.row.title}}
                                         </RouterLink>
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="role" label="Role" fixed="right" width="200"/>
+                                <el-table-column prop="role" :label="singleData.locale.role" fixed="right" width="200"/>
                             </el-table>
 <!--                            <el-button @click="toggleSelectionCeleb()" type="info">Clear selection</el-button>-->
-                            <el-button type="danger" @click="handleRemoveItems()" class="mt-3">Remove selected</el-button>
+                            <el-button type="danger" @click="handleRemoveItems()" class="mt-3">{{singleData.locale.delete_selection}}</el-button>
                         </li>
                     </el-tab-pane>
                 </template>
             </el-tabs>
             <el-collapse v-if="singleData.info.knowfor.length" v-model="activeAccordionTab" class="m-3" accordion>
-                <el-collapse-item title="Known For" name="1">
+                <el-collapse-item :title="singleData.locale.known_for" name="1">
                     <div class="p-1 m-1 border bg-light" style="display: flex;">
 
                         <template v-for="(item, id) in singleData.info.knowfor" >
                             <div style="display: flex; flex-direction: column">
                                 <p><strong>{{item.type_film}}</strong></p>
                                 <p><em>{{item.original_title}}</em></p>
-                                <div style="width: 194px; height: 300px; background-color: rgb(243 243 243); margin-right: 10px">
-                                    <el-image  v-if="item.poster" :src="item.poster" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
-                                </div>
-                                <div style="width: 194px; margin-right: 10px">
-                                    <RouterLink :to="{ name: 'showmovie', params: { slug: item.type_film, id: item.id_movie }}">
-                                        {{ item.title }}
+                                <div style=" margin-right: 10px">
+                                    <RouterLink :to="{ name: 'showMovie', params: { slug: item.type_film_slug, id: item.id_movie }}">
+                                        <div style="width: 194px; height: 300px; background-color: rgb(243 243 243); margin-right: 10px">
+                                            <el-image  v-if="item.poster" :src="item.poster" :fit="cover" style="object-fit: cover;width: 100%; height: 100%;" />
+                                        </div>
                                     </RouterLink>
+                                    <p>{{ item.title }}</p>
                                 </div>
                             </div>
                         </template>
                     </div>
                 </el-collapse-item>
             </el-collapse>
-            <el-collapse v-model="activeCollapseTab" class="m-3" @change="handleChange" >
-                <el-collapse-item title="Images" name="image" >
+            <el-collapse v-model="activeCollapseTab" class="m-3" @change="handleChangeImages" >
+                <el-collapse-item :title="singleData.locale.images" name="image" >
                     <template v-if="imagesData.length">
                         <el-table
                             ref="multipleTableImage"
@@ -91,12 +91,12 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Preview" width="200">
+                            <el-table-column property="src" :label="singleData.locale.photo" width="200">
                                 <template v-slot:default="scope">
                                     <el-image :src="scope.row.srcset"/>
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" label="Link" show-overflow-tooltip>
+                            <el-table-column property="src" :label="singleData.locale.link" show-overflow-tooltip>
                                 <template v-slot:default="scope">
                                     <a :href="scope.row.src" target="_blank">{{scope.row.src}}</a>
                                 </template>
@@ -104,15 +104,14 @@
                         </el-table>
 
                         <div style="margin-top: 20px">
-                            <el-button @click="toggleSelectImage()" type="info">Clear selection</el-button>
-                            <el-button @click="toggleRemoveImage()" type="danger">Delete selection</el-button>
-                            <template v-if="countImg" >
-                                <el-button :type="info" @click="handleImageLoadMore" > Next Page
-                                    <el-icon class="el-icon--right">
-                                        <ArrowRight/>
-                                    </el-icon>
-                                </el-button>
-                            </template>
+                            <el-button @click="toggleSelectImage()" type="info">{{singleData.locale.clear_selection}}</el-button>
+                            <el-button @click="toggleRemoveImage()" type="danger">{{singleData.locale.delete_selection}}</el-button>
+                            <el-button :type="info" @click="handleImageLoadMore">
+                                {{singleData.locale.next_page}}
+                                <el-icon class="el-icon--right">
+                                    <ArrowRight/>
+                                </el-icon>
+                            </el-button>
                         </div>
                     </template>
                  </el-collapse-item>
@@ -120,7 +119,7 @@
         </el-col>
     </el-row>
     <el-row v-else>
-        <el-col> <h2>Not Enough Data ...</h2> </el-col>
+        <el-col><h2>{{$t('not_enough_data')}}</h2></el-col>
     </el-row>
 </template>
 
@@ -130,19 +129,21 @@
     import { usePersonsStore } from "../store/personsStore";
     import { useMediaStore } from "../store/mediaStore";
     import { useProgressBarStore } from "../store/progressBarStore";
+    import { useLanguageStore } from "../store/languageStore";
     import type { TabsPaneContext } from 'element-plus';
     import { ArrowRight } from '@element-plus/icons-vue'
-    import {ref, watch, reactive, onMounted} from "vue";
-    import {ElMessage, ElMessageBox, ElTable } from "element-plus";
+    import { ref, watch, reactive, onMounted } from "vue";
+    import { ElMessage, ElMessageBox, ElTable } from "element-plus";
 
     const mediaStore = useMediaStore();
     const personsStore = usePersonsStore();
     const progressBarStore = useProgressBarStore();
-
+    const languageStore = useLanguageStore();
 
     const { singleData, route, error, } = storeToRefs(personsStore);
     const { statusBar, percentageSync } = storeToRefs(progressBarStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
+    const { watcherLang } = storeToRefs( languageStore );
 
 
     const activeTabName = ref('actor');
@@ -155,6 +156,10 @@
     const multipleTableCeleb = ref()
     const multipleSelection = ref([])
     const imageType = ref('event');
+
+    watch(() => watcherLang.value, (newLang) => {
+        personsStore.showItem();
+    });
 
     onMounted(() => {
         personsStore.showItem();
@@ -180,13 +185,13 @@
         //     console.log(multipleSelection.value);
         // }
     }
-    const handleChange = (val: string[]) => {
+    const handleChangeImages = (val: string[]) => {
         //console.log(val[1]);
         mediaStore.flushState();
-        mediaStore.getImages()
+        mediaStore.getImages('Celebs')
     }
     const handleImageLoadMore = () => {
-        mediaStore.updateImagePageSize();
+        mediaStore.updateImagePageSize('Celebs');
     }
 
     const handleClick = (tab: TabsPaneContext, event: Event) => {

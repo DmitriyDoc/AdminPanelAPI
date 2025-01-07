@@ -46,14 +46,11 @@ class TranslatorController
     }
 
     private function updateOrCreateLocalizing($data){
-        try {
-            $localizingModel = $this->localizingTable::where($this->columnKey,$this->columnId)->first();
-            $localizingModel ? $localizingModel::where($this->columnKey,$this->columnId)->update($data) : $this->localizingTable::firstOrCreate($data);
-        }
-        catch (\Exception $e)
-        {
-            Log::info("ID-->>>{$this->columnId}");
-            Log::info("ERROR--EXEPTION>>>{$e}");
+        $localizingModel = $this->localizingTable::where($this->columnKey,$this->columnId)->first();
+        if ($localizingModel){
+            $localizingModel::updateOrCreate([$this->columnKey=>$this->columnId],$data);
+        } else {
+            $this->localizingTable::firstOrCreate($data);
         }
     }
     public function translateTag($inputTag){

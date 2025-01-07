@@ -4,13 +4,15 @@ import { ref }  from "vue";
 
 export const useDashboardStore = defineStore('dashboardStore',() => {
     const countCard = ref([]);
+    const title = ref('');
     const loader = ref(true);
     const error =  ref(null);
 
     const getMoviesCount = async () =>{
         try {
              await axios.get('/dashboard').then((response) => {
-                 countCard.value = response.data.data
+                 countCard.value = response.data;
+                 title.value = response.data.locale.title;
              });
         } catch (error) {
             error.value = error;
@@ -23,6 +25,7 @@ export const useDashboardStore = defineStore('dashboardStore',() => {
 
     return {
         countCard,
+        title,
         loader,
         error,
         getMoviesCount,

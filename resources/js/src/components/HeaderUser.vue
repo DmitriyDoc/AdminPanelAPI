@@ -1,31 +1,3 @@
-<script setup>
-    import useHttpRequest from '../composables/useHttpRequest';
-    import useUserStore from '../store/useUserStore';
-    import useRoleStore from '../store/useRoleStore';
-    import usePermissionStore from '../store/usePermissionStore';
-    import useAppRouter from '../composables/useAppRouter';
-
-
-    const { index: logout } = useHttpRequest('/logout');
-    const { pushToRoute } = useAppRouter();
-
-    const userStore = useUserStore();
-    const roleStore = useRoleStore();
-    const permissionStore = usePermissionStore();
-
-    const onLogout = async () => {
-        const isLoggedOut = await logout();
-        if (isLoggedOut) {
-            userStore.setUser(null);
-            userStore.users = [];
-            roleStore.roles = [];
-            permissionStore.permissions = [];
-
-            await pushToRoute({ name: 'login' });
-        }
-    };
-</script>
-
 <template>
     <div>
         <!-- logo -->
@@ -118,4 +90,33 @@
     </div>
 
 </template>
+<script setup>
+    import useHttpRequest from '../composables/useHttpRequest';
+    import useUserStore from '../store/useUserStore';
+    import useRoleStore from '../store/useRoleStore';
+    import usePermissionStore from '../store/usePermissionStore';
+    import useAppRouter from '../composables/useAppRouter';
+
+
+    const { index: logout } = useHttpRequest('/logout');
+    const { pushToRoute } = useAppRouter();
+
+    const userStore = useUserStore();
+    const roleStore = useRoleStore();
+    const permissionStore = usePermissionStore();
+
+    const onLogout = async () => {
+        const isLoggedOut = await logout();
+        if (isLoggedOut) {
+            userStore.setUser(null);
+            userStore.users = [];
+            roleStore.roles = [];
+            permissionStore.permissions = [];
+
+            await pushToRoute({ name: 'login' });
+        }
+    };
+</script>
+
+
 

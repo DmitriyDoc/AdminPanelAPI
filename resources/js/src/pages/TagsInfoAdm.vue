@@ -1,89 +1,90 @@
 <template>
-    <h3 class="text-center mt-3 mb-3">{{tagsData['title']??''}}</h3>
-    <el-form
-        ref="formRef"
-        :model="queryValidateForm"
-        class="demo-ruleForm"
-    >
-        <el-form-item prop="query" :rules="[{}]">
-            <el-input
-                v-model.query="queryValidateForm.query"
-                type="text"
-                autocomplete="off"
-                placeholder="Search here"
-                v-on:keydown.enter.prevent = "submitSearch(formRef)"
-            />
-        </el-form-item>
-        <el-form-item>
-            <el-button @click="resetSearch(formRef)">Reset</el-button>
-            <el-button @click="submitSearch(formRef)">Go!</el-button>
-        </el-form-item>
-<!--        <el-form-item>-->
-<!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-<!--        </el-form-item>-->
-    </el-form>
-
-    <div class="demo-pagination-block"  v-loading="loader">
-        <p>Spin by:</p>
-        <el-switch
-            v-model="defaultSpin"
-            class="mb-2"
-            active-text="ASC"
-            inactive-text="DESC"
-            @change="handleSwitchChange"
-        />
-        <p>Sort by:</p>
-        <el-select
-            v-model="valueSort"
-            filterable
-            @change="handleSelectChange"
-            placeholder="Select"
-            style="width: 240px"
+    <template v-if="tagsData.data">
+        <h3 class="text-center mt-3 mb-3">{{tagsData.title??''}}</h3>
+        <h5>{{tagsData.locale.search_by_title}}</h5>
+        <el-form
+            ref="formRef"
+            :model="queryValidateForm"
+            class="demo-ruleForm"
         >
-            <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+            <el-form-item prop="query" :rules="[{}]">
+                <el-input
+                    v-model.query="queryValidateForm.query"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="tagsData.locale.search_here"
+                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
+                />
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="resetSearch(formRef)">{{tagsData.locale.reset}}</el-button>
+                <el-button @click="submitSearch(formRef)">{{tagsData.locale.go}}</el-button>
+            </el-form-item>
+    <!--        <el-form-item>-->
+    <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+    <!--        </el-form-item>-->
+        </el-form>
+
+        <div class="demo-pagination-block" v-loading="loader">
+            <p>{{tagsData.locale.spin_by}}</p>
+            <el-switch
+                v-model="defaultSpin"
+                class="mb-2"
+                active-text="&#8595;"
+                inactive-text="&#8593;"
+                @change="handleSwitchChange"
             />
-        </el-select>
-        <div class="demonstration">Jump to</div>
-        <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :small="small"
-            :disabled="disabled"
-            :background="background"
-            layout="sizes, prev, pager, next, jumper"
-            :total="tagsData['total']"
-            :page-sizes="[20, 50, 100, 300]"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-        />
-    </div>
-    <template v-if="tagsData['data']">
-        <el-table :data="tagsData['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
+            <p>{{tagsData.locale.sort_by}}</p>
+            <el-select
+                v-model="valueSort"
+                filterable
+                @change="handleSelectChange"
+                placeholder="Select"
+                style="width: 240px"
+            >
+                <el-option
+                    v-for="field in tagsData.locale.movies_sort_fields"
+                    :key="field.value"
+                    :label="field.label"
+                    :value="field.value"
+                />
+            </el-select>
+            <div class="demonstration">{{tagsData.locale.jump_to}}</div>
+            <el-pagination
+                v-model:current-page="currentPage"
+                v-model:page-size="pageSize"
+                :small="small"
+                :disabled="disabled"
+                :background="background"
+                layout="sizes, prev, pager, next, jumper"
+                :total="tagsData.total"
+                :page-sizes="[20, 50, 100, 300]"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+            />
+        </div>
+        <el-table :data="tagsData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
             <el-table-column type="index" label="№"/>
-            <el-table-column fixed prop="created_at" label="Date Create" width="130" />
+            <el-table-column fixed prop="created_at" :label="tagsData.locale.created_at" width="130" />
             <el-table-column prop="poster" label="Cover" width="130" >
                 <template v-slot:default="scope">
                     <el-image :src="scope.row.poster" />
                 </template>
             </el-table-column>
-            <el-table-column prop="id_movie" label="ID Movie" width="120" />
-            <el-table-column prop="year" label="Year" width="100" />
-            <el-table-column prop="title" label="Title" width="600" />
-            <el-table-column prop="updated_at" label="Date Update" width="120" />
-            <el-table-column prop="id_movie" property="type_film" fixed="right" label="Operations" width="120">
+            <el-table-column prop="id_movie" :label="tagsData.locale.id_movie" width="120" />
+            <el-table-column prop="year" :label="tagsData.locale.year" width="100" />
+            <el-table-column prop="title" :label="tagsData.locale.title" width="600" />
+            <el-table-column prop="updated_at" :label="tagsData.locale.updated_at" width="120" />
+            <el-table-column prop="id_movie" property="type_film" fixed="right" :label="tagsData.locale.actions" width="120">
                 <template v-slot:default="scope">
                     <el-button type="success" link >
-                        <RouterLink :to="{ name: 'showmovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="View" title="Details"/>
+                        <RouterLink :to="{ name: 'showMovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
+                            <el-button link type="primary" :icon="View" :title="$t('details')"/>
                         </RouterLink>
                     </el-button>
                     <el-button link type="primary" >
                         <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="EditPen" title="Edit"/>
+                            <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
                         </RouterLink>
                     </el-button>
                  </template>
@@ -92,7 +93,7 @@
         <el-backtop :right="20" :bottom="100" />
     </template>
     <template v-else>
-        <p style="text-align: center">Not Found</p>
+        <p style="text-align: center">{{$t('data_not_found')}}</p>
     </template>
     <p v-if="error">{{ error }}</p>
 </template>
@@ -100,6 +101,7 @@
 <script lang="ts" setup >
     import { storeToRefs } from 'pinia';
     import { useTagsStore } from "../store/tagsStore";
+    import { useLanguageStore } from "../store/languageStore";
     import { RouterLink } from 'vue-router'
     import { Delete,View,EditPen } from '@element-plus/icons-vue';
     import { ElMessage, ElMessageBox } from 'element-plus'
@@ -108,7 +110,9 @@
     import { onMounted,onUpdated, ref, watch, reactive} from "vue";
 
     const tagsStore = useTagsStore();
+    const languageStore = useLanguageStore();
     const { tagsData, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(tagsStore);
+    const { watcherLang } = storeToRefs( languageStore );
 
     const small = ref(false);
     const background = ref(false);
@@ -150,7 +154,8 @@
     // const handleSelect = (key, keyPath) => {
     //     console.log(key, keyPath)
     // }
-    watch(() => route,  tagsStore.getDataTags,{deep: true, immediate: true,});
+
+    watch(() => [route, watcherLang.value],  tagsStore.getDataTags,{deep: true, immediate: true,});
 
     const handleSizeChange = (val) => {
         tagsStore.updatePageSize(val);

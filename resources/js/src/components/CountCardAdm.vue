@@ -10,7 +10,7 @@
             </el-statistic>
             <div class="statistic-footer">
                 <div class="footer-item">
-                    <span>last update</span>
+                    <span>{{ locale }}</span>
                     <span :class="[countCard.lastAddCount  ? 'red' : 'grey']">{{countCard.lastAddCount}}</span>
                 </div>
             </div>
@@ -24,7 +24,12 @@
             type: Object,
             required: true,
             default: () => {}
-        }
+        },
+        locale: {
+            type: String,
+            required: true,
+            default: () => {}
+        },
     })
 </script>
 

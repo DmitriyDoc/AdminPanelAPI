@@ -1,86 +1,86 @@
 <template>
-    <h3 class="text-center mt-3 mb-3">List Franchise:</h3>
-        <h5>Search by Slug Franchise</h5>
-        <el-form
-            ref="formRef"
-            :model="queryValidateForm"
-            class="demo-ruleForm"
-        >
-            <el-form-item prop="query" :rules="[{}]">
-                <el-input
-                    v-model.query="queryValidateForm.query"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="Search here"
-                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
-                />
-            </el-form-item>
-            <el-form-item>
-                <el-button @click="resetSearch(formRef)">Reset</el-button>
-                <el-button @click="submitSearch(formRef)">Go!</el-button>
-            </el-form-item>
-<!--            <el-form-item>-->
-<!--                <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-<!--            </el-form-item>-->
-        </el-form>
+    <template v-if="franchiseList.data">
+        <h3 class="text-center mt-3 mb-3">{{$t('list_franchises')}}</h3>
+        <h5>{{franchiseList.locale.search_by_resource_frinchise}}</h5>
+            <el-form
+                ref="formRef"
+                :model="queryValidateForm"
+                class="demo-ruleForm"
+            >
+                <el-form-item prop="query" :rules="[{}]">
+                    <el-input
+                        v-model.query="queryValidateForm.query"
+                        type="text"
+                        autocomplete="off"
+                        :placeholder="franchiseList.locale.search_here"
+                        v-on:keydown.enter.prevent = "submitSearch(formRef)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-button @click="resetSearch(formRef)">{{franchiseList.locale.reset}}</el-button>
+                    <el-button @click="submitSearch(formRef)">{{franchiseList.locale.go}}</el-button>
+                </el-form-item>
+    <!--            <el-form-item>-->
+    <!--                <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+    <!--            </el-form-item>-->
+            </el-form>
 
-    <div class="demo-pagination-block"  v-loading="loader">
-        <p>Spin by:</p>
-        <el-switch
-            v-model="defaultSpin"
-            class="mb-2"
-            active-text="ASC"
-            inactive-text="DESC"
-            @change="handleSwitchChange"
-        />
-        <p>Sort by:</p>
-        <el-select
-            v-model="valueSort"
-            filterable
-            @change="handleSelectChange"
-            placeholder="Select"
-            style="width: 240px"
-        >
-            <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+        <div class="demo-pagination-block"  v-loading="loader">
+            <p>{{franchiseList.locale.spin_by}}</p>
+            <el-switch
+                v-model="defaultSpin"
+                class="mb-2"
+                active-text="&#8595;"
+                inactive-text="&#8593;"
+                @change="handleSwitchChange"
             />
-        </el-select>
-        <div class="demonstration">Jump to</div>
-        <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :small="small"
-            :disabled="disabled"
-            :background="background"
-            layout="sizes, prev, pager, next, jumper"
-            :total="franchiseList['total']"
-            :page-sizes="[20, 50, 100, 300]"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-        />
-    </div>
-    <template v-if="franchiseList['data']">
+            <p>{{franchiseList.locale.sort_by}}</p>
+            <el-select
+                v-model="valueSort"
+                filterable
+                @change="handleSelectChange"
+                style="width: 240px"
+            >
+                <el-option
+                    v-for="field in franchiseList.locale.franchise_list_info_sort_fields"
+                    :key="field.value"
+                    :label="field.label"
+                    :value="field.value"
+                />
+            </el-select>
+            <div class="demonstration">{{franchiseList.locale.jump_to}}</div>
+            <el-pagination
+                v-model:current-page="currentPage"
+                v-model:page-size="pageSize"
+                :small="small"
+                :disabled="disabled"
+                :background="background"
+                layout="sizes, prev, pager, next, jumper"
+                :total="franchiseList['total']"
+                :page-sizes="[20, 50, 100, 300]"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+            />
+        </div>
+
         <el-table :data="franchiseList['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
             <el-table-column type="index" label="№"/>
-            <el-table-column fixed prop="created_at" label="Date Create" width="160" />
-            <el-table-column prop="id" label="ID Franchise" width="120" />
-            <el-table-column prop="value" label="Slug" width="160" />
-            <el-table-column prop="label" label="Title_Eng" width="300" />
-            <el-table-column prop="label_ru" label="Title_Rus" width="300" />
-            <el-table-column prop="updated_at" label="Date Update" width="120" />
-            <el-table-column prop="id" fixed="right" label="Remove" width="100">
+            <el-table-column fixed prop="created_at" :label="franchiseList.locale.created_at" width="160" />
+            <el-table-column prop="id" :label="franchiseList.locale.id_frinchise" width="120" />
+            <el-table-column prop="value" :label="franchiseList.locale.resource" width="160" />
+            <el-table-column prop="label_en" :label="franchiseList.locale.frinchise_name" width="300" />
+            <el-table-column prop="label_ru" :label="franchiseList.locale.frinchise_name_rus" width="300" />
+            <el-table-column prop="updated_at" :label="franchiseList.locale.updated_at"  width="120" />
+            <el-table-column prop="id" fixed="right" :label="franchiseList.locale.actions" width="100">
                 <template v-slot:default="scope">
-                    <el-button link type="danger" @click="handleRemove(scope.row.id,scope.$index)" :icon="Delete" title="Remove from franchise" />
+                    <el-button link type="danger" @click="handleRemove(scope.row.id,scope.$index)" :icon="Delete" :title="$t('remove_from_franchise')" />
                 </template>
             </el-table-column>
         </el-table>
         <el-backtop :right="20" :bottom="100" />
     </template>
     <template v-else>
-        <p style="text-align: center">Not Found Franchise list</p>
+        <p style="text-align: center">{{$t('data_not_found')}}</p>
     </template>
     <p v-if="error">{{ error }}</p>
 </template>
@@ -88,6 +88,7 @@
 <script lang="ts" setup >
     import { storeToRefs } from 'pinia';
     import { useFranchiseStore } from "../store/franchiseStore";
+    import { useLanguageStore } from "../store/languageStore";
     import { RouterLink } from 'vue-router'
     import { Delete,View,EditPen } from '@element-plus/icons-vue';
     import { ElMessage, ElMessageBox } from 'element-plus'
@@ -96,39 +97,15 @@
     import { ref, watch, reactive } from "vue";
 
     const franchiseStore = useFranchiseStore();
+    const languageStore = useLanguageStore();
     const { franchiseList, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
+    const { watcherLang } = storeToRefs( languageStore );
 
     const small = ref(false);
     const background = ref(false);
     const disabled = ref(false);
     const defaultSpin = ref(false);
-    const options = ref([
-        {
-            value: 'id',
-            label: 'ID',
-        },
-        {
-            value: 'value',
-            label: 'Slug',
-        },
-        {
-            value: 'label',
-            label: 'Title_Eng',
-        },
-        {
-            value: 'label_ru',
-            label: 'Title_Rus',
-        },
-        {
-            value: 'created_at',
-            label: 'Created date',
-            disabled: true,
-        },
-        {
-            value: 'updated_at',
-            label: 'Updated date',
-        },
-    ]);
+
     const formRef = ref<FormInstance>();
     const activeMenuIndex = ref('1')
     const queryValidateForm = reactive({
@@ -138,7 +115,8 @@
     // const handleSelect = (key, keyPath) => {
     //     console.log(key, keyPath)
     // }
-    watch(() => route,  franchiseStore.getListFranchise,{deep: true, immediate: true,});
+
+    watch(() => [route, watcherLang.value], franchiseStore.getListFranchise,{deep: true, immediate: true,});
 
     const handleSizeChange = (val) => {
         franchiseStore.updatePageSize(val);

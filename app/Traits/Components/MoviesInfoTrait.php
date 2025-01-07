@@ -85,12 +85,12 @@ trait MoviesInfoTrait
                         $genresContainer = $document->find(".ipc-chip-list__scroller a");
                         foreach ($genresContainer as $item){
                             $tag = $item->text();
-                            $tagExist = DB::table('tags')->where('tag_name','=',$tag)->first();
+                            $tagExist = DB::table('tags')->where('tag_name_en','=',$tag)->first();
                             if (!$tagExist) {
                                 $translator = new TranslatorController();
                                 $tagRus = $translator->translateTag($tag) ?? null;
                                 Tag::updateOrCreate(
-                                    ['value' => strtolower(str_ireplace(' ', '_',$tag)), 'tag_name' => $tag],
+                                    ['value' => strtolower(str_ireplace(' ', '_',$tag)), 'tag_name_en' => $tag],
                                     ['tag_name_ru' => $tagRus],
                                 );
                             }

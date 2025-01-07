@@ -76,11 +76,17 @@ class MediaController extends Controller
             if ($modelAssignPoster->isNotEmpty()){
                 $arrayAssignPoster = $modelAssignPoster->toArray();
                 $res['poster_count']['id_poster_original'] = $arrayAssignPoster[0]['id_poster_original'] ? 1 : 0;
+                $res['locale']['id_poster_original'] =  __('buttons.original');
                 $res['poster_count']['id_poster_ru'] = $arrayAssignPoster[0]['id_poster_ru'] ? 1 : 0;
+                $res['locale']['id_poster_ru'] =  __('buttons.russian');
                 $res['poster_count']['id_posters_characters'] = count(json_decode($arrayAssignPoster[0]['id_posters_characters']??'')??[]) ?? 0;
+                $res['locale']['id_posters_characters'] =  __('buttons.characters');
                 $res['poster_count']['id_posters_alternative'] = count(json_decode($arrayAssignPoster[0]['id_posters_alternative']??'')??[]) ?? 0;
+                $res['locale']['id_posters_alternative'] =  __('buttons.alternative');
                 $res['poster_count']['id_wallpaper'] = $arrayAssignPoster[0]['id_wallpaper'] ? 1 : 0;
+                $res['locale']['id_wallpaper'] =  __('buttons.wallpaper');
             }
+
             return $res ?? [];
         }
 
@@ -194,6 +200,7 @@ class MediaController extends Controller
                 }
             }
         }
+
         return $res;
     }
 
@@ -300,12 +307,12 @@ class MediaController extends Controller
                 switch ($key) {
                     case 'id_poster_original':
                         if ($item == $id){
-                            return "Original poster";
+                            return __('buttons.original');
                         }
                         break;
                     case 'id_poster_ru':
                         if ($item == $id){
-                            return "Russian poster";
+                            return __('buttons.russian');
                         }
                         break;
                     case 'id_posters_characters':
@@ -313,7 +320,7 @@ class MediaController extends Controller
                             $decodeArr = json_decode($item,true);
                             if (in_array($id, $decodeArr)){
                                 unset($decodeArr);
-                                return "Character poster";
+                                return __('buttons.characters');
                             }
                         }
                         break;
@@ -322,13 +329,13 @@ class MediaController extends Controller
                             $decodeArr = json_decode($item,true);
                             if (in_array($id, $decodeArr)){
                                 unset($decodeArr);
-                                return "Alternative poster";
+                                return __('buttons.alternative');
                             }
                         }
                         break;
                     case 'id_wallpaper':
                         if ($item == $id){
-                            return "Wallpaper";
+                            return __('buttons.wallpaper');
                         }
                         break;
                 }

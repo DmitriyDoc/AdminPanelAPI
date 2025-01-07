@@ -39,7 +39,7 @@ class ParserUpdateCelebController extends ParserController
 
     public function update(Request $request){
         if ($data = $request->all()){
-            $model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
+            //$model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
 
             $this->signByField = 'id_celeb';
             $this->imgUrlFragment = '/name/';
@@ -56,12 +56,13 @@ class ParserUpdateCelebController extends ParserController
             if (!empty($this->idCeleb)){
                 $this->parserStart($data['data']['imageType']);
             }
-            $this->touchDB($model, $data['data']['id'],'actor_id');
+            //$this->touchDB($model, $data['data']['id'],'actor_id');
             return ['success' => true];
         }
     }
-    public function localizing($celebId){
-        $updateModel = DB::table($this->update_info_table)->where($this->signByField,$celebId)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
+    public function localizing($celebId) : void
+    {
+        $updateModel = DB::table('localizing_celebs_info_en')->where($this->signByField,$celebId)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
         if ($updateModel->isNotEmpty()){
             $this->localizing->translateCeleb($updateModel[0],$celebId,$this->signByField);
             session()->push('tracking.report.finishLocalizing', $celebId);
@@ -69,7 +70,7 @@ class ParserUpdateCelebController extends ParserController
             Log::info(">>> LOCALIZING CELEB ID FINISH:",[$celebId]);
         }
     }
-    public function parserStart($imageType):void
+    public function parserStart($imageType) : void
     {
         foreach ($this->idCeleb as $id) {
             array_push($this->linksInfo,$this->domen.$this->imgUrlFragment.$id);

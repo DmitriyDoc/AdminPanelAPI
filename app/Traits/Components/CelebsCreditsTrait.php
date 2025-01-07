@@ -63,13 +63,13 @@ trait CelebsCreditsTrait
                             }
                         }
                         if (!empty($insertData['filmography'])){
-                            $currentData = $this->selectDB($this->update_info_table, $insertData[$this->signByField], $this->signByField,'filmography');
+                            $currentData = $this->selectDB('localizing_celebs_info_en', $insertData[$this->signByField], $this->signByField,'filmography');
                             if (!empty($currentData[0])){
                                 $res = array_replace_recursive(json_decode($currentData[0],true),$insertData['filmography']);
                                 $insertData['filmography'] = json_encode($res);
                                 unset($res);
                             }
-                            $this->updateOrInsert($this->update_info_table,$insertData,$this->signByField);
+                            $this->updateOrInsert('localizing_celebs_info_en',$insertData,$this->signByField);
                             unset($insertData);
                         }
                     }

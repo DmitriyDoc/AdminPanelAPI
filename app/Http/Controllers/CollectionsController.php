@@ -9,6 +9,7 @@ use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -31,6 +32,7 @@ class CollectionsController extends Controller
         ];
 
         if (in_array($slugSect,$allowedSectionsNames)){
+            $currentLocaleLabel = 'label_'.Lang::locale();
             $allowedCollectionsArray = [];
             $collectionFranchise = [];
             $collectionId = null;
@@ -41,7 +43,8 @@ class CollectionsController extends Controller
                 $allowedCollectionsArray = Collection::where('category_id',$sectionId[0]['id'])->with('children')->get()->toArray();
                 foreach ($allowedCollectionsArray as $k => $item){
                    if ($item['value'] == $slugColl) {
-                       $collectionTitle = $item['label'];
+
+                       $collectionTitle = $item[$currentLocaleLabel];
                        $collectionId = $item['id'];
                        $collectionFranchise = $item['children'];
                    }
@@ -101,7 +104,7 @@ class CollectionsController extends Controller
                                     foreach ($collectionFranchise as $col){
                                         if (!empty($cat['franchise_id']) ){
                                             if ($cat['franchise_id'] == $col['id']){
-                                                $collectionResponse['data'][$k]['franchise'][$key]['label'] = $localizingFranchiseModel->find($col['id'])->label;
+                                                $collectionResponse['data'][$k]['franchise'][$key]['label'] = $localizingFranchiseModel->find($col['id'])->$currentLocaleLabel;
                                                 $collectionResponse['data'][$k]['franchise'][$key]['value'] = $localizingFranchiseModel->find($col['id'])->value;
                                             }
                                         }
@@ -125,6 +128,7 @@ class CollectionsController extends Controller
                         }
                         $collectionResponse['title'] = $collectionTitle;
                         $collectionResponse['total'] = $collapsed->count();
+                        $collectionResponse['locale'] = LanguageController::localizingCollectionsList();
                         if (!empty($collectionResponse['data'])){
                             foreach ($collectionResponse['data'] as $dataMovie){
                                 if (!empty($dataMovie['franchise'])){
@@ -171,7 +175,8 @@ class CollectionsController extends Controller
             $collectionSortArr = $collectionSort->values()->toArray();
             return [
                 'total' => $itemsCount,
-                'data' => $collectionSortArr
+                'data' => $collectionSortArr,
+                'locale' => LanguageController::localizingCollectionsInfoList()
             ];
         }
         return [];

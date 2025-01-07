@@ -1,6 +1,7 @@
 <?php
 
 use \Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 
 $movieArgs = [
     'flagType' => true,
@@ -98,22 +99,24 @@ if (!function_exists('cascaderStructure')) {
     function cascaderStructure($collectionArray)
     {
         $localizingFranchiseModel = \App\Models\LocalizingFranchise::query()->get();
+        $currentLocaleLabel = 'label_'.Lang::locale();
+        $currentLocaleTitle = 'title_'.Lang::locale();
         if ( !empty($collectionArray) ){
             foreach ( $collectionArray as $catKey => $catValue ){
-                $collectionArray[$catKey]['label'] = $catValue['label'];
+                $collectionArray[$catKey]['label'] = $catValue[$currentLocaleTitle];
                 $collectionArray[$catKey]['value'] = $catValue['id'];
                 $collectionArray[$catKey]['disabled'] = true;
                 unset($collectionArray[$catKey]['id']);
                 unset($collectionArray[$catKey]['title']);
                 foreach ( $catValue['children'] as $colKey => $colValue ){
-                    $collectionArray[$catKey]['children'][$colKey]['label'] = $colValue['label'];
+                    $collectionArray[$catKey]['children'][$colKey]['label'] = $colValue[$currentLocaleLabel];
                     $collectionArray[$catKey]['children'][$colKey]['value'] = $colValue['id'];
                     unset($collectionArray[$catKey]['children'][$colKey]['id']);
                     unset($collectionArray[$catKey]['children'][$colKey]['category_id']);
                     if (!empty($colValue['children'])){
                         foreach ($colValue['children'] as $frhKey => $frValue){
                             $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['value'] = 'fr_'.$colValue['id'].$frValue['id'];
-                            $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['label'] = $localizingFranchiseModel->find($frValue['id'])->label??'empty label';
+                            $collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['label'] = $localizingFranchiseModel->find($frValue['id'])->$currentLocaleLabel??'empty label';
                             unset($collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['id']);
                             unset($collectionArray[$catKey]['children'][$colKey]['children'][$frhKey]['collection_id']);
                         }
@@ -162,6 +165,16 @@ if (!function_exists('cascaderStructure')) {
             }
             return $str;
 
+        }
+    }
+    if (!function_exists('transformTitleByLocale')) {
+        function transformTitleByLocale()
+        {
+            if (Lang::locale() == 'ru'){
+                return 'title';
+            } elseif (Lang::locale() == 'en') {
+                return 'original_title';
+            }
         }
     }
 }

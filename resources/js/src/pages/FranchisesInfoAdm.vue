@@ -1,24 +1,23 @@
 <template>
-    <h3 class="text-center mt-3 mb-3">{{franchiseData['title']??''}}</h3>
-    <el-page-header :icon="null" >
-        <template #extra>
-            <p>Display:</p>
-            <div class="flex items-center">
-                <el-switch
-                    v-model="displaySwitch"
-                    class="mb-2"
-                    active-text="TIMELINE"
-                    inactive-text="TABLE"
-                    @change="handleSwitchDisplay"
-                />
-            </div>
-        </template>
-    </el-page-header>
-    <template v-if="franchiseData['data']">
-
+    <template v-if="franchiseData.data">
+        <h3 class="text-center mt-3 mb-3">{{franchiseData.title}}</h3>
+        <el-page-header :icon="null" >
+            <template #extra>
+                <p>{{franchiseData.locale.display}}</p>
+                <div class="flex items-center">
+                    <el-switch
+                        v-model="displaySwitch"
+                        class="mb-2"
+                        :active-text="franchiseData.locale.display_timeline"
+                        :inactive-text="franchiseData.locale.display_table"
+                        @change="handleSwitchDisplay"
+                    />
+                </div>
+            </template>
+        </el-page-header>
         <div v-if="displaySwitch">
             <el-timeline style="max-width: 800px">
-                <h4>Frinchise Timeline ({{franchiseData['data'].length}})</h4>
+                <h4>{{franchiseData.locale.timeline_franchise}} ({{franchiseData.data.length}} {{franchiseData.locale.timeline_movies}} )</h4>
                 <el-timeline-item v-for="item in yearsDiapason()" :timestamp="item" placement="top"  >
                     <template v-for="movie in franchiseData['data']">
                         <el-card v-if="item == movie.year" shadow="hover" >
@@ -30,8 +29,8 @@
                                     <div>
                                         <el-text class="mx-1" tag="mark">{{movie.type_film}}</el-text>
                                         <h4>{{movie.title}}</h4>
-                                        <RouterLink :to="{ name: 'showmovie', params: { slug: movie.type_film, id: movie.id_movie }}">
-                                            <el-button link type="primary" title="Details"> Details </el-button>
+                                        <RouterLink :to="{ name: 'showMovie', params: { slug: movie.type_film, id: movie.id_movie }}">
+                                            <el-button link type="primary" > {{franchiseData.locale.details}} </el-button>
                                         </RouterLink>
                                     </div>
                                 </el-container>
@@ -42,6 +41,7 @@
             </el-timeline>
         </div>
         <div v-else>
+            <p>{{franchiseData.locale.search_by_title_id}}</p>
             <el-form
                 ref="formRef"
                 :model="queryValidateForm"
@@ -52,13 +52,13 @@
                         v-model.query="queryValidateForm.query"
                         type="text"
                         autocomplete="off"
-                        placeholder="Search here"
+                        :placeholder="franchiseData.locale.search_here"
                         v-on:keydown.enter.prevent = "submitSearch(formRef)"
                     />
                 </el-form-item>
                 <el-form-item>
-                    <el-button @click="resetSearch(formRef)">Reset</el-button>
-                    <el-button @click="submitSearch(formRef)">Go!</el-button>
+                    <el-button @click="resetSearch(formRef)">{{franchiseData.locale.reset}}</el-button>
+                    <el-button @click="submitSearch(formRef)">{{franchiseData.locale.go}}</el-button>
                 </el-form-item>
                 <!--        <el-form-item>-->
                 <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
@@ -103,28 +103,28 @@
 <!--                    @current-change="handleCurrentChange"-->
 <!--                />-->
 <!--            </div>-->
-            <el-table :data="franchiseData['data']" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
+            <el-table :data="franchiseData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
                 <el-table-column type="index" label="№"/>
-                <el-table-column fixed prop="created_at" label="Date Create" width="130" />
-                <el-table-column prop="poster" label="Cover" width="130" >
+                <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
+                <el-table-column prop="poster" :label="$t('poster')" width="130" >
                     <template v-slot:default="scope">
                         <el-image :src="scope.row.poster" />
                     </template>
                 </el-table-column>
-                <el-table-column prop="id_movie" label="ID Movie" width="120" />
-                <el-table-column prop="year" label="Year" width="100" />
-                <el-table-column prop="title" label="Title" width="600" />
-                <el-table-column prop="updated_at" label="Date Update" width="120" />
-                <el-table-column prop="id_movie" property="type_film" fixed="right" label="Operations" width="120">
+                <el-table-column prop="id_movie" :label="$t('id_movie')" width="120" />
+                <el-table-column prop="year" :label="$t('year_release')" width="100" />
+                <el-table-column prop="title" :label="$t('title')" width="600" />
+                <el-table-column prop="updated_at" :label="$t('updated_at')" width="120" />
+                <el-table-column prop="id_movie" property="type_film_link" fixed="right" :label="$t('actions')" width="120">
                     <template v-slot:default="scope">
                         <el-button type="success" link >
-                            <RouterLink :to="{ name: 'showmovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                                <el-button link type="primary" :icon="View" title="Details"/>
+                            <RouterLink :to="{ name: 'showMovie', params: { slug: scope.row.type_film_link, id: scope.row.id_movie }}">
+                                <el-button link type="primary" :icon="View" :title="$t('details')"/>
                             </RouterLink>
                         </el-button>
                         <el-button link type="primary" >
-                            <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film, id: scope.row.id_movie }}">
-                                <el-button link type="primary" :icon="EditPen" title="Edit"/>
+                            <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film_link, id: scope.row.id_movie }}">
+                                <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
                             </RouterLink>
                         </el-button>
                         <!--                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" title="Remove from franchise" />-->
@@ -135,7 +135,7 @@
         <el-backtop :right="20" :bottom="100" />
     </template>
     <template v-else>
-        <p style="text-align: center">Not Found</p>
+        <p style="text-align: center">{{$t('data_not_found')}}</p>
     </template>
     <p v-if="error">{{ error }}</p>
 </template>
@@ -143,6 +143,7 @@
 <script lang="ts" setup >
     import { storeToRefs } from 'pinia';
     import { useFranchiseStore } from "../store/franchiseStore";
+    import { useLanguageStore } from "../store/languageStore";
     import { RouterLink } from 'vue-router'
     import { Delete,View,EditPen } from '@element-plus/icons-vue';
     import { ElMessage, ElMessageBox } from 'element-plus'
@@ -151,6 +152,8 @@
     import { onMounted,onUpdated, ref, watch, reactive } from "vue";
 
     const franchiseStore = useFranchiseStore();
+    const languageStore = useLanguageStore();
+    const { watcherLang } = storeToRefs( languageStore );
     const { franchiseData, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
 
     const small = ref(false);
@@ -158,33 +161,7 @@
     const disabled = ref(false);
     const defaultSpin = ref(false);
     const displaySwitch = ref(false);
-    const options = ref([
-        {
-            value: 'id',
-            label: 'ID',
-        },
-        {
-            value: 'id_movie',
-            label: 'ID movie',
-        },
-        {
-            value: 'title',
-            label: 'Title',
-        },
-        {
-            value: 'year',
-            label: 'Year',
-        },
-        {
-            value: 'created_at',
-            label: 'Created date',
-            disabled: true,
-        },
-        {
-            value: 'updated_at',
-            label: 'Updated date',
-        },
-    ]);
+
     const formRef = ref<FormInstance>();
     const activeMenuIndex = ref('1')
     const queryValidateForm = reactive({
@@ -194,7 +171,9 @@
     // const handleSelect = (key, keyPath) => {
     //     console.log(key, keyPath)
     // }
-    watch(() => route,  franchiseStore.getDataFranchise,{deep: true, immediate: true,});
+
+    watch(() => [route, watcherLang.value],  franchiseStore.getDataFranchise,{deep: true, immediate: true,});
+
     const rangeYears = ref(0);
     const yearsDiapason = () => {
         function range(start, end) {

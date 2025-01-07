@@ -11,15 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController
 {
-    private $dataMovie = [
-        'genres' => null,
-        'cast' => null,
-        'directors' => null,
-        'writers' => null,
-        'story_line' => null,
-        'release_date' => null,
-        'countries' => null,
-    ];
     public function index()
     {
         $data = [];
@@ -50,23 +41,22 @@ class DashboardController
                 $update = $model::where('created_at','>=',Carbon::now()->subdays(1))->count();
             }
 
-            $data[$index]['key'] = $index.'_'.$name;
-            $data[$index]['title'] = $name;
-            $data[$index]['count'] = $count;
-            $data[$index]['lastAddCount'] = $update;
+            $data['data'][$index]['key'] = $index.'_'.$name;
+            $data['data'][$index]['title'] =  $name !== 'Celebs' ? __('movies.type_movies.'.$name) : __('movies_info.celebs');
+            $data['data'][$index]['count'] = $count;
+            $data['data'][$index]['lastAddCount'] = $update;
 
             session()->increment('tracking.dashboardPercentageBar',1);
             session()->save();
         }
-        return [
-            'success' => true,
-            'status' => 200,
-            'data' => $data
-        ];
+        if (!empty($data)){
+            $data['locale'] = LanguageController::localizingDashboardInfo();
+        }
+        return $data;
     }
 
     public function test(){
-        return;
+        dd('test');
     }
 
 }
