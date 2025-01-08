@@ -60,16 +60,20 @@ class CollectionsController extends Controller
                     });
                     $model = modelByName('MovieInfo');
                     $allowedFilterFields = $model->getFillable();
+
                     foreach ($TypeFilmArray as $key => $item){
                         if ($query = $request->query('search')){
                             $searchQuery = trim(strtolower(strip_tags($query)));
-                            $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+                            $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
                         }
                         $collection->add($model->select('type_film','id_movie','title','year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
+                        if (!empty($collection[0])){
+                            break;
+                        }
                     }
                     $collapsed = $collection->collapse();
                     $sorted = $collapsed->sort();
-                    if ($sorted[0]){
+                    if ($sorted->isNotEmpty()){
                         $allowedSortFields = ['desc','asc'];
                         $limit = $request->query('limit',50);
                         $sortDir = strtolower($request->query('spin','asc'));
@@ -126,9 +130,6 @@ class CollectionsController extends Controller
                             $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                             $collectionResponse['data'][$k]['type_film'] = getTableSegmentOrTypeId($item['type_film']) ?? '';
                         }
-                        $collectionResponse['title'] = $collectionTitle;
-                        $collectionResponse['total'] = $collapsed->count();
-                        $collectionResponse['locale'] = LanguageController::localizingCollectionsList();
                         if (!empty($collectionResponse['data'])){
                             foreach ($collectionResponse['data'] as $dataMovie){
                                 if (!empty($dataMovie['franchise'])){
@@ -139,8 +140,11 @@ class CollectionsController extends Controller
                         if(!empty($collectionResponse['franchise'])){
                             $collectionResponse['franchise'] = array_unique($collectionResponse['franchise'],SORT_REGULAR);
                         }
-                        return $collectionResponse;
                     }
+                    $collectionResponse['title'] = $collectionTitle;
+                    $collectionResponse['total'] = $collapsed->count();
+                    $collectionResponse['locale'] = LanguageController::localizingCollectionsList();
+                    return $collectionResponse;
                 }
             }
         }

@@ -74,11 +74,9 @@ class MoviesController extends Controller
                 $modelArr['data'][$k]['poster'] = $img[0] ?? '';
                 unset($modelArr['data'][$k][$relationName]);
             }
-            $modelArr['locale'] = LanguageController::localizingMoviesList();
-
-            return $modelArr;
         }
-        return [];
+        $modelArr['locale'] = LanguageController::localizingMoviesList();
+        return $modelArr;
     }
 
     /**

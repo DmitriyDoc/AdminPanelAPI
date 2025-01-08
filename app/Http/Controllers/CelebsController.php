@@ -62,10 +62,10 @@ class CelebsController extends Controller
                     $modelArr['data'][$k]['poster'] = $item['info']['photo'] ?? '';
                 }
             }
-            $modelArr['locale'] = LanguageController::localizingPersonsList();
-            return $modelArr;
+
         }
-        return [];
+        $modelArr['locale'] = LanguageController::localizingPersonsList();
+        return $modelArr;
     }
 
     /**

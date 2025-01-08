@@ -1,5 +1,5 @@
 <template>
-    <template v-if="collectionsData.data">
+    <template v-if="collectionsData.locale">
         <h3 class="text-center mt-3 mb-3">{{collectionsData.title}}</h3>
         <p>{{collectionsData.locale.search_by_title_id}}</p>
         <el-form
@@ -22,7 +22,7 @@
             </el-form-item>
         </el-form>
 
-        <div class="demo-pagination-block"  v-loading="loader">
+        <div class="demo-pagination-block" v-if="collectionsData.data" v-loading="loader">
             <el-menu
                 v-if="collectionsData.franchise"
                 :default-active="activeMenuIndex"

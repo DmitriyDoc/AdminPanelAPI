@@ -1,5 +1,5 @@
 <template>
-    <template v-if="tableData.data">
+    <template v-if="tableData.locale">
         <h3>{{tableData.locale.type_movies_title}}</h3>
         <div style="margin: 20px 0;" >
             <el-radio-group v-model="typeMovie" @change="handleCurrentType(typeMovie)">
@@ -66,7 +66,7 @@
                 @current-change="handleCurrentChange"
             />
         </div>
-        <el-table :data="tableData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef" >
+        <el-table v-if="tableData.data" :data="tableData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef" >
             <el-table-column type="index" label="№"/>
             <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
             <el-table-column prop="poster" :label="$t('poster')" width="150" >

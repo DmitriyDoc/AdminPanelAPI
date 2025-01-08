@@ -51,13 +51,16 @@ class FranchiseController extends Controller
                 foreach ($TypeFilmArray as $key => $item){
                     if ($query = $request->query('search')){
                         $searchQuery = trim(strtolower(strip_tags($query)));
-                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[2],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
                     }
                     $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
+                    if (!empty($collection[0])){
+                        break;
+                    }
                 }
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
-                if ($sorted[0]){
+                if ($sorted->isNotEmpty()){
                     $allowedSortFields = ['desc','asc'];
                     $limit = $request->query('limit',50);
                     $sortDir = strtolower($request->query('spin','asc'));
@@ -104,11 +107,11 @@ class FranchiseController extends Controller
                         $collectionResponse['data'][$k]['type_film'] = __('movies.type_movies.'.$typeKey) ?? '';
                         $collectionResponse['data'][$k]['type_film_link'] = $typeKey;
                     }
-                    $collectionResponse['title'] = $collectionTitle;
-                    $collectionResponse['total'] = $collapsed->count();
-                    $collectionResponse['locale'] = LanguageController::localizingFranchisesList();
-                    return $collectionResponse;
                 }
+                $collectionResponse['title'] = $collectionTitle;
+                $collectionResponse['total'] = $collapsed->count();
+                $collectionResponse['locale'] = LanguageController::localizingFranchisesList();
+                return $collectionResponse;
             }
 
         }

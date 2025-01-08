@@ -1,5 +1,5 @@
 <template>
-    <template v-if="tableData.data">
+    <template v-if="tableData.locale">
         <p>{{tableData.locale.search_by_name_id}}</p>
         <el-form
             ref="formRef"
@@ -60,7 +60,7 @@
                 @current-change="handleCurrentChange"
             />
         </div>
-        <el-table :data="tableData.data" v-loading="loader" style="width: 100%" >
+        <el-table v-if="tableData.data"  :data="tableData.data" v-loading="loader" style="width: 100%" >
             <el-table-column type="index" label="№"/>
             <el-table-column fixed prop="created_at" :label="tableData.locale.created_at" width="130" />
             <el-table-column prop="poster" :label="tableData.locale.photo" width="130" >

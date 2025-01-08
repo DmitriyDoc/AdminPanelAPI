@@ -44,20 +44,23 @@ class SectionsController extends Controller
                     $typeFilm = getTableSegmentOrTypeId($item['type_film']);
                     $typeFilmArray[$typeFilm][] = $item['id_movie'];
                 });
-
                 $model = modelByName('MovieInfo');
                 $allowedFilterFields = $model->getFillable();
                 $titleFieldName = transformTitleByLocale();
                 foreach ($typeFilmArray as $key => $item){
                     if ($query = $request->query('search')){
                         $searchQuery = trim(strtolower(strip_tags($query)));
-                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[3],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[1],'like','%'.$searchQuery.'%');
+                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
                     }
+
                     $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
+                    if (!empty($collection[0])){
+                        break;
+                    }
                 }
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
-                if ($sorted[0]){
+                if ($sorted->isNotEmpty()){
                     $allowedSortFields = ['desc','asc'];
 
                     $limit = $request->query('limit',50);
@@ -120,12 +123,12 @@ class SectionsController extends Controller
                         $collectionResponse['collections'][$k]['value'] = $item['value'];
                     }
 
-                    $collectionResponse['total'] = $collapsed->count();
-                    $collectionResponse['locale'] = LanguageController::localizingSectionsList();
                 }
+                $collectionResponse['total'] = $collapsed->count();
+                $collectionResponse['locale'] = LanguageController::localizingSectionsList();
+                $collectionResponse['title'] = $section['title_'.$currentLocale];
+                return $collectionResponse;
             }
-            $collectionResponse['title'] = $section['title_'.$currentLocale];
-            return $collectionResponse;
         }
         return [];
     }

@@ -1,5 +1,5 @@
 <template>
-    <template v-if="franchiseData.data">
+    <template v-if="franchiseData.locale">
         <h3 class="text-center mt-3 mb-3">{{franchiseData.title}}</h3>
         <el-page-header :icon="null" >
             <template #extra>
@@ -17,7 +17,7 @@
         </el-page-header>
         <div v-if="displaySwitch">
             <el-timeline style="max-width: 800px">
-                <h4>{{franchiseData.locale.timeline_franchise}} ({{franchiseData.data.length}} {{franchiseData.locale.timeline_movies}} )</h4>
+                <h4 v-if="franchiseData.data">{{franchiseData.locale.timeline_franchise}} ({{franchiseData.data.length}} {{franchiseData.locale.timeline_movies}} )</h4>
                 <el-timeline-item v-for="item in yearsDiapason()" :timestamp="item" placement="top"  >
                     <template v-for="movie in franchiseData['data']">
                         <el-card v-if="item == movie.year" shadow="hover" >
