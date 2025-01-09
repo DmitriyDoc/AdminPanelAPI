@@ -41,23 +41,20 @@ class SectionsController extends Controller
 
             if (!empty($moviesIds)){
                 array_walk($moviesIds, function($item, $key) use (&$typeFilmArray) {
-                    $typeFilm = getTableSegmentOrTypeId($item['type_film']);
-                    $typeFilmArray[$typeFilm][] = $item['id_movie'];
+                    //$typeFilm = getTableSegmentOrTypeId($item['type_film']);
+                    //$typeFilmArray[$typeFilm][] = $item['id_movie'];
+                    $typeFilmArray[] = $item['id_movie'];
                 });
                 $model = modelByName('MovieInfo');
                 $allowedFilterFields = $model->getFillable();
                 $titleFieldName = transformTitleByLocale();
-                foreach ($typeFilmArray as $key => $item){
-                    if ($query = $request->query('search')){
-                        $searchQuery = trim(strtolower(strip_tags($query)));
-                        $model = $model->whereIn('id_movie',$item)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
-                    }
 
-                    $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$item)->with(['assignPoster','categories'])->get()->all());
-                    if (!empty($collection[0])){
-                        break;
-                    }
+                if ($query = $request->query('search')){
+                    $searchQuery = trim(strtolower(strip_tags($query)));
+                    $model = $model->whereIn('id_movie',$typeFilmArray)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
                 }
+
+                $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$typeFilmArray)->with(['assignPoster','categories'])->get()->all());
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
                 if ($sorted->isNotEmpty()){
@@ -67,6 +64,9 @@ class SectionsController extends Controller
                     $sortDir = strtolower($request->query('spin','asc'));
                     $sortBy = $request->query('orderBy','updated_at');
                     $perPage = $request->query('page',1);
+                    if (!empty($searchQuery)){
+                        $perPage = 1;
+                    }
                     if (!in_array($sortBy,$allowedFilterFields)){
                         $sortBy = $allowedSortFields[0];
                     }
