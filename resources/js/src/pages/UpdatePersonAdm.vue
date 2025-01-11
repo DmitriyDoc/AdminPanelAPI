@@ -12,7 +12,7 @@
                     <el-radio value="publicity">[publicity]</el-radio>
                 </el-radio-group>
             </div>
-            <el-button type="danger" style="width: 100%;" @click="submitSync()">
+            <el-button type="danger" style="width: 100%;" @click="submitSync()" :loading="!!disabledBtnSync">
                 {{singleData.locale.sync_imdb}}
             </el-button>
             <div v-if="percentageSync" class="mt-1">
@@ -140,7 +140,7 @@
     const progressBarStore = useProgressBarStore();
     const languageStore = useLanguageStore();
 
-    const { singleData, route, error, } = storeToRefs(personsStore);
+    const { singleData, disabledBtnSync, route, error, } = storeToRefs(personsStore);
     const { statusBar, percentageSync } = storeToRefs(progressBarStore);
     const { imagesData, srcListImages, countImg } = storeToRefs(mediaStore);
     const { watcherLang } = storeToRefs( languageStore );
@@ -176,7 +176,18 @@
             multipleSelection.value.forEach((item, index) => {
                 dataRemoveKey.push(item.id);
             });
-            personsStore.removeFilmographyItems(dataRemoveKey,activeTabName.value);
+            ElMessageBox.confirm(`Are you sure? This movie(s) will be deleted from list. Continue?`, 'WARNING', {
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel',
+                type: 'warning',
+            }).then(() => {
+                personsStore.removeFilmographyItems(dataRemoveKey,activeTabName.value);
+            }).catch(() => {
+                ElMessage({
+                    type: 'info',
+                    message: 'Delete canceled',
+                })
+            })
         }
     }
     const handleSelectionChange = (val) => {

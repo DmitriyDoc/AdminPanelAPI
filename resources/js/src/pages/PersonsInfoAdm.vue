@@ -169,10 +169,6 @@
                 type: 'warning',
             }).then(() => {
             personsStore.removeItem(id,index);
-            ElMessage({
-                type: 'success',
-                message: 'Delete completed',
-            })
         }).catch(() => {
             ElMessage({
                 type: 'info',

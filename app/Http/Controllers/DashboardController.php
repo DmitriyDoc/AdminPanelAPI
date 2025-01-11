@@ -42,7 +42,7 @@ class DashboardController
             }
 
             $data['data'][$index]['key'] = $index.'_'.$name;
-            $data['data'][$index]['title'] =  $name !== 'Celebs' ? __('movies.type_movies.'.$name) : __('movies_info.celebs');
+            $data['data'][$index]['title'] =  $name !== 'Celebs' ? __('movies.type_movies.'.$name) : __('movies.celebs');
             $data['data'][$index]['count'] = $count;
             $data['data'][$index]['lastAddCount'] = $update;
 

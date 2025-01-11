@@ -170,23 +170,27 @@ class CelebsController extends Controller
         //
     }
     public function removeFromFilmography(Request $request){
-        $data = $request->all();
-        $celebsModelNames = [
-            0 => 'InfoCelebs',
-            1 => 'LocalizingCelebsInfo'
-        ];
+        $dataRequest = $request->all();
+        $match = preg_match("/nm\d{1,10}/",$dataRequest['data']['id'],$matches, PREG_UNMATCHED_AS_NULL);
+        $id = $match > 0 ? $dataRequest['data']['id'] : null;
+        $itemsArr = ($dataRequest['data']['id_items']) && is_array($dataRequest['data']['id_items']) ? $dataRequest['data']['id_items'] : [];
+        $tabIndex = $dataRequest['data']['tab_index'];
 
-        if (!empty($data['data']['id']) && !empty($data['data']['id_items']) && !empty($data['data']['tab_index'])){
-            transaction( function () use ($data,$celebsModelNames){
+        if (!empty($id) && !empty($itemsArr)){
+            transaction( function () use ($tabIndex,$itemsArr,$id){
+                $celebsModelNames = [
+                    0 => 'CelebsInfoEn',
+                    1 => 'CelebsInfoRu'
+                ];
                 foreach ($celebsModelNames as $name){
-                   $model = modelByName($name)->where('id_celeb',$data['data']['id']);
+                   $model = modelByName($name)->where('id_celeb',$id);
                    $collection =  $model->get(['filmography','id']);
                    if ($collection->isNotEmpty()){
                        $filmographyDecodeArr = json_decode($collection->first()->filmography,true);
                        foreach ($filmographyDecodeArr as $occupIndex => $occupation){
                            foreach ($occupation as $index => $key){
-                               foreach ($data['data']['id_items'] as $delId){
-                                   if ($index == $delId && $occupIndex == $data['data']['tab_index']) {
+                               foreach ($itemsArr as $delId){
+                                   if ($index == $delId && $occupIndex == $tabIndex) {
                                        unset($filmographyDecodeArr[$occupIndex][$index]);
                                    }
                                }
@@ -204,9 +208,8 @@ class CelebsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
-        dd($id);
         $types = [
             0=>'CelebsInfo',
             1=>'CelebsInfoEn',
@@ -214,13 +217,20 @@ class CelebsController extends Controller
             3=>'ImagesCelebs',
             4=>'IdImagesCelebs',
         ];
+        $dataRequest = $request->all();
+        $match = preg_match("/nm\d{1,10}/",$dataRequest['id'],$matches, PREG_UNMATCHED_AS_NULL);
+        $id = $match > 0 ? $dataRequest['id'] : null;
         if (!empty($id)) {
-            transaction( function () use ($id,$types){
-                foreach ($types as $type){
-                    $model = convertVariableToModelName($type,'', ['App', 'Models']);
-                    $model::where('id_celeb',$id)->delete();
-                }
-            });
+            $modelInfo = convertVariableToModelName('CelebsInfo','', ['App', 'Models']);
+            $modelExist = $modelInfo::where('id_celeb',$id)->first();
+            if ($modelExist){
+                transaction( function () use ($id,$types){
+                    foreach ($types as $type){
+                        $model = convertVariableToModelName($type,'', ['App', 'Models']);
+                        $model::where('id_celeb',$id)->delete();
+                    }
+                });
+            }
         }
     }
 }

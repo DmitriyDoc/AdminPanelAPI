@@ -8,6 +8,8 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\MovieInfo;
 
+use App\Models\MoviesInfoEn;
+use App\Models\MoviesInfoRu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -198,67 +200,63 @@ class MoviesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $slug,string $id)
+    public function update(Request $request)
     {
-        $allowedTableNames = [
-            0=>'FeatureFilm',
-            1=>'MiniSeries',
-            2=>'ShortFilm',
-            3=>'TvMovie',
-            4=>'TvSeries',
-            5=>'TvShort',
-            6=>'TvSpecial',
-            7=>'Video',
-        ];
+        $dataRequest = $request->all();
+        $match = preg_match("/tt\d{1,10}/",$dataRequest['data']['id'],$matches, PREG_UNMATCHED_AS_NULL);
+        $id = $match > 0 ? $dataRequest['data']['id'] : null;
+        $dataForm = ($dataRequest['data']['form']) && is_array($dataRequest['data']['form']) ? $dataRequest['data']['form'] : [];
+        $locale = $dataRequest['data']['lang'] === 'ru' || 'en' ? $dataRequest['data']['lang'] : '';
 
-        $this->typeMovieSlug = $slug;
-        if (in_array($this->typeMovieSlug ,$allowedTableNames)){
-            if ($data = $request->data)
-
-                $modelIdType = convertVariableToModelName('IdType', $this->typeMovieSlug, ['App', 'Models']);
-                if (!$modelIdType::where('id_movie',$id)->exists()){
-
-                    foreach ($allowedTableNames as $type){
-                        $modelIdType = convertVariableToModelName('IdType', $type, ['App', 'Models']);
-                        if ($modelIdType::where('id_movie',$id)->exists()){
-                            $this->typeMovieSlug  = $type;
-                            break;
-                        }
-                    }
-                }
-            $modelInfo = convertVariableToModelName('Info', $this->typeMovieSlug, ['App', 'Models']);
-            unset($this->typeMovieSlug);
-            transaction( function () use ($data,$id,$modelInfo,$modelIdType){
-                $modelInfo::where('id_movie',$id)->update($data);
-                $modelIdType::where('id_movie',$id)->update([
-                    'title' => $data['title'],
-                    'year' => $data['year_release']
+        if (!empty($dataForm) && $id){
+            $model = modelByName('MovieInfo');
+            $localizingModel = modelByName('MoviesInfo'.ucfirst($locale));
+            transaction( function () use ( $dataForm, $id, $model, $localizingModel ){
+                $model::where('id_movie',$id)->update([
+                    'title' => $dataForm['title'],
+                    'original_title' => $dataForm['original_title'],
+                    'year_release' => $dataForm['year_release'],
+                    'restrictions' => $dataForm['restrictions'],
+                    'runtime' => $dataForm['runtime'],
+                    'rating' => $dataForm['rating'],
+                    'budget' => $dataForm['budget'],
+                ]);
+                $localizingModel::where('id_movie',$id)->update([
+                    'release_date' => $dataForm['release_date'],
+                    'story_line' => $dataForm['story_line']
                 ]);
             });
-
+            return ['success'=>true];
         }
-        return ['success'=>true];
+        return ['success'=>false];
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $slug, string $id)
+    public function destroy(Request $request)
     {
-        $types = [
-            0=>'IdType',
-            1=>'Info',
-            2=>'Images',
-            3=>'IdImages',
-            4=>'Posters',
-            5=>'IdPosters',
+        $dataRequest = $request->all();
+        $match = preg_match("/tt\d{1,10}/",$dataRequest['id'],$matches, PREG_UNMATCHED_AS_NULL);
+        $id = $match > 0 ? $dataRequest['id'] : null;
+        $type = is_int(getTableSegmentOrTypeId($dataRequest['type'])) ? $dataRequest['type'] : null;
+
+        $typesTables = [
+            0=>'Images',
+            1=>'IdImages',
+            2=>'Posters',
+            3=>'IdPosters',
         ];
-        //$tableName = request()->segment(3) ?? '';
-        if (!empty($slug)) {
-            foreach ($types as $type){
-                $model = convertVariableToModelName($type,$slug, ['App', 'Models']);
-                $model::where('id_movie',$id)->delete();
-            }
+        if (!empty($id) && !empty($type)) {
+            transaction( function () use ( $typesTables, $id, $type ){
+                MovieInfo::query()->where('id_movie',$id)->delete();
+                MoviesInfoEn::query()->where('id_movie',$id)->delete();
+                MoviesInfoRu::query()->where('id_movie',$id)->delete();
+                foreach ($typesTables as $table){
+                    $model = convertVariableToModelName($table,$type, ['App', 'Models']);
+                    $model::where('id_movie',$id)->delete();
+                }
+            });
         }
     }
 }

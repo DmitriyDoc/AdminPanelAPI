@@ -60,7 +60,6 @@ class ParserUpdateMovieController extends ParserController
                     'typePosters'=>$data['data']['posterType'],
                     ]);
             }
-            return ['success' => true];
         }
     }
     public function localizing($movieId)
@@ -74,7 +73,7 @@ class ParserUpdateMovieController extends ParserController
             Log::info(">>> LOCALIZING MOVIE ID FINISH",[$movieId]);
         }
     }
-    public function parserStart($params):void
+    public function parserStart($params) : void
     {
         foreach ($this->idMovies as $id) {
             array_push($this->linksInfo, $this->domen . $this->imgUrlFragment . $id);

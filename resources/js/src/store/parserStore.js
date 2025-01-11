@@ -8,16 +8,19 @@ export const useParserStore = defineStore('parserStore',() => {
     const localeDatePicker = ref({});
     const filters = ref([]);
     const types = ref([]);
+    const disabledBtnAddCeleb = ref(false);
     const loader = ref(true);
     const error = ref(null);
 
     const addCelebById = async (idCeleb) => {
-        axios.put('/updateceleb',{ data: {
+        disabledBtnAddCeleb.value = true;
+        axios.post('/updateceleb',{ data: {
                 id:idCeleb,
                 type:'Celebs',
                 imageType:'event',
             }}).then((response) => {
             if (response.status === 200) {
+                disabledBtnAddCeleb.value = false;
                 ElMessage({
                     type: 'success',
                     message: 'Celeb add completed',
@@ -73,6 +76,7 @@ export const useParserStore = defineStore('parserStore',() => {
     return {
         locale,
         localeDatePicker,
+        disabledBtnAddCeleb,
         filters,
         types,
         loader,

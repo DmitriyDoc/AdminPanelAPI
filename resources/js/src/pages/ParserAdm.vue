@@ -36,7 +36,7 @@
                     <el-progress :percentage="percentageSync" :status="statusBar"/>
                 </div>
                 <div class="mt-3">
-                    <button @click="handleAddMovie" class="btn btn-primary" >{{locale.add_movie}}</button>
+                    <el-button type="primary" @click="handleAddMovie" class="btn btn-primary" :loading="!!disabledBtnSync">{{locale.add_movie}}</el-button>
                 </div>
             </el-tab-pane>
             <el-tab-pane :label="locale.add_celebs_by_id">
@@ -57,7 +57,7 @@
                     <el-progress :percentage="percentageSync" :status="statusBar"/>
                 </div>
                 <div>
-                    <button @click="handleAddCeleb" class="btn btn-primary" >{{locale.add_person}}</button>
+                    <el-button type="primary" @click="handleAddCeleb" class="btn btn-primary" :loading="!!disabledBtnAddCeleb">{{locale.add_person}}</el-button>
                 </div>
             </el-tab-pane>
             <el-tab-pane :label="locale.parser_start">
@@ -260,7 +260,7 @@
 
 <script setup lang="ts">
     import { storeToRefs } from 'pinia';
-    import { onMounted, ref, watch } from "vue";
+    import { onMounted, ref, computed, watch } from "vue";
     import { ElMessage, ElMessageBox } from "element-plus";
     import { useParserStore } from "../store/parserStore";
     import { useProgressBarStore } from "../store/progressBarStore";
@@ -273,11 +273,18 @@
     const moviesStore = useMoviesStore();
     const languageStore = useLanguageStore();
 
-    const { loader, locale, filters, localeDatePicker, types, error } = storeToRefs(parserStore);
+    const { loader, locale, filters, disabledBtnAddCeleb, localeDatePicker, types, error } = storeToRefs(parserStore);
+    const { disabledBtnSync } = storeToRefs(moviesStore);
     const { percentage, statusBar, percentageSync, parserReport } = storeToRefs(progressBarStore);
     const { watcherLang } = storeToRefs( languageStore );
     const celeb_ID = ref('nm');
     const movie_ID = ref('tt');
+    const inputLengthCelebId = computed(() => {
+        return celeb_ID.value.length
+    })
+    const inputLengthMoviebId = computed(() => {
+        return movie_ID.value.length
+    })
 
     const radioTypeToggle =  ref(true);
     const pickerFrom  = ref(null);
@@ -446,9 +453,16 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            parserStore.addCelebById(celeb_ID.value);
-            progressBarStore.getSyncCurrentPercentage();
-            celeb_ID.value = 'nm';
+            if (inputLengthCelebId.value > 2) {
+                parserStore.addCelebById(celeb_ID.value);
+                progressBarStore.getSyncCurrentPercentage();
+                celeb_ID.value = 'nm';
+            } else {
+                ElMessage({
+                    type: 'info',
+                    message: 'Add canceled. Enter person ID',
+                });
+            }
         }).catch(() => {
             ElMessage({
                 type: 'info',
@@ -462,13 +476,20 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            moviesStore.syncItem({
-                id: movie_ID.value,
-                type: selectType.value,
-                posterType: posterType.value,
-            });
-            progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
-            celeb_ID.value = 'nm';
+            if (selectType.value && inputLengthMoviebId.value > 2) {
+                moviesStore.syncItem({
+                    id: movie_ID.value,
+                    type: selectType.value,
+                    posterType: posterType.value,
+                });
+                progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
+                celeb_ID.value = 'nm';
+            } else {
+                ElMessage({
+                    type: 'info',
+                    message: 'Add canceled. Not enough data',
+                })
+            }
         }).catch(() => {
             ElMessage({
                 type: 'info',

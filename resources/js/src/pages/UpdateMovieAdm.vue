@@ -12,7 +12,7 @@
                     <el-radio value="product" >[product]</el-radio>
                 </el-radio-group>
             </div>
-            <el-button type="danger" style="width: 100%;" @click="submitSync()">
+            <el-button type="danger" style="width: 100%;" @click="submitSync()" :loading='!!disabledBtnSync'>
                 {{singleData.locale.sync_imdb}}
             </el-button>
             <div v-if="percentageSync" class="mt-1">
@@ -271,7 +271,8 @@
                 </el-form-item>
 
                 <el-form-item>
-                    <el-button type="primary" @click="submitForm(ruleFormRef)">
+
+                    <el-button type="primary" @click="submitForm(ruleFormRef)" :loading="!!disabledBtnUpdate">
                         {{singleData.locale.update}}
                     </el-button>
                 </el-form-item>
@@ -303,7 +304,7 @@
     const progressBarStore = useProgressBarStore();
     const languageStore = useLanguageStore();
 
-    const { singleData, locale, error } = storeToRefs(moviesStore);
+    const { singleData, disabledBtnUpdate, disabledBtnSync, locale, error } = storeToRefs(moviesStore);
     const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
     const { statusBar, percentageSync } = storeToRefs(progressBarStore);
     const { optionsCats } = storeToRefs(categoryStore);
@@ -326,6 +327,7 @@
         checkStrictly: true,
     }
     const posterType = ref('poster');
+
 
     watch(() => watcherLang.value, (newLang) => {
         moviesStore.showItem();

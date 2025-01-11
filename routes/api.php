@@ -48,10 +48,10 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
         // CHECK  LANGUAGE
         Route::middleware('localization')->group(function () {
             //PARSER
-            Route::put('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
+            Route::post('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
             Route::get('/updatemovie/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
 
-            Route::put('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
+            Route::post('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
             Route::get('/updateceleb/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
 
             Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInitStore']);
@@ -73,15 +73,15 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
                 Route::get('/movies/{slug}', 'index');
                 Route::get('/movies/{slug}/show/{id}', 'show');
-                Route::patch('/movies/{slug}/update/{id}', 'update');
-                Route::delete('/movies/{slug}/{id}', 'destroy');
+                Route::put('/movies/update', 'update');
+                Route::delete('/movies', 'destroy');
 
             });
             Route::controller(\App\Http\Controllers\CelebsController::class)->group(function () {
                 Route::get('/persons', 'index');
                 Route::get('/persons/show/{id}', 'show');
-                Route::delete('/persons/{id}', 'destroy');
                 Route::patch('/persons/remove_items', 'removeFromFilmography');
+                Route::delete('/persons', 'destroy');
 
             });
             Route::controller(\App\Http\Controllers\CategoriesController::class)->group(function () {

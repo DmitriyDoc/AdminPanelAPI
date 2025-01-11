@@ -19,6 +19,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
     const pageSize = ref(state.value.limit);
     const currentPage = ref(state.value.page);
     const valueSort = ref(state.value.sortBy);
+    const disabledBtnSync = ref(false);
     const loader = ref(true);
     const error = ref();
 
@@ -55,9 +56,25 @@ export const usePersonsStore = defineStore('personsStore',() => {
         }
     }
     const removeItem = async (id,index) => {
-        axios.delete('/persons/' + id).then((response) => {
-            tableData.value.splice(index,1);
-            getCelebs();
+        axios.delete('/persons',{
+            data: {
+                id: id
+            }
+        }).then((response) => {
+            if (response.status === 200) {
+                tableData.value.data.splice(index,1);
+                getCelebs();
+                ElMessage({
+                    type: 'success',
+                    message: 'Selected person(s) was be removed successfully',
+                })
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Remove is not finished',
+                });
+            }
+
         });
     }
     const removeFilmographyItems = async (idArray,activeTab) => {
@@ -70,24 +87,26 @@ export const usePersonsStore = defineStore('personsStore',() => {
                 showItem();
                 ElMessage({
                     type: 'success',
-                    message: 'Selected filmography item(s) was removed',
+                    message: 'Selected item(s) was removed',
                 })
             } else {
                 ElMessage({
                     type: 'error',
-                    message: 'Remove filmography item(s)  is not finished',
+                    message: 'Remove item(s)  is not finished',
                 });
             }
         });
     }
     const syncItem = async (imageType) => {
-        axios.put('/updateceleb',{ data: {
+        disabledBtnSync.value = true;
+        axios.post('/updateceleb',{ data: {
             id:singleData.value.id_celeb,
             type:'Celebs',
             imageType: imageType,
         }}).then((response) => {
             if (response.status === 200) {
                 showItem();
+                disabledBtnSync.value = false;
                 ElMessage({
                     type: 'success',
                     message: 'Sync with IMDB completed',
@@ -125,6 +144,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         currentPage,
         pageSize,
         valueSort,
+        disabledBtnSync,
         route,
         loader,
         error,

@@ -90,7 +90,7 @@
                             <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
                         </RouterLink>
                     </el-button>
-                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" :title="$t('remove')" />
+                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,typeMovie,scope.$index)" :icon="Delete" :title="$t('remove')" />
                  </template>
             </el-table-column>
         </el-table>
@@ -168,13 +168,13 @@
         moviesStore.updateSearchQuery( '' );
         moviesStore.getMovies(typeMovie.value);
     }
-    const handleRemove = (id,index) => {
+    const handleRemove = (id,type,index) => {
         ElMessageBox.confirm(`Are you sure? Entries under ID: ${id} will be deleted. Continue?`, 'WARNING', {
                 confirmButtonText: 'OK',
                 cancelButtonText: 'Cancel',
                 type: 'warning',
             }).then(() => {
-            moviesStore.removeItem(id,index);
+            moviesStore.removeItem(id,type,index);
             ElMessage({
                 type: 'success',
                 message: 'Delete completed',

@@ -39,8 +39,6 @@ class ParserUpdateCelebController extends ParserController
 
     public function update(Request $request){
         if ($data = $request->all()){
-            //$model = convertVariableToModelName('IdType', $data['data']['type'], ['App', 'Models']);
-
             $this->signByField = 'id_celeb';
             $this->imgUrlFragment = '/name/';
             $this->chunkSize = 1;
@@ -56,8 +54,6 @@ class ParserUpdateCelebController extends ParserController
             if (!empty($this->idCeleb)){
                 $this->parserStart($data['data']['imageType']);
             }
-            //$this->touchDB($model, $data['data']['id'],'actor_id');
-            return ['success' => true];
         }
     }
     public function localizing($celebId) : void

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useRoute } from 'vue-router';
 import { ref } from "vue";
 import {ElMessage} from "element-plus";
+import { getActiveLanguage } from 'laravel-vue-i18n';
 
 export const useMoviesStore = defineStore('moviesStore',() => {
     const state = ref({
@@ -19,6 +20,9 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const pageSize = ref(state.value.limit);
     const currentPage = ref(state.value.page);
     const valueSort = ref(state.value.sortBy);
+    const disabledBtnUpdate = ref(false);
+    const disabledBtnSync = ref(false);
+    const disabledBtnAddMovie = ref(false);
     const loader = ref(true);
     const error = ref();
 
@@ -58,17 +62,30 @@ export const useMoviesStore = defineStore('moviesStore',() => {
             }
         }
     }
-    const removeItem = async (id,index) => {
-        axios.delete('/movies/' + route.params.slug + '/' + id).then((response) => {
-            tableData.value.splice(index,1);
+    const removeItem = async (id,type,index) => {
+        axios.delete('/movies',{ data:
+            {
+                'id':id,
+                'type':type,
+            }
+        }).then((response) => {
+            tableData.value.data.splice(index,1);
             showItem();
         });
     }
     const updateItem = async (dataForm) => {
-        axios.patch('/movies/' + route.params.slug + '/update/' + route.params.id,{ data: dataForm })
-            .then((response) => {
-                if (response.status === 200) {
+        const lang = getActiveLanguage();
+        disabledBtnUpdate.value = true;
+        axios.put('/movies/update',{ data:
+            {
+                'id':route.params.id,
+                'form':dataForm,
+                'lang':lang
+            }
+        }).then((response) => {
+                if (response.data.success) {
                     showItem();
+                    disabledBtnUpdate.value = false;
                     ElMessage({
                         type: 'success',
                         message: 'Update completed',
@@ -82,9 +99,11 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         });
     }
     const syncItem = async (params) => {
-        axios.put('/updatemovie',{ data: params}).then((response) => {
+        disabledBtnSync.value = true;
+        axios.post('/updatemovie',{ data: params}).then((response) => {
             if (response.status === 200) {
                 showItem();
+                disabledBtnSync.value = false;
                 ElMessage({
                     type: 'success',
                     message: 'Sync with IMDB completed',
@@ -122,6 +141,8 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         pageSize,
         valueSort,
         route,
+        disabledBtnUpdate,
+        disabledBtnSync,
         loader,
         error,
         syncItem,
