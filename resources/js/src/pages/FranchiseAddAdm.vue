@@ -36,7 +36,9 @@
                 </div>
             </div>
             <div>
-                <button @click="handleAddFranchise" class="btn btn-primary">{{franchiseLocale.btn_add_new}}</button>
+                <el-button type="primary" @click="handleAddFranchise" class="btn btn-primary">
+                    {{franchiseLocale.btn_add_new}}
+                </el-button>
             </div>
         </el-col>
     </el-row>

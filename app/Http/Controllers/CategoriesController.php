@@ -66,21 +66,26 @@ class CategoriesController extends Controller
                 'errors' => $data->errors()
             ]);
         }
+        $localModel = LocalizingFranchise::query();
+        $modelExist = $localModel->where('value',$data->getValue('value'))->first();
+        if (!$modelExist){
+            transaction( function () use ($data,$localModel){
+                $newFrinchiseId = $localModel->insertGetId([
+                    'value' => $data->getValue('value'),
+                    'label_en' => $data->getValue('label_en'),
+                    'label_ru' => $data->getValue('label_ru'),
+                ]);
 
-        transaction( function () use ($data){
-            $localModel = LocalizingFranchise::firstOrCreate([
-                'label_en' => $data->getValue('label_en'),
-                'label_ru' => $data->getValue('label_ru'),
-                'value' => $data->getValue('value')
-            ]);
-            foreach ($data->getValue('collection') as $collectionId){
-                $dataTable[] = [
-                    'id' => $localModel->id,
-                    'collection_id' => $collectionId,
-                ];
-            }
-            CollectionsFranchisesPivot::insert($dataTable);
-        });
+                foreach ($data->getValue('collection') as $collectionId){
+                    $dataTable[] = [
+                        'id' => $newFrinchiseId,
+                        'collection_id' => $collectionId,
+                    ];
+                }
+               CollectionsFranchisesPivot::insert($dataTable);
+            });
+        }
+
     }
     public function addCollection(Request $request)
     {
@@ -96,8 +101,11 @@ class CategoriesController extends Controller
                 'errors' => $data->errors()
             ]);
         }
-
-        Collection::insert($data->getData());
+        $modelCollection = Collection::query();
+        $modelExist = $modelCollection->where('value',$data->getValue('value'))->first();
+        if (!$modelExist){
+            $modelCollection->insert($data->getData());
+        }
     }
     public function store(Request $request) : array
     {
