@@ -20,10 +20,13 @@ export const useTagsStore = defineStore('tagsStore',() => {
     const optionsCats = ref([]);
     const tagsData = ref([]);
     const tagsList = ref([]);
+    const locale = ref([]);
+    const title = ref('');
     const route = useRoute();
 
     const getDataTags = async () =>{
         try {
+            loader.value = true;
             axios.get('/tag/'
                 + route.params.tagName
                 + '?page=' + state.value.page
@@ -32,7 +35,10 @@ export const useTagsStore = defineStore('tagsStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                tagsData.value = response.data;
+                locale.value = response.data.locale;
+                title.value = response.data.title;
+                totalCount.value = response.data.total;
+                tagsData.value = response.data.data;
                 loader.value = false;
             });
         } catch (e) {
@@ -48,7 +54,9 @@ export const useTagsStore = defineStore('tagsStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                tagsList.value = response.data;
+                locale.value = response.data.locale;
+                totalCount.value = response.data.total;
+                tagsList.value = response.data.data;
                 loader.value = false;
             });
         } catch (e) {
@@ -92,6 +100,8 @@ export const useTagsStore = defineStore('tagsStore',() => {
         pageSize,
         valueSort,
         route,
+        locale,
+        title,
         loader,
         //removeItemFromTags,
         getDataTags,

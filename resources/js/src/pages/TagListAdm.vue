@@ -1,90 +1,85 @@
 <template>
-    <template v-if="tagsList.data">
-        <h3 class="text-center mt-3 mb-3">{{$t('list_tags')}}</h3>
-        <h5>{{tagsList.locale.search_by_tag_name}}</h5>
-            <el-form
-                ref="formRef"
-                :model="queryValidateForm"
-                class="demo-ruleForm"
-            >
-                <el-form-item prop="query" :rules="[{}]">
-                    <el-input
-                        v-model.query="queryValidateForm.query"
-                        type="text"
-                        autocomplete="off"
-                        :placeholder="tagsList.locale.search_here"
-                        v-on:keydown.enter.prevent = "submitSearch(formRef)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <el-button @click="resetSearch(formRef)">{{tagsList.locale.reset}}</el-button>
-                    <el-button @click="submitSearch(formRef)">{{tagsList.locale.go}}</el-button>
-                </el-form-item>
-    <!--            <el-form-item>-->
-    <!--                <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-    <!--            </el-form-item>-->
-            </el-form>
-
-        <div class="demo-pagination-block"  v-loading="loader">
-            <p>{{tagsList.locale.spin_by}}</p>
-            <el-switch
-                v-model="defaultSpin"
-                class="mb-2"
-                active-text="&#8595;"
-                inactive-text="&#8593;"
-                @change="handleSwitchChange"
-            />
-            <p>{{tagsList.locale.sort_by}}</p>
-            <el-select
-                v-model="valueSort"
-                filterable
-                @change="handleSelectChange"
-                style="width: 240px"
-            >
-                <el-option
-                    v-for="field in tagsList.locale.tag_sort_fields"
-                    :key="field.value"
-                    :label="field.label"
-                    :value="field.value"
+    <h3 class="text-center mt-3 mb-3">{{$t('list_tags')}}</h3>
+    <h5>{{locale.search_by_tag_name}}</h5>
+        <el-form
+            ref="formRef"
+            :model="queryValidateForm"
+            class="demo-ruleForm"
+        >
+            <el-form-item prop="query" :rules="[{}]">
+                <el-input
+                    v-model.query="queryValidateForm.query"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="locale.search_here"
+                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
                 />
-            </el-select>
-            <div class="demonstration">{{tagsList.locale.jump_to}}</div>
-            <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :small="small"
-                :disabled="disabled"
-                :background="background"
-                layout="sizes, prev, pager, next, jumper"
-                :total="tagsList.total"
-                :page-sizes="[20, 50, 100, 300]"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="resetSearch(formRef)">{{locale.reset}}</el-button>
+                <el-button @click="submitSearch(formRef)">{{locale.go}}</el-button>
+            </el-form-item>
+<!--            <el-form-item>-->
+<!--                <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+<!--            </el-form-item>-->
+        </el-form>
+
+    <div class="demo-pagination-block"  v-loading="loader">
+        <p>{{locale.spin_by}}</p>
+        <el-switch
+            v-model="defaultSpin"
+            class="mb-2"
+            active-text="&#8595;"
+            inactive-text="&#8593;"
+            @change="handleSwitchChange"
+        />
+        <p>{{locale.sort_by}}</p>
+        <el-select
+            v-model="valueSort"
+            filterable
+            @change="handleSelectChange"
+            style="width: 240px"
+        >
+            <el-option
+                v-for="field in locale.tag_sort_fields"
+                :key="field.value"
+                :label="field.label"
+                :value="field.value"
             />
-        </div>
-        <el-table :data="tagsList.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
-            <el-table-column type="index" label="№"/>
-            <el-table-column fixed prop="created_at" :label="tagsList.locale.created_at" width="130" />
-            <el-table-column prop="id" :label="tagsList.locale.id_tag" width="120" />
-            <el-table-column prop="tag_name_en" :label="tagsList.locale.tag_name" width="300" />
-            <el-table-column prop="tag_name_ru" :label="tagsList.locale.tag_name_rus" width="300" />
-            <el-table-column prop="value" :label="tagsList.locale.resource" width="300" >
-                <template v-slot:default="scope">
-                    <RouterLink :to="{ name: 'showTags', params: { tagName: scope.row.value }}"> <strong>{{ scope.row.value }}</strong></RouterLink>
-                </template>
-            </el-table-column>
-            <el-table-column fixed="right" prop="updated_at" :label="tagsList.locale.updated_at" width="120" />
-    <!--            <el-table-column prop="id" fixed="right" label="Remove" width="100">-->
-    <!--                <template v-slot:default="scope">-->
-    <!--                    <el-button link type="danger" @click="handleRemove(scope.row.id,scope.$index)" :icon="Delete" title="Remove from collection" />-->
-    <!--                </template>-->
-    <!--            </el-table-column>-->
-        </el-table>
-        <el-backtop :right="20" :bottom="100" />
-    </template>
-    <template v-else>
-        <p style="text-align: center">{{$t('data_not_found')}}</p>
-    </template>
+        </el-select>
+        <div class="demonstration">{{locale.jump_to}}</div>
+        <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :small="small"
+            :disabled="disabled"
+            :background="background"
+            layout="sizes, prev, pager, next, jumper"
+            :total="totalCount"
+            :page-sizes="[20, 50, 100, 300]"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        />
+    </div>
+    <el-table :data="tagsList" v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
+        <el-table-column type="index" label="№"/>
+        <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
+        <el-table-column prop="id" :label="locale.id_tag" width="120" />
+        <el-table-column prop="tag_name_en" :label="locale.tag_name" width="300" />
+        <el-table-column prop="tag_name_ru" :label="locale.tag_name_rus" width="300" />
+        <el-table-column prop="value" :label="locale.resource" width="300" >
+            <template v-slot:default="scope">
+                <RouterLink :to="{ name: 'showTags', params: { tagName: scope.row.value }}"> <strong>{{ scope.row.value }}</strong></RouterLink>
+            </template>
+        </el-table-column>
+        <el-table-column fixed="right" prop="updated_at" :label="locale.updated_at" width="120" />
+<!--            <el-table-column prop="id" fixed="right" label="Remove" width="100">-->
+<!--                <template v-slot:default="scope">-->
+<!--                    <el-button link type="danger" @click="handleRemove(scope.row.id,scope.$index)" :icon="Delete" title="Remove from collection" />-->
+<!--                </template>-->
+<!--            </el-table-column>-->
+    </el-table>
+    <el-backtop :right="20" :bottom="100" />
     <p v-if="error">{{ error }}</p>
 </template>
 
@@ -101,7 +96,7 @@
 
     const tagsStore = useTagsStore();
     const languageStore = useLanguageStore();
-    const { tagsList, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(tagsStore);
+    const { tagsList, totalCount, locale, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(tagsStore);
     const { watcherLang } = storeToRefs( languageStore );
 
     const small = ref(false);

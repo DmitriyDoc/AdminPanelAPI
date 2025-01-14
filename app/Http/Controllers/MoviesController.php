@@ -18,8 +18,7 @@ use Illuminate\Support\Facades\Log;
 
 class MoviesController extends Controller
 {
-    public $typeMovieSlug;
-    /**
+     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): array

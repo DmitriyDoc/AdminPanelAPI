@@ -1,108 +1,106 @@
 <template>
-    <template v-if="tableData.locale">
-        <h3>{{tableData.locale.type_movies_title}}</h3>
-        <div style="margin: 20px 0;" >
-            <el-radio-group v-model="typeMovie" @change="handleCurrentType(typeMovie)">
-                <el-radio-button v-for="(type, index) of tableData.locale.type_movies" :label="type" :value="index" />
-            </el-radio-group>
-        </div>
-        <p>{{tableData.locale.search_by_title_id}}</p>
-        <el-form
-            ref="formRef"
-            :model="queryValidateForm"
-            class="demo-ruleForm"
+    <h3>{{locale.type_movies_title}}</h3>
+    <div style="margin: 20px 0;" >
+        <el-radio-group v-model="typeMovie" @change="handleCurrentType(typeMovie)">
+            <el-radio-button v-for="(type, index) of locale.type_movies" :label="type" :value="index" />
+        </el-radio-group>
+    </div>
+    <p>{{locale.search_by_title_id}}</p>
+    <el-form
+        ref="formRef"
+        :model="queryValidateForm"
+        class="demo-ruleForm"
+    >
+        <el-form-item prop="query" :rules="[{}]">
+            <el-input
+                v-model.query="queryValidateForm.query"
+                type="text"
+                autocomplete="off"
+                :placeholder="locale.search_here"
+                v-on:keydown.enter.prevent = "submitSearch(formRef)"
+            />
+        </el-form-item>
+        <el-form-item>
+            <el-button @click="resetSearch(formRef)">{{locale.reset}}</el-button>
+            <el-button @click="submitSearch(formRef)">{{locale.go}}</el-button>
+        </el-form-item>
+        <!--        <el-form-item>-->
+        <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+        <!--        </el-form-item>-->
+    </el-form>
+    <div class="demo-pagination-block" >
+        <p>{{locale.spin_by}}</p>
+        <el-switch
+            v-model="defaultSpin"
+            class="mb-2"
+            active-text="&#8595;"
+            inactive-text="&#8593;"
+            @change="handleSwitchChange"
+        />
+        <p>{{locale.sort_by}}</p>
+        <el-select
+            v-model="valueSort"
+            filterable
+            @change="handleSelectChange"
+            style="width: 240px"
         >
-            <el-form-item prop="query" :rules="[{}]">
-                <el-input
-                    v-model.query="queryValidateForm.query"
-                    type="text"
-                    autocomplete="off"
-                    :placeholder="tableData.locale.search_here"
-                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
-                />
-            </el-form-item>
-            <el-form-item>
-                <el-button @click="resetSearch(formRef)">{{tableData.locale.reset}}</el-button>
-                <el-button @click="submitSearch(formRef)">{{tableData.locale.go}}</el-button>
-            </el-form-item>
-            <!--        <el-form-item>-->
-            <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-            <!--        </el-form-item>-->
-        </el-form>
-        <div class="demo-pagination-block" >
-            <p>{{tableData.locale.spin_by}}</p>
-            <el-switch
-                v-model="defaultSpin"
-                class="mb-2"
-                active-text="&#8595;"
-                inactive-text="&#8593;"
-                @change="handleSwitchChange"
+            <el-option
+                v-for="field in locale.table_sort_fields"
+                :key="field.value"
+                :label="field.label"
+                :value="field.value"
             />
-            <p>{{tableData.locale.sort_by}}</p>
-            <el-select
-                v-model="valueSort"
-                filterable
-                @change="handleSelectChange"
-                style="width: 240px"
-            >
-                <el-option
-                    v-for="field in tableData.locale.table_sort_fields"
-                    :key="field.value"
-                    :label="field.label"
-                    :value="field.value"
-                />
-            </el-select>
-            <div class="demonstration">{{tableData.locale.jump_to}}</div>
-            <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :small="small"
-                :disabled="disabled"
-                :background="background"
-                layout="sizes, prev, pager, next, jumper"
-                :total="totalCount"
-                :page-sizes="[20, 50, 100, 300]"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-            />
-        </div>
-        <el-table v-if="tableData.data" :data="tableData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef" >
-            <el-table-column type="index" label="№"/>
-            <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
-            <el-table-column prop="poster" :label="$t('poster')" width="150" >
-                <template v-slot:default="scope">
-                    <el-image :src="scope.row.poster" />
-                </template>
-            </el-table-column>
-            <el-table-column prop="id_movie" :label="$t('id_movie')" width="120" />
-            <el-table-column prop="year_release" :label="$t('year_release')" width="100" />
-            <el-table-column prop="title" :label="$t('title')" width="600" />
-            <el-table-column prop="updated_at" :label="$t('updated_at')" width="150" />
-            <el-table-column fixed="right" prop="id_movie" :label="$t('actions')" width="120">
-                <template v-slot:default="scope">
-                    <el-button type="success" link >
-                        <RouterLink :to="{ name: 'showMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="View" :title="$t('details')"/>
-                        </RouterLink>
-                    </el-button>
-                    <el-button link type="primary" >
-                        <RouterLink :to="{ name: 'editMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">
-                            <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
-                        </RouterLink>
-                    </el-button>
-                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,typeMovie,scope.$index)" :icon="Delete" :title="$t('remove')" />
-                 </template>
-            </el-table-column>
-        </el-table>
-        <el-backtop :right="100" :bottom="100" />
-    </template>
-   <template v-else>
-       <p style="text-align: center">{{$t('data_not_found')}}</p>
-   </template>
+        </el-select>
+        <div class="demonstration">{{locale.jump_to}}</div>
+        <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :small="small"
+            :disabled="disabled"
+            :background="background"
+            layout="sizes, prev, pager, next, jumper"
+            :total="totalCount"
+            :page-sizes="[20, 50, 100, 300]"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        />
+    </div>
+    <el-table :data="tableData" v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
+        <el-table-column type="index" label="№"/>
+        <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
+        <el-table-column prop="poster" :label="$t('poster')" width="150" >
+            <template v-slot:default="scope">
+                <el-image :src="scope.row.poster" />
+            </template>
+        </el-table-column>
+        <el-table-column prop="id_movie" :label="$t('id_movie')" width="120" />
+        <el-table-column prop="year_release" :label="$t('year_release')" width="100" />
+        <el-table-column prop="title" :label="$t('title')" width="600" />
+        <el-table-column prop="updated_at" :label="$t('updated_at')" width="150" />
+        <el-table-column fixed="right" prop="id_movie" :label="$t('actions')" width="120">
+            <template v-slot:default="scope">
+                <el-button type="success" link >
+                    <RouterLink :to="{ name: 'showMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">
+                        <el-button link type="primary" :icon="View" :title="$t('details')"/>
+                    </RouterLink>
+                </el-button>
+                <el-button link type="primary" >
+                    <RouterLink :to="{ name: 'editMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">
+                        <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
+                    </RouterLink>
+                </el-button>
+                <el-button link type="danger" @click="handleRemove(scope.row.id_movie,typeMovie,scope.$index)" :icon="Delete" :title="$t('remove')" />
+             </template>
+        </el-table-column>
+    </el-table>
+<!--    <div slot="empty">-->
+<!--        <el-empty description=" " :image-size="150" />-->
+<!--    </div>-->
+    <el-backtop :right="100" :bottom="100" />
     <p v-if="error">{{ error }}</p>
 </template>
 
-<script lang="ts" setup >
+<script lang="ts" setup>
     import { storeToRefs } from 'pinia';
     import { useMoviesStore } from "../store/moviesStore";
     import { useLanguageStore } from "../store/languageStore";
@@ -116,7 +114,7 @@
     const moviesStore = useMoviesStore();
     const languageStore = useLanguageStore();
     const { watcherLang } = storeToRefs( languageStore );
-    const { tableData, totalCount, currentPage, pageSize, valueSort, route, loader, error, } = storeToRefs( moviesStore );
+    const { tableData, locale, totalCount, currentPage, pageSize, valueSort, route, loader, error, } = storeToRefs( moviesStore );
 
     const small = ref(false);
     const background = ref(false);

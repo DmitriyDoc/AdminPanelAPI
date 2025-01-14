@@ -15,6 +15,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     });
     const route = useRoute();
     const tableData = ref([]);
+    const locale = ref([]);
     const singleData = ref({});
     const totalCount = ref(0);
     const pageSize = ref(state.value.limit);
@@ -22,13 +23,12 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const valueSort = ref(state.value.sortBy);
     const disabledBtnUpdate = ref(false);
     const disabledBtnSync = ref(false);
-    const disabledBtnAddMovie = ref(false);
     const loader = ref(true);
     const error = ref();
 
     const getMovies = (type) =>{
         try {
-            tableData.value = [];
+            loader.value = true;
             axios.get('/movies/'
                 + type
                 + '?page=' + state.value.page
@@ -37,14 +37,16 @@ export const useMoviesStore = defineStore('moviesStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                tableData.value = response.data;
+                locale.value = response.data.locale;
+                tableData.value = response.data.data;
                 totalCount.value = response.data.total;
+                loader.value = false;
             });
         } catch (e) {
             error.value = e;
             console.log('error',e);
         } finally {
-            loader.value = false;
+
         }
     }
     const showItem = async () =>{
@@ -143,6 +145,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         route,
         disabledBtnUpdate,
         disabledBtnSync,
+        locale,
         loader,
         error,
         syncItem,

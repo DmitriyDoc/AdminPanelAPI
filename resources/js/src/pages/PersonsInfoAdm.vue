@@ -1,97 +1,92 @@
 <template>
-    <template v-if="tableData.locale">
-        <p>{{tableData.locale.search_by_name_id}}</p>
-        <el-form
-            ref="formRef"
-            :model="queryValidateForm"
-            class="demo-ruleForm"
+    <p>{{locale.search_by_name_id}}</p>
+    <el-form
+        ref="formRef"
+        :model="queryValidateForm"
+        class="demo-ruleForm"
+    >
+        <el-form-item prop="query" :rules="[{}]">
+            <el-input
+                v-model.query="queryValidateForm.query"
+                type="text"
+                autocomplete="off"
+                :placeholder="locale.search_here"
+                v-on:keydown.enter.prevent = "submitSearch(formRef)"
+            />
+        </el-form-item>
+        <el-form-item>
+            <el-button @click="resetSearch(formRef)">{{locale.reset}}</el-button>
+            <el-button @click="submitSearch(formRef)">{{locale.go}}</el-button>
+        </el-form-item>
+<!--        <el-form-item>-->
+<!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+<!--        </el-form-item>-->
+    </el-form>
+    <div class="demo-pagination-block"  >
+        <p>{{locale.spin_by}}</p>
+        <el-switch
+            v-model="defaultSpin"
+            class="mb-2"
+            active-text="&#8595;"
+            inactive-text="&#8593;"
+            @change="handleSwitchChange"
+        />
+        <p>{{locale.sort_by}}</p>
+        <el-select
+            v-model="valueSort"
+            filterable
+            @change="handleSelectChange"
+            style="width: 240px"
         >
-            <el-form-item prop="query" :rules="[{}]">
-                <el-input
-                    v-model.query="queryValidateForm.query"
-                    type="text"
-                    autocomplete="off"
-                    :placeholder="tableData.locale.search_here"
-                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
-                />
-            </el-form-item>
-            <el-form-item>
-                <el-button @click="resetSearch(formRef)">{{tableData.locale.reset}}</el-button>
-                <el-button @click="submitSearch(formRef)">{{tableData.locale.go}}</el-button>
-            </el-form-item>
-    <!--        <el-form-item>-->
-    <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-    <!--        </el-form-item>-->
-        </el-form>
-        <div class="demo-pagination-block"  v-loading="loader">
-            <p>{{tableData.locale.spin_by}}</p>
-            <el-switch
-                v-model="defaultSpin"
-                class="mb-2"
-                active-text="&#8595;"
-                inactive-text="&#8593;"
-                @change="handleSwitchChange"
+            <el-option
+                v-for="item in locale.person_sort_fields"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
             />
-            <p>{{tableData.locale.sort_by}}</p>
-            <el-select
-                v-model="valueSort"
-                filterable
-                @change="handleSelectChange"
-                style="width: 240px"
-            >
-                <el-option
-                    v-for="item in tableData.locale.person_sort_fields"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                />
-            </el-select>
-            <div class="demonstration">{{tableData.locale.jump_to}}</div>
-            <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :small="small"
-                :disabled="disabled"
-                :background="background"
-                layout="sizes, prev, pager, next, jumper"
-                :total="totalCount"
-                :page-sizes="[20, 50]"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-            />
-        </div>
-        <el-table v-if="tableData.data"  :data="tableData.data" v-loading="loader" style="width: 100%" >
-            <el-table-column type="index" label="№"/>
-            <el-table-column fixed prop="created_at" :label="tableData.locale.created_at" width="130" />
-            <el-table-column prop="poster" :label="tableData.locale.photo" width="130" >
-                <template v-slot:default="scope">
-                    <el-image :src="scope.row.poster" />
-                </template>
-            </el-table-column>
-            <el-table-column prop="id_celeb" :label="tableData.locale.id_person" width="120" />
-            <el-table-column prop="nameActor" :label="tableData.locale.name" width="600" />
+        </el-select>
+        <div class="demonstration">{{locale.jump_to}}</div>
+        <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :small="small"
+            :disabled="disabled"
+            :background="background"
+            layout="sizes, prev, pager, next, jumper"
+            :total="totalCount"
+            :page-sizes="[20, 50]"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        />
+    </div>
+    <el-table :data="tableData" v-loading="loader" :empty-text="$t('data_not_found')"  style="width: 100%" ref="multipleTableRef">
+        <el-table-column type="index" label="№"/>
+        <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
+        <el-table-column prop="poster" :label="locale.photo" width="130" >
+            <template v-slot:default="scope">
+                <el-image :src="scope.row.poster" />
+            </template>
+        </el-table-column>
+        <el-table-column prop="id_celeb" :label="locale.id_person" width="120" />
+        <el-table-column prop="nameActor" :label="locale.name" width="600" />
 <!--            <el-table-column prop="updated_at" label="Date Update" width="120" />-->
-            <el-table-column prop="id_celeb" fixed="right" :label="tableData.locale.actions" width="200">
-                <template v-slot:default="scope">
-                    <el-button type="success" link >
-                        <RouterLink :to="{ name: 'showPerson', params: { id: scope.row.id_celeb }}">
-                            <el-button link type="primary" :icon="View" :title="$t('details')"/>
-                        </RouterLink>
-                    </el-button>
-                    <el-button link type="primary" >
-                        <RouterLink :to="{ name: 'editPerson', params: { id: scope.row.id_celeb }}">
-                            <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
-                        </RouterLink>
-                    </el-button>
-                    <el-button link type="danger" @click="handleRemove(scope.row.id_celeb,scope.$index)" :icon="Delete" :title="$t('remove')" />
-                 </template>
-            </el-table-column>
-        </el-table>
-        <el-backtop :right="100" :bottom="100" />
-    </template>
-   <template v-else>
-       <p style="text-align: center">{{$t('data_not_found')}}</p>
-   </template>
+        <el-table-column prop="id_celeb" fixed="right" :label="locale.actions" width="200">
+            <template v-slot:default="scope">
+                <el-button type="success" link >
+                    <RouterLink :to="{ name: 'showPerson', params: { id: scope.row.id_celeb }}">
+                        <el-button link type="primary" :icon="View" :title="$t('details')"/>
+                    </RouterLink>
+                </el-button>
+                <el-button link type="primary" >
+                    <RouterLink :to="{ name: 'editPerson', params: { id: scope.row.id_celeb }}">
+                        <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
+                    </RouterLink>
+                </el-button>
+                <el-button link type="danger" @click="handleRemove(scope.row.id_celeb,scope.$index)" :icon="Delete" :title="$t('remove')" />
+             </template>
+        </el-table-column>
+    </el-table>
+    <el-backtop :right="100" :bottom="100" />
     <p v-if="error">{{ error }}</p>
 </template>
 

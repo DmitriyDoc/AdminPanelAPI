@@ -1,69 +1,68 @@
 <template>
-    <template v-if="franchiseData.locale">
-        <h3 class="text-center mt-3 mb-3">{{franchiseData.title}}</h3>
-        <el-page-header :icon="null" >
-            <template #extra>
-                <p>{{franchiseData.locale.display}}</p>
-                <div class="flex items-center">
-                    <el-switch
-                        v-model="displaySwitch"
-                        class="mb-2"
-                        :active-text="franchiseData.locale.display_timeline"
-                        :inactive-text="franchiseData.locale.display_table"
-                        @change="handleSwitchDisplay"
-                    />
-                </div>
-            </template>
-        </el-page-header>
-        <div v-if="displaySwitch">
-            <el-timeline style="max-width: 800px">
-                <h4 v-if="franchiseData.data">{{franchiseData.locale.timeline_franchise}} ({{franchiseData.data.length}} {{franchiseData.locale.timeline_movies}} )</h4>
-                <el-timeline-item v-for="item in yearsDiapason()" :timestamp="item" placement="top"  >
-                    <template v-for="movie in franchiseData['data']">
-                        <el-card v-if="item == movie.year" shadow="hover" >
-                            <div class="common-layout">
-                                <el-container>
-                                    <el-aside width="100px">
-                                        <el-image :src="movie.poster" :fit="cover" style="width: 80%"/>
-                                    </el-aside>
-                                    <div>
-                                        <el-text class="mx-1" tag="mark">{{movie.type_film}}</el-text>
-                                        <h4>{{movie.title}}</h4>
-                                        <RouterLink :to="{ name: 'showMovie', params: { slug: movie.type_film, id: movie.id_movie }}">
-                                            <el-button link type="primary" > {{franchiseData.locale.details}} </el-button>
-                                        </RouterLink>
-                                    </div>
-                                </el-container>
-                            </div>
-                        </el-card>
-                    </template>
-                </el-timeline-item>
-            </el-timeline>
-        </div>
-        <div v-else>
-            <p>{{franchiseData.locale.search_by_title_id}}</p>
-            <el-form
-                ref="formRef"
-                :model="queryValidateForm"
-                class="demo-ruleForm"
-            >
-                <el-form-item prop="query" :rules="[{}]">
-                    <el-input
-                        v-model.query="queryValidateForm.query"
-                        type="text"
-                        autocomplete="off"
-                        :placeholder="franchiseData.locale.search_here"
-                        v-on:keydown.enter.prevent = "submitSearch(formRef)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <el-button @click="resetSearch(formRef)">{{franchiseData.locale.reset}}</el-button>
-                    <el-button @click="submitSearch(formRef)">{{franchiseData.locale.go}}</el-button>
-                </el-form-item>
-                <!--        <el-form-item>-->
-                <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
-                <!--        </el-form-item>-->
-            </el-form>
+    <h3 class="text-center mt-3 mb-3">{{title}}</h3>
+    <el-page-header :icon="null" >
+        <template #extra>
+            <p>{{locale.display}}</p>
+            <div class="flex items-center">
+                <el-switch
+                    v-model="displaySwitch"
+                    class="mb-2"
+                    :active-text="locale.display_timeline"
+                    :inactive-text="locale.display_table"
+                    @change="handleSwitchDisplay"
+                />
+            </div>
+        </template>
+    </el-page-header>
+    <div v-if="displaySwitch">
+        <el-timeline style="max-width: 800px">
+            <h4 v-if="franchiseData">{{locale.timeline_franchise}} ({{franchiseData.length}} {{locale.timeline_movies}} )</h4>
+            <el-timeline-item v-for="item in yearsDiapason()" :timestamp="item" placement="top"  >
+                <template v-for="movie in franchiseData">
+                    <el-card v-if="item == movie.year" shadow="hover" >
+                        <div class="common-layout">
+                            <el-container>
+                                <el-aside width="100px">
+                                    <el-image :src="movie.poster" :fit="cover" style="width: 80%"/>
+                                </el-aside>
+                                <div>
+                                    <el-text class="mx-1" tag="mark">{{movie.type_film}}</el-text>
+                                    <h4>{{movie.title}}</h4>
+                                    <RouterLink :to="{ name: 'showMovie', params: { slug: movie.type_film, id: movie.id_movie }}">
+                                        <el-button link type="primary" > {{locale.details}} </el-button>
+                                    </RouterLink>
+                                </div>
+                            </el-container>
+                        </div>
+                    </el-card>
+                </template>
+            </el-timeline-item>
+        </el-timeline>
+    </div>
+    <div v-else>
+        <p>{{locale.search_by_title_id}}</p>
+        <el-form
+            ref="formRef"
+            :model="queryValidateForm"
+            class="demo-ruleForm"
+        >
+            <el-form-item prop="query" :rules="[{}]">
+                <el-input
+                    v-model.query="queryValidateForm.query"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="locale.search_here"
+                    v-on:keydown.enter.prevent = "submitSearch(formRef)"
+                />
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="resetSearch(formRef)">{{locale.reset}}</el-button>
+                <el-button @click="submitSearch(formRef)">{{locale.go}}</el-button>
+            </el-form-item>
+            <!--        <el-form-item>-->
+            <!--            <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>-->
+            <!--        </el-form-item>-->
+        </el-form>
 
 <!--            <div class="demo-pagination-block"  v-loading="loader">-->
 <!--                <p>Spin by:</p>-->
@@ -103,40 +102,36 @@
 <!--                    @current-change="handleCurrentChange"-->
 <!--                />-->
 <!--            </div>-->
-            <el-table :data="franchiseData.data" v-loading="loader" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
-                <el-table-column type="index" label="№"/>
-                <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
-                <el-table-column prop="poster" :label="$t('poster')" width="130" >
-                    <template v-slot:default="scope">
-                        <el-image :src="scope.row.poster" />
-                    </template>
-                </el-table-column>
-                <el-table-column prop="id_movie" :label="$t('id_movie')" width="120" />
-                <el-table-column prop="year" :label="$t('year_release')" width="100" />
-                <el-table-column prop="title" :label="$t('title')" width="600" />
-                <el-table-column prop="updated_at" :label="$t('updated_at')" width="120" />
-                <el-table-column prop="id_movie" property="type_film_link" fixed="right" :label="$t('actions')" width="120">
-                    <template v-slot:default="scope">
-                        <el-button type="success" link >
-                            <RouterLink :to="{ name: 'showMovie', params: { slug: scope.row.type_film_link, id: scope.row.id_movie }}">
-                                <el-button link type="primary" :icon="View" :title="$t('details')"/>
-                            </RouterLink>
-                        </el-button>
-                        <el-button link type="primary" >
-                            <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film_link, id: scope.row.id_movie }}">
-                                <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
-                            </RouterLink>
-                        </el-button>
-                        <!--                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" title="Remove from franchise" />-->
-                    </template>
-                </el-table-column>
-            </el-table>
-        </div>
-        <el-backtop :right="20" :bottom="100" />
-    </template>
-    <template v-else>
-        <p style="text-align: center">{{$t('data_not_found')}}</p>
-    </template>
+        <el-table :data="franchiseData" v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef"  @selection-change="handleSelectionChange" >
+            <el-table-column type="index" label="№"/>
+            <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
+            <el-table-column prop="poster" :label="locale.poster" width="130" >
+                <template v-slot:default="scope">
+                    <el-image :src="scope.row.poster" />
+                </template>
+            </el-table-column>
+            <el-table-column prop="id_movie" :label="locale.id_movie" width="120" />
+            <el-table-column prop="year" :label="locale.year" width="100" />
+            <el-table-column prop="title" :label="locale.title" width="600" />
+            <el-table-column prop="updated_at" :label="locale.updated_at" width="120" />
+            <el-table-column prop="id_movie" property="type_film_link" fixed="right" :label="locale.actions" width="120">
+                <template v-slot:default="scope">
+                    <el-button type="success" link >
+                        <RouterLink :to="{ name: 'showMovie', params: { slug: scope.row.type_film_link, id: scope.row.id_movie }}">
+                            <el-button link type="primary" :icon="View" :title="$t('details')"/>
+                        </RouterLink>
+                    </el-button>
+                    <el-button link type="primary" >
+                        <RouterLink :to="{ name: 'editMovie', params: { slug: scope.row.type_film_link, id: scope.row.id_movie }}">
+                            <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
+                        </RouterLink>
+                    </el-button>
+                    <!--                    <el-button link type="danger" @click="handleRemove(scope.row.id_movie,scope.$index)" :icon="Delete" title="Remove from franchise" />-->
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+    <el-backtop :right="20" :bottom="100" />
     <p v-if="error">{{ error }}</p>
 </template>
 
@@ -154,7 +149,7 @@
     const franchiseStore = useFranchiseStore();
     const languageStore = useLanguageStore();
     const { watcherLang } = storeToRefs( languageStore );
-    const { franchiseData, totalCount, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
+    const { franchiseData, totalCount, locale, title, currentPage, pageSize, valueSort, route, loader, error } = storeToRefs(franchiseStore);
 
     const small = ref(false);
     const background = ref(false);

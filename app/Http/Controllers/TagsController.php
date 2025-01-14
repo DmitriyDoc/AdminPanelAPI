@@ -32,8 +32,7 @@ class TagsController
             }
             $collapsed = $collection->collapse();
             $sorted = $collapsed->sort();
-
-            if ($sorted[0]){
+            if ($sorted){
                 $allowedSortFields = ['desc','asc'];
                 $limit = $request->query('limit',50);
                 $sortDir = strtolower($request->query('spin','asc'));

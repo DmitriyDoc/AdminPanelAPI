@@ -20,10 +20,13 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
     const optionsCats = ref([]);
     const franchiseData = ref([]);
     const franchiseList = ref([]);
+    const locale = ref([]);
+    const title = ref('');
     const route = useRoute();
 
     const getDataFranchise = async () =>{
         try {
+            loader.value = true;
             axios.get('/franchise/'
                 + route.params.slug
                 + '/'
@@ -34,7 +37,9 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                franchiseData.value = response.data;
+                locale.value = response.data.locale;
+                title.value = response.data.title;
+                franchiseData.value = response.data.data;
                 totalCount.value = response.data.total;
                 loader.value = false;
             });
@@ -44,6 +49,7 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
     }
     const getListFranchise = async () =>{
         try {
+            loader.value = true;
             axios.get('/franchise'
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
@@ -51,7 +57,8 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                franchiseList.value = response.data;
+                locale.value = response.data.locale;
+                franchiseList.value = response.data.data;
                 totalCount.value = response.data.total;
                 loader.value = false;
             });
@@ -95,6 +102,8 @@ export const useFranchiseStore = defineStore('franchiseStore',() => {
         currentPage,
         pageSize,
         valueSort,
+        locale,
+        title,
         route,
         loader,
         removeItemFromFranchise,

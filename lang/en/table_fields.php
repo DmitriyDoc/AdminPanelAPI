@@ -6,6 +6,8 @@ return [
     "title"=>"Title",
     "id_movie"=>"ID movie",
     "year"=>"Year",
+    "collection"=>"Collections",
+    "franchise"=>"Franchises",
     "assign_status"=>"Status",
     "photo"=>"Photo",
     "poster"=>"Poster",

@@ -20,6 +20,9 @@ export const useSectionStore = defineStore('sectionStore',() => {
     const optionsCats = ref([]);
     const sections = ref([]);
     const sectionsData = ref([]);
+    const collections = ref([]);
+    const title = ref('');
+    const locale = ref([]);
     const route = useRoute();
 
     const getSections = async () =>{
@@ -33,6 +36,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
     }
     const getDataSections = async () =>{
         try {
+            loader.value = true;
             axios.get('/sections/'
                 + route.params.slug
                 + '?page=' + state.value.page
@@ -41,7 +45,10 @@ export const useSectionStore = defineStore('sectionStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                sectionsData.value = response.data;
+                locale.value = response.data.locale;
+                sectionsData.value = response.data.data;
+                collections.value = response.data.collections;
+                title.value = response.data.title;
                 totalCount.value = response.data.total;
                 loader.value = false;
             });
@@ -80,11 +87,14 @@ export const useSectionStore = defineStore('sectionStore',() => {
     return {
         optionsCats,
         sections,
+        collections,
+        title,
         sectionsData,
         totalCount,
         currentPage,
         pageSize,
         valueSort,
+        locale,
         route,
         loader,
         removeItemFromSection,

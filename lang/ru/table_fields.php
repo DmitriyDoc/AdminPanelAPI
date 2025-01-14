@@ -6,6 +6,8 @@ return [
     "title"=>"Название фильма",
     "id_movie"=>"ID фильма",
     "year"=>"Год",
+    "collection"=>"Коллекции",
+    "franchise"=>"Франшизы",
     "assign_status"=>"Статус",
     "photo"=>"Фото",
     "poster"=>"Постер",

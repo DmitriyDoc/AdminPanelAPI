@@ -14,6 +14,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
     });
     const route = useRoute();
     const tableData = ref([]);
+    const locale = ref([]);
     const singleData = ref({});
     const totalCount = ref(0);
     const pageSize = ref(state.value.limit);
@@ -25,6 +26,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
 
     const getCelebs = async () =>{
         try {
+            loader.value = true;
             axios.get('/persons'
                 + '?page=' + state.value.page
                 + '&limit=' + state.value.limit
@@ -32,14 +34,16 @@ export const usePersonsStore = defineStore('personsStore',() => {
                 + '&spin=' + state.value.spinParam
                 + '&search=' + state.value.searchQuery
             ).then((response) => {
-                tableData.value = response.data;
+                locale.value = response.data.locale;
+                tableData.value = response.data.data;
                 totalCount.value = response.data.total;
+                loader.value = false;
             });
         } catch (e) {
             error.value = e;
             console.log('error',e);
         } finally {
-            loader.value = false;
+
         }
     }
     const showItem = async () =>{
@@ -145,6 +149,7 @@ export const usePersonsStore = defineStore('personsStore',() => {
         pageSize,
         valueSort,
         disabledBtnSync,
+        locale,
         route,
         loader,
         error,
