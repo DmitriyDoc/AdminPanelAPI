@@ -67,17 +67,17 @@
     </div>
     <el-table :data="tableData" v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
         <el-table-column type="index" label="№"/>
-        <el-table-column fixed prop="created_at" :label="$t('created_at')" width="130" />
-        <el-table-column prop="poster" :label="$t('poster')" width="150" >
+        <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
+        <el-table-column prop="poster" :label="locale.poster" width="150" >
             <template v-slot:default="scope">
                 <el-image :src="scope.row.poster" />
             </template>
         </el-table-column>
-        <el-table-column prop="id_movie" :label="$t('id_movie')" width="120" />
-        <el-table-column prop="year_release" :label="$t('year_release')" width="100" />
-        <el-table-column prop="title" :label="$t('title')" width="600" />
-        <el-table-column prop="updated_at" :label="$t('updated_at')" width="150" />
-        <el-table-column fixed="right" prop="id_movie" :label="$t('actions')" width="120">
+        <el-table-column prop="id_movie" :label="locale.id_movie" width="120" />
+        <el-table-column prop="year_release" :label="locale.year" width="100" />
+        <el-table-column prop="title" :label="locale.title" width="600" />
+        <el-table-column prop="updated_at" :label="locale.updated_at" width="150" />
+        <el-table-column fixed="right" prop="id_movie" :label="locale.actions" width="120">
             <template v-slot:default="scope">
                 <el-button type="success" link >
                     <RouterLink :to="{ name: 'showMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">

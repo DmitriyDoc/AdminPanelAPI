@@ -90,143 +90,151 @@ class LanguageController
     }
     public static function localizingDashboardInfo() : array
     {
-        $localizingData['title'] = __('dashboard.title');
-        $localizingData['last_update'] = __('dashboard.last_update');
-        return $localizingData;
+        return [
+            'title' => __('dashboard.title'),
+            'last_update' => __('dashboard.last_update'),
+        ];
     }
     public static function localizingMoviesByTagsList() : array
     {
-        $localizingData['search_by_title'] = __('navigation.search_by_title');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['movies_sort_fields'] = __('sort.movies_sort_fields');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['updated_at'] = __('table_fields.updated_at');
-        $localizingData['actions'] = __('table_fields.actions');
-        $localizingData['title'] = __('table_fields.title');
-        $localizingData['id_movie'] = __('table_fields.id_movie');
-        $localizingData['year'] = __('table_fields.year');
-        return $localizingData;
+        return [
+            'search_by_title'=> __('navigation.search_by_title'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'movies_sort_fields'=> __('sort.movies_sort_fields'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'actions'=> __('table_fields.actions'),
+            'title'=> __('table_fields.title'),
+            'id_movie'=> __('table_fields.id_movie'),
+            'year'=> __('table_fields.year'),
+        ];
     }
     public static function localizingFranchisesInfoList() : array
     {
-        $localizingData['search_by_resource_frinchise'] = __('navigation.search_by_resource_frinchise');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['id_frinchise'] = __('table_fields.id_frinchise');
-        $localizingData['resource'] = __('table_fields.resource');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['updated_at'] = __('table_fields.updated_at');
-        $localizingData['collection_name'] = __('table_fields.collection_name');
-        $localizingData['collection_name_rus'] = __('table_fields.collection_name_rus');
-        $localizingData['frinchise_name'] = __('table_fields.frinchise_name');
-        $localizingData['frinchise_name_rus'] = __('table_fields.frinchise_name_rus');
-        $localizingData['actions'] = __('table_fields.actions');
-        $localizingData['franchise_list_info_sort_fields'] = __('sort.franchise_list_info_sort_fields');
-        return $localizingData;
+        return [
+            'search_by_resource_frinchise'=> __('navigation.search_by_resource_frinchise'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'id_frinchise'=> __('table_fields.id_frinchise'),
+            'resource'=> __('table_fields.resource'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'collection_name'=> __('table_fields.collection_name'),
+            'collection_name_rus'=> __('table_fields.collection_name_rus'),
+            'frinchise_name'=> __('table_fields.frinchise_name'),
+            'frinchise_name_rus'=> __('table_fields.frinchise_name_rus'),
+            'actions'=> __('table_fields.actions'),
+            'franchise_list_info_sort_fields'=> __('sort.franchise_list_info_sort_fields'),
+        ];
     }
     public static function localizingCollectionsInfoList() : array
     {
-        $localizingData['search_by_resource_collection'] = __('navigation.search_by_resource_collection');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['updated_at'] = __('table_fields.updated_at');
-        $localizingData['resource'] = __('table_fields.resource');
-        $localizingData['actions'] = __('table_fields.actions');
-        $localizingData['id_category'] = __('table_fields.id_category');
-        $localizingData['id_collection'] = __('table_fields.id_collection');
-        $localizingData['collection_name'] = __('table_fields.collection_name');
-        $localizingData['collection_name_rus'] = __('table_fields.collection_name_rus');
-        $localizingData['collection_list_info_sort_fields'] = __('sort.collection_list_info_sort_fields');
-        return $localizingData;
+        return [
+            'search_by_resource_collection'=> __('navigation.search_by_resource_collection'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'resource'=> __('table_fields.resource'),
+            'actions'=> __('table_fields.actions'),
+            'id_category'=> __('table_fields.id_category'),
+            'id_collection'=> __('table_fields.id_collection'),
+            'collection_name'=> __('table_fields.collection_name'),
+            'collection_name_rus'=> __('table_fields.collection_name_rus'),
+            'collection_list_info_sort_fields'=> __('sort.collection_list_info_sort_fields'),
+        ];
     }
     public static function localizingTagsInfoList() : array
     {
-        $localizingData['search_by_tag_name'] = __('navigation.search_by_tag_name');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['tag_sort_fields'] = __('sort.tag_sort_fields');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['updated_at'] = __('table_fields.updated_at');
-        $localizingData['tag_name'] = __('table_fields.tag_name');
-        $localizingData['tag_name_rus'] = __('table_fields.tag_name_rus');
-        $localizingData['resource'] = __('table_fields.resource');
-        $localizingData['id_tag'] = __('table_fields.id_tag');
-        return $localizingData;
+        return [
+            'search_by_tag_name'=> __('navigation.search_by_tag_name'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'tag_sort_fields'=> __('sort.tag_sort_fields'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'tag_name'=> __('table_fields.tag_name'),
+            'tag_name_rus'=> __('table_fields.tag_name_rus'),
+            'resource'=> __('table_fields.resource'),
+            'id_tag'=> __('table_fields.id_tag'),
+        ];
     }
     public static function localizingPersonsList() : array
     {
-        $localizingData['search_by_name_id'] = __('navigation.search_by_name_id');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['person_sort_fields'] = __('sort.person_sort_fields');
-        $localizingData['name'] = __('table_fields.name');
-        $localizingData['id_person'] = __('table_fields.id_person');
-        $localizingData['photo'] = __('table_fields.photo');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['actions'] = __('table_fields.actions');
-        return $localizingData;
+        return [
+            'search_by_name_id'=> __('navigation.search_by_name_id'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'person_sort_fields'=> __('sort.person_sort_fields'),
+            'name'=> __('table_fields.name'),
+            'id_person'=> __('table_fields.id_person'),
+            'photo'=> __('table_fields.photo'),
+            'created_at'=> __('table_fields.created_at'),
+            'actions'=> __('table_fields.actions'),
+        ];
     }
     public static function localizingSectionsList() : array
     {
-        $localizingData['section_sort_fields'] = __('sort.section_sort_fields');
-        $localizingData['search_by_title_id'] = __('navigation.search_by_title_id');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['updated_at'] = __('table_fields.updated_at');
-        $localizingData['id_movie'] = __('table_fields.id_movie');
-        $localizingData['poster'] = __('table_fields.poster');
-        $localizingData['year'] = __('table_fields.year');
-        $localizingData['collection'] = __('table_fields.collection');
-        $localizingData['title'] = __('table_fields.title');
-        $localizingData['actions'] = __('table_fields.actions');
-        return $localizingData;
+        return [
+            'section_sort_fields'=> __('sort.section_sort_fields'),
+            'search_by_title_id'=> __('navigation.search_by_title_id'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'id_movie'=> __('table_fields.id_movie'),
+            'poster'=> __('table_fields.poster'),
+            'year'=> __('table_fields.year'),
+            'collection'=> __('table_fields.collection'),
+            'title'=> __('table_fields.title'),
+            'actions'=> __('table_fields.actions'),
+        ];
     }
     public static function localizingCollectionsList() : array
     {
-        $localizingData['reset'] = __('navigation.reset');
-        $localizingData['go'] = __('navigation.go');
-        $localizingData['search_here'] = __('navigation.search_here');
-        $localizingData['collection_sort_fields'] = __('sort.collection_sort_fields');
-        $localizingData['search_by_title_id'] = __('navigation.search_by_title_id');
-        $localizingData['spin_by'] = __('navigation.spin_by');
-        $localizingData['sort_by'] = __('navigation.sort_by');
-        $localizingData['jump_to'] = __('navigation.jump_to');
-        $localizingData['created_at'] = __('table_fields.created_at');
-        $localizingData['updated_at'] = __('table_fields.updated_at');
-        $localizingData['id_movie'] = __('table_fields.id_movie');
-        $localizingData['poster'] = __('table_fields.poster');
-        $localizingData['year'] = __('table_fields.year');
-        $localizingData['franchise'] = __('table_fields.franchise');
-        $localizingData['title'] = __('table_fields.title');
-        $localizingData['actions'] = __('table_fields.actions');
-        return $localizingData;
+        return [
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'search_here'=> __('navigation.search_here'),
+            'collection_sort_fields'=> __('sort.collection_sort_fields'),
+            'search_by_title_id'=> __('navigation.search_by_title_id'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'id_movie'=> __('table_fields.id_movie'),
+            'poster'=> __('table_fields.poster'),
+            'year'=> __('table_fields.year'),
+            'franchise'=> __('table_fields.franchise'),
+            'title'=> __('table_fields.title'),
+            'actions'=> __('table_fields.actions'),
+        ];
     }
     public static function localizingFranchisesList() : array
     {
@@ -263,79 +271,88 @@ class LanguageController
             'spin_by' => __('navigation.spin_by'),
             'sort_by' => __('navigation.sort_by'),
             'jump_to' => __('navigation.jump_to'),
+            'created_at' => __('table_fields.created_at'),
+            'updated_at' => __('table_fields.updated_at'),
+            'id_movie' => __('table_fields.id_movie'),
+            'poster'=> __('table_fields.poster'),
+            'year' => __('table_fields.year'),
+            'title' => __('table_fields.title'),
+            'actions' => __('table_fields.actions'),
         ];
     }
     public static function localizingMovieShow() : array
     {
-        $localizingData['edit'] = __('buttons.edit');
-        $localizingData['update'] = __('buttons.update');
-        $localizingData['sync_imdb'] = __('buttons.sync_imdb');
-        $localizingData['clear_selection'] = __('buttons.clear_selection');
-        $localizingData['delete_selection'] = __('buttons.delete_selection');
-        $localizingData['next_page'] = __('buttons.next_page');
-        $localizingData['original'] = __('buttons.original');
-        $localizingData['russian'] = __('buttons.russian');
-        $localizingData['characters'] = __('buttons.characters');
-        $localizingData['alternative'] = __('buttons.alternative');
-        $localizingData['wallpaper'] = __('buttons.wallpaper');
-        $localizingData['unselected'] = __('movies.unselected');
-        $localizingData['year_release'] = __('movies.year_release');
-        $localizingData['original_title'] = __('movies.original_title');
-        $localizingData['title'] = __('movies.title');
-        $localizingData['release_date'] = __('movies.release_date');
-        $localizingData['restriction'] = __('movies.restriction');
-        $localizingData['runtime'] = __('movies.runtime');
-        $localizingData['rating'] = __('movies.rating');
-        $localizingData['budget'] = __('movies.budget');
-        $localizingData['empty'] = __('movies.empty');
-        $localizingData['genres'] = __('movies.genres');
-        $localizingData['countries'] = __('movies.countries');
-        $localizingData['companies'] = __('movies.companies');
-        $localizingData['directors'] = __('movies.directors');
-        $localizingData['writers'] = __('movies.writers');
-        $localizingData['cast'] = __('movies.cast');
-        $localizingData['story'] = __('movies.story');
-        $localizingData['images'] = __('movies.images');
-        $localizingData['posters'] = __('movies.posters');
-        $localizingData['video'] = __('movies.video');
-        $localizingData['poster_type'] = __('movies.poster_type');
-        $localizingData['sync_notice'] = __('movies.sync_notice');
-        $localizingData['check_viewed'] = __('movies.check_viewed');
-        $localizingData['check_short'] = __('movies.check_short');
-        $localizingData['check_type_content'] = __('movies.check_type_content');
-        $localizingData['assign_categories'] = __('movies.assign_categories');
-        $localizingData['select'] = __('movies.select');
-        $localizingData['viewed'] = __('movies.viewed');
-        $localizingData['short_film'] = __('movies.short_film');
-        $localizingData['adult'] = __('movies.adult');
-        $localizingData['assign_poster_as'] = __('movies.assign_poster_as');
-        $localizingData['no_assigned'] = __('movies.no_assigned');
-        $localizingData['photo'] = __('table_fields.photo');
-        $localizingData['link'] = __('table_fields.link');
-        $localizingData['assign_status'] = __('table_fields.assign_status');
-        return $localizingData;
+        return [
+            'edit' => __('buttons.edit'),
+            'update' => __('buttons.update'),
+            'sync_imdb' => __('buttons.sync_imdb'),
+            'clear_selection' => __('buttons.clear_selection'),
+            'delete_selection' => __('buttons.delete_selection'),
+            'next_page' => __('buttons.next_page'),
+            'original' => __('buttons.original'),
+            'russian' => __('buttons.russian'),
+            'characters' => __('buttons.characters'),
+            'alternative' => __('buttons.alternative'),
+            'wallpaper' => __('buttons.wallpaper'),
+            'unselected' => __('movies.unselected'),
+            'year_release' => __('movies.year_release'),
+            'original_title' => __('movies.original_title'),
+            'title' => __('movies.title'),
+            'release_date' => __('movies.release_date'),
+            'restriction' => __('movies.restriction'),
+            'runtime' => __('movies.runtime'),
+            'rating' => __('movies.rating'),
+            'budget' => __('movies.budget'),
+            'empty' => __('movies.empty'),
+            'genres' => __('movies.genres'),
+            'countries' => __('movies.countries'),
+            'companies' => __('movies.companies'),
+            'directors' => __('movies.directors'),
+            'writers' => __('movies.writers'),
+            'cast' => __('movies.cast'),
+            'story' => __('movies.story'),
+            'images' => __('movies.images'),
+            'posters' => __('movies.posters'),
+            'video' => __('movies.video'),
+            'poster_type' => __('movies.poster_type'),
+            'sync_notice' => __('movies.sync_notice'),
+            'check_viewed' => __('movies.check_viewed'),
+            'check_short' => __('movies.check_short'),
+            'check_type_content' => __('movies.check_type_content'),
+            'assign_categories' => __('movies.assign_categories'),
+            'select' => __('movies.select'),
+            'viewed' => __('movies.viewed'),
+            'short_film' => __('movies.short_film'),
+            'adult' => __('movies.adult'),
+            'assign_poster_as' => __('movies.assign_poster_as'),
+            'no_assigned' => __('movies.no_assigned'),
+            'photo' => __('table_fields.photo'),
+            'link' => __('table_fields.link'),
+            'assign_status' => __('table_fields.assign_status'),
+        ];
     }
     public static function localizingPersonShow() : array
     {
-        $localizingData['edit'] = __('buttons.edit');
-        $localizingData['empty'] = __('movies.empty');
-        $localizingData['birthday'] = __('persons_info.birthday');
-        $localizingData['birthday_location'] = __('persons_info.birthday_location');
-        $localizingData['died'] = __('persons_info.died');
-        $localizingData['died_location'] = __('persons_info.died_location');
-        $localizingData['known_for'] = __('persons_info.known_for');
-        $localizingData['image_type'] = __('persons_info.image_type');
-        $localizingData['role'] = __('table_fields.role');
-        $localizingData['title'] = __('table_fields.title');
-        $localizingData['id_movie'] = __('table_fields.id_movie');
-        $localizingData['year'] = __('table_fields.year');
-        $localizingData['photo'] = __('table_fields.photo');
-        $localizingData['link'] = __('table_fields.link');
-        $localizingData['images'] = __('movies.images');
-        $localizingData['next_page'] = __('buttons.next_page');
-        $localizingData['sync_imdb'] = __('buttons.sync_imdb');
-        $localizingData['clear_selection'] = __('buttons.clear_selection');
-        $localizingData['delete_selection'] = __('buttons.delete_selection');
-        return $localizingData;
+        return [
+            'edit' => __('buttons.edit'),
+            'empty' => __('movies.empty'),
+            'birthday' => __('persons_info.birthday'),
+            'birthday_location' => __('persons_info.birthday_location'),
+            'died' => __('persons_info.died'),
+            'died_location' => __('persons_info.died_location'),
+            'known_for' => __('persons_info.known_for'),
+            'image_type' => __('persons_info.image_type'),
+            'role' => __('table_fields.role'),
+            'title' => __('table_fields.title'),
+            'id_movie' => __('table_fields.id_movie'),
+            'year' => __('table_fields.year'),
+            'photo' => __('table_fields.photo'),
+            'link' => __('table_fields.link'),
+            'images' => __('movies.images'),
+            'next_page' => __('buttons.next_page'),
+            'sync_imdb' => __('buttons.sync_imdb'),
+            'clear_selection' => __('buttons.clear_selection'),
+            'delete_selection' => __('buttons.delete_selection'),
+        ];
     }
 }
