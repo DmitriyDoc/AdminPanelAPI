@@ -1,5 +1,5 @@
 <template>
-    <el-row v-if="singleData.cast">
+    <el-row v-if="singleData.locale">
         <el-col :span="24">
             <h1>{{ singleData.title }}</h1>
             <span>{{ singleData.original_title }}</span>
@@ -154,8 +154,12 @@
             </el-collapse>
         </el-col>
     </el-row>
-    <el-row v-else v-if="singleData.locale">
-        <el-col><h2>{{$t('not_enough_data')}}</h2> </el-col>
+    <el-row v-else>
+        <el-col>
+            <div slot="empty">
+                <el-empty :description="$t('not_enough_data')" :image-size="150" />
+            </div>
+        </el-col>
     </el-row>
 </template>
 

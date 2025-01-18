@@ -1,5 +1,5 @@
 <template>
-    <el-row v-if="singleData.filmography">
+    <el-row v-if="singleData.locale">
         <el-col :span="24"><div class="grid-content ep-bg-purple" />
             <h1>{{ singleData.nameActor }}</h1>
         </el-col>
@@ -119,7 +119,11 @@
         </el-col>
     </el-row>
     <el-row v-else>
-        <el-col><h2>{{$t('not_enough_data')}}</h2></el-col>
+        <el-col>
+            <div slot="empty">
+                <el-empty :description="$t('not_enough_data')" :image-size="150" />
+            </div>
+        </el-col>
     </el-row>
 </template>
 
