@@ -125,16 +125,17 @@ class MoviesController extends Controller
         $relationLocalizeName = camelToSnake($localazingName);
         $safeId = trim(strtolower(strip_tags($id)));
         $typeId = getTableSegmentOrTypeId($slug);
-        $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',$typeId)->where('id_movie',$safeId)->first()->toArray();
+        $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',$typeId)->where('id_movie',$safeId)->first();
 
         if (empty($modelArr)){
             foreach ($allowedTableNames as $type){
-                $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$safeId)->first()->toArray();
+                $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$safeId)->first();
                 if (!empty($modelArr)) break;
             }
         }
 
         if (!empty($modelArr)){
+            $modelArr = $modelArr->toArray();
             $infoMovieData = $modelArr[$relationLocalizeName] ?? [];
             $infoMovieData['type_film'] = __('movies.type_movies.'.$slug) ?? '';
             $infoMovieData['title'] = $modelArr[$titleFieldName];
