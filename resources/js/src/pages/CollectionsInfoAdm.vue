@@ -20,7 +20,7 @@
             <el-button @click="submitSearch(formRef)">{{locale.go}}</el-button>
         </el-form-item>
     </el-form>
-    <div class="demo-pagination-block" v-if="frinchises">
+    <div class="demo-pagination-block" >
         <el-menu
             v-if="frinchises"
             :default-active="activeMenuIndex"
