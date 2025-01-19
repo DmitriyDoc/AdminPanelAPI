@@ -67,7 +67,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
                 Route::get('/media/show/posters/{id}', 'showPosters');
                 Route::get('/media/{type}/{slug}/{id}', 'index');
                 Route::post('/media/poster_assign', 'store');
-                Route::delete('/media/{type}/{slug}', 'destroy');
+                Route::delete('/media', 'destroy');
             });
             // Resources QUERY
             Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {

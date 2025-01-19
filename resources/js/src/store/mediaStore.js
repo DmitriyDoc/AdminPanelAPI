@@ -119,11 +119,11 @@ export const useMediaStore = defineStore('mediaStore',() => {
     }
     const removeImages = async (ids,type) =>{
         try {
-            axios.delete('/media/'
-                + type
-                + '/'
-                + route.params.slug, { data: ids}).then((response) => {
-                //if (response.data.success) getImages();
+            axios.delete('/media/', { data: {
+                    'data':ids,
+                    'type':type,
+                    'slug':route.params.slug ?? 'Celebs',
+                }}).then((response) => {
             });
         } catch (e) {
             error.value = e;

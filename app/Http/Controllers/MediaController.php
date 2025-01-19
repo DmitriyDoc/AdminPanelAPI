@@ -271,7 +271,7 @@ class MediaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $type, string $slug,Request $request)
+    public function destroy(Request $request)
     {
         $allowedTypesNames = [
             0=>'images',
@@ -288,17 +288,21 @@ class MediaController extends Controller
             7=>'Video',
             8=>'Celebs',
         ];
-
+        $type = $request->query('type','images');
+        $slug = $request->query('slug','Celebs');
+        $data = $request->get('data',[]);
         if (in_array($type,$allowedTypesNames) && in_array($slug,$allowedTableNames)){
             $model = convertVariableToModelName(ucfirst($type),$slug, ['App', 'Models']);
-            $model::whereIn('id', $request->all())->delete();
-            return [
-                'success' => true,
-                'status' => 200,
-            ];
+            if (!empty($data)){
+                $model::whereIn('id', $data)->delete();
+                return [
+                    'success' => true,
+                    'status' => 200,
+                ];
+            }
 
         }
-
+        return [];
     }
 
     private function checkAssignPoster($id, $assignArray = null){
