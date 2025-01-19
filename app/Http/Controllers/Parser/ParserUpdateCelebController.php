@@ -58,12 +58,12 @@ class ParserUpdateCelebController extends ParserController
     }
     public function localizing($celebId) : void
     {
-        $updateModel = DB::table('localizing_celebs_info_en')->where($this->signByField,$celebId)->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
+        $updateModel = DB::table('localizing_celebs_info_en')->where($this->signByField,$celebId['id_celeb'])->get(['nameActor','id_celeb','filmography','birthdayLocation','dieLocation']);
         if ($updateModel->isNotEmpty()){
-            $this->localizing->translateCeleb($updateModel[0],$celebId,$this->signByField);
-            session()->push('tracking.report.finishLocalizing', $celebId);
+            $this->localizing->translateCeleb($updateModel[0],$celebId['id_celeb'],$this->signByField);
+            session()->push('tracking.report.finishLocalizing', $celebId['id_celeb']);
             session()->save();
-            Log::info(">>> LOCALIZING CELEB ID FINISH:",[$celebId]);
+            Log::info(">>> LOCALIZING CELEB ID FINISH:",[$celebId['id_celeb']]);
         }
     }
     public function parserStart($imageType) : void
