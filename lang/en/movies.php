@@ -8,7 +8,7 @@ return [
     'details' => 'Details',
     'timeline_franchise' => 'Frinchise timeline',
     'timeline_movies' => 'movies',
-    'sync_notice'=>'After synchronization, all posters must be reassigned',
+    'sync_notice'=>'After synchronization, all posters must be reassigned.',
     'check_viewed'=>'Check viewed:',
     'check_short'=>'Check short:',
     'check_type_content'=>'Check type content:',

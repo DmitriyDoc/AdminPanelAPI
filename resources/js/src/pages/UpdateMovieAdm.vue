@@ -543,7 +543,7 @@
     }
 
     const submitSync = () => {
-        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+        ElMessageBox.confirm(singleData.value.locale.sync_notice + '\n' + `Are you sure?`, 'WARNING', {
             confirmButtonText: 'OK',
             cancelButtonText: 'Cancel',
             type: 'warning',
