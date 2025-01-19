@@ -102,10 +102,11 @@
                 <el-tab-pane :label="singleData.locale.cast" name="six">
                     <li class="list-group-item">
                         <template v-for="(item, index) in singleData.cast">
-                            <div class="p-1 m-1 border bg-light">
+                            <div class="d-flex justify-content-between p-1 bg-light">
                                 <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
                                     <strong>{{item.actor}}</strong>
                                 </RouterLink>
+                                <span v-if="item.role" class="dots"></span>
                                 <em>{{item.role}}</em>
                             </div>
                         </template>
@@ -233,5 +234,10 @@
     .grid-content {
         border-radius: 4px;
         min-height: 36px;
+    }
+    .dots {
+        flex-grow: 1;
+        border-bottom: 1px dashed black;
+        margin: 0 10px 7px;
     }
 </style>
