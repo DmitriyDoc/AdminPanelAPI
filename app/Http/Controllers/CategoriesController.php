@@ -119,6 +119,7 @@ class CategoriesController extends Controller
             6=>'TvSpecial',
             7=>'Video',
         ];
+        $locale = Lang::locale();
         $data = Validator::make($request->all(),[
             'id_movie' => 'required|string|max:10',
             'type_film' => 'required|string|max:12',
@@ -153,7 +154,7 @@ class CategoriesController extends Controller
                 }
             //}
         }
-        transaction( function () use ($data){
+        transaction( function () use ($data,$locale){
             CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
             TagsMoviesPivot::where('id_movie',$data['id_movie'])->delete();
             if (!empty($data['categories'])){
@@ -174,7 +175,7 @@ class CategoriesController extends Controller
                 }
                 if (!empty($data['tags'])){
                     foreach ($data['tags'] as $tag){
-                        $tagExist = DB::table('tags')->where('tag_name_en','=',$tag)->first();
+                        $tagExist = DB::table('tags')->where('tag_name_'.$locale,'=',$tag)->first();
                         if ($tagExist){
                             TagsMoviesPivot::create([
                                 'id_movie' => $data['id_movie'],
