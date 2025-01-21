@@ -6,10 +6,12 @@ use App\Models\AssignPoster;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
+use App\Models\CollectionsFranchisesPivot;
 use App\Models\MovieInfo;
 
 use App\Models\MoviesInfoEn;
 use App\Models\MoviesInfoRu;
+use App\Models\TagsMoviesPivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -253,6 +255,8 @@ class MoviesController extends Controller
                 MoviesInfoEn::query()->where('id_movie',$id)->delete();
                 MoviesInfoRu::query()->where('id_movie',$id)->delete();
                 AssignPoster::query()->where('id_movie',$id)->delete();
+                TagsMoviesPivot::query()->where('id_movie',$id)->delete();
+                CollectionsCategoriesPivot::query()->where('id_movie',$id)->delete();
                 foreach ($typesTables as $table){
                     $model = convertVariableToModelName($table,$type, ['App', 'Models']);
                     $model::where('id_movie',$id)->delete();
