@@ -252,6 +252,7 @@ class MoviesController extends Controller
                 MovieInfo::query()->where('id_movie',$id)->delete();
                 MoviesInfoEn::query()->where('id_movie',$id)->delete();
                 MoviesInfoRu::query()->where('id_movie',$id)->delete();
+                AssignPoster::query()->where('id_movie',$id)->delete();
                 foreach ($typesTables as $table){
                     $model = convertVariableToModelName($table,$type, ['App', 'Models']);
                     $model::where('id_movie',$id)->delete();
