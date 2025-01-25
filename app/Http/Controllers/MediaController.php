@@ -288,8 +288,8 @@ class MediaController extends Controller
             7=>'Video',
             8=>'Celebs',
         ];
-        $type = $request->query('type','images');
-        $slug = $request->query('slug','Celebs');
+        $type = $request->get('type','images');
+        $slug = $request->get('slug','Celebs');
         $data = $request->get('data',[]);
         if (in_array($type,$allowedTypesNames) && in_array($slug,$allowedTableNames)){
             $model = convertVariableToModelName(ucfirst($type),$slug, ['App', 'Models']);
