@@ -50,7 +50,7 @@ class TranslatorController
         if ($localizingModel){
             $this->localizingTable::updateOrCreate([$this->columnKey=>$this->columnId],$data);
         } else {
-            $this->localizingTable::firstOrCreate([$this->columnKey=>$this->columnId],$data);
+            $this->localizingTable::create($data);
         }
     }
     public function translateTag($inputTag){
@@ -66,6 +66,7 @@ class TranslatorController
             $unpackGenres = json_decode($dataInfo->genres);
             $genres = array_unique($unpackGenres);
             $genres = json_encode($genres,JSON_UNESCAPED_UNICODE);
+            $genres = str_replace('Spirituality Documentary' ,'Spirituality',$genres);
             $resultGenres = $this->startTranslate($genres);
             $resultGenres = str_replace(['«','»'] ,'"',$resultGenres);
             $this->dataMovie['genres'] = str_replace("\u{200B}" ,'',$resultGenres);
