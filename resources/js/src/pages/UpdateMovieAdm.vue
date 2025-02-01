@@ -90,7 +90,19 @@
                 <el-tab-pane :label="singleData.locale.writers" name="five">
                     <li class="list-group-item">
                         <template v-for="(writer, index) in singleData.writers">
-                            <div class="p-1 m-1 border bg-light">{{writer}}</div>
+                            <template v-if="typeof writer === 'object'" v-for="(role, name) in writer">
+                                <div class="p-1 m-1 border bg-light">
+                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
+                                        <strong>{{name}}</strong>
+                                    </RouterLink>
+                                    <em>{{role}}</em>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div class="p-1 m-1 border bg-light">
+                                    {{writer}}
+                                </div>
+                            </template>
                         </template>
                     </li>
                 </el-tab-pane>
