@@ -48,7 +48,7 @@ class TranslatorController
     private function updateOrCreateLocalizing($data){
         $localizingModel = $this->localizingTable::where($this->columnKey,$this->columnId)->first();
         if ($localizingModel){
-            $this->localizingTable::updateOrCreate([$this->columnKey=>$this->columnId],$data);
+            $this->localizingTable->query()->updateOrCreate([$this->columnKey=>$this->columnId],$data);
         } else {
             $this->localizingTable::create($data);
         }
@@ -66,10 +66,12 @@ class TranslatorController
             $unpackGenres = json_decode($dataInfo->genres);
             $genres = array_unique($unpackGenres);
             $genres = json_encode($genres,JSON_UNESCAPED_UNICODE);
-            $genres = str_replace('Spirituality Documentary' ,'Spirituality',$genres);
             $resultGenres = $this->startTranslate($genres);
             $resultGenres = str_replace(['«','»'] ,'"',$resultGenres);
-            $this->dataMovie['genres'] = str_replace("\u{200B}" ,'',$resultGenres);
+            $resultGenres = str_replace("\u{200B}" ,'',$resultGenres);
+            if (json_validate($resultGenres)){
+                $this->dataMovie['genres'] = $resultGenres;
+            }
         }
         $this->dataMovie['cast'] = null;
         if (!empty($dataInfo->cast)){
