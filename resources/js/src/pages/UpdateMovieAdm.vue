@@ -90,21 +90,7 @@
                 <el-tab-pane :label="singleData.locale.writers" name="five">
                     <li class="list-group-item">
                         <template v-for="(writer, index) in singleData.writers">
-                            <template v-if="typeof writer === 'object'" v-for="(role, name) in writer">
-                                <div class="p-1 m-1 border bg-light">
-                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
-                                        <strong>{{name}}</strong>
-                                    </RouterLink>
-                                    <em>{{role}}</em>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <div class="p-1 m-1 border bg-light">
-                                    <RouterLink :to="{ name: 'showPerson', params: { slug: 'Celebs', id: index }}">
-                                        <strong>{{writer}}</strong>
-                                    </RouterLink>
-                                </div>
-                            </template>
+                            <div class="p-1 m-1 border bg-light">{{writer}}</div>
                         </template>
                     </li>
                 </el-tab-pane>
@@ -385,16 +371,16 @@
     const handleChangeImages = (val: string[],) => {
         mediaStore.flushState();
         if (val[1]) {
-            (val[1] === 'image') ? mediaStore.getImages(route.params.slug) : mediaStore.getPosters();
+            (val[1] === 'image') ? mediaStore.getImages(singleData.value.slug) : mediaStore.getPosters(singleData.value.slug);
         }
     }
 
     const handleImageLoadMore = () => {
-        mediaStore.updateImagePageSize(route.params.slug);
+        mediaStore.updateImagePageSize(singleData.value.slug);
     }
 
     const handlePosterLoadMore = () => {
-        mediaStore.updatePosterPageSize();
+        mediaStore.updatePosterPageSize(singleData.value.slug);
     }
     // const handleClick = (tab: TabsPaneContext, event: Event) => {
     //     //console.log(tab, event)
@@ -440,7 +426,7 @@
                 cancelButtonText: 'Cancel',
                 type: 'warning',
             }).then(() => {
-                mediaStore.removeMultipleImages(multipleSelectImage.value,'images');
+                mediaStore.removeMultipleImages(multipleSelectImage.value,'images',singleData.value.slug);
                 multipleTableImage.value!.clearSelection();
                 ElMessage({
                     type: 'success',
@@ -465,7 +451,7 @@
                 cancelButtonText: 'Cancel',
                 type: 'warning',
             }).then(() => {
-                mediaStore.removeMultipleImages(multipleSelectPoster.value,'posters');
+                mediaStore.removeMultipleImages(multipleSelectPoster.value,'posters',singleData.value.slug);
                 multipleTablePoster.value!.clearSelection();
                 ElMessage({
                     type: 'success',
@@ -489,7 +475,7 @@
                 cancelButtonText: 'Cancel',
                 type: 'warning',
             }).then(() => {
-                mediaStore.assignPoster(multipleSelectPoster.value,category);
+                mediaStore.assignPoster(multipleSelectPoster.value,category,singleData.value.slug);
                 toggleSelectPoster();
                 ElMessage({
                     type: 'success',

@@ -120,7 +120,7 @@ const routes = [
         },
     },
     {
-        path: '/movies/:slug/show/:id',
+        path: '/movies/show/:id',
         name: 'showMovie',
         component: MovieDetailsAdm,
         meta: {
@@ -129,7 +129,7 @@ const routes = [
         },
     },
     {
-        path: '/movies/:slug/edit/:id',
+        path: '/movies/edit/:id',
         name: 'editMovie',
         component: UpdateMovieAdm,
         meta: {

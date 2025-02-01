@@ -80,12 +80,12 @@
         <el-table-column fixed="right" prop="id_movie" :label="locale.actions" width="120">
             <template v-slot:default="scope">
                 <el-button type="success" link >
-                    <RouterLink :to="{ name: 'showMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">
+                    <RouterLink :to="{ name: 'showMovie', params: { id: scope.row.id_movie }}">
                         <el-button link type="primary" :icon="View" :title="$t('details')"/>
                     </RouterLink>
                 </el-button>
                 <el-button link type="primary" >
-                    <RouterLink :to="{ name: 'editMovie', params: { slug: typeMovie, id: scope.row.id_movie }}">
+                    <RouterLink :to="{ name: 'editMovie', params: { id: scope.row.id_movie }}">
                         <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
                     </RouterLink>
                 </el-button>

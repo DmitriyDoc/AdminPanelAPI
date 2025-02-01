@@ -39,8 +39,6 @@ export const useMediaStore = defineStore('mediaStore',() => {
     const getAssignedImages = async () =>{
         try {
             axios.get('/media/show/images/'
-                + route.params.slug
-                + '/'
                 + route.params.id
             ).then((response) => {
                 response.data.forEach((item) => {
@@ -89,10 +87,10 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
-    const getPosters = async () =>{
+    const getPosters = async (slug) =>{
         try {
             axios.get('/media/posters/'
-                + route.params.slug
+                + slug
                 + '/'
                 + route.params.id
                 + '?page=' + pagePoster.value
@@ -102,7 +100,6 @@ export const useMediaStore = defineStore('mediaStore',() => {
                     srcListPosters.value.push(item.src);
                 });
                 if (response.data.poster_count){
-                    console.log(response.data);
                     for (var item in response.data.poster_count) {
                         postersAssignInfo[item].locale = reactive(response.data.locale[item]);
                         postersAssignInfo[item].count = reactive(response.data.poster_count[item]);
@@ -132,16 +129,16 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
-    const setPoster = async (id,cat) =>{
+    const setPoster = async (id,cat,slug) =>{
         try {
             axios.post('/media/poster_assign', {
-                type_film: route.params.slug,
+                type_film: slug,
                 id_movie: route.params.id,
                 id_poster: id,
                 poster_cat: cat,
                 }).then((response) => {
                 //flushState();
-                getPosters();
+                getPosters(slug);
             });
         } catch (e) {
             error.value = e;
@@ -154,15 +151,15 @@ export const useMediaStore = defineStore('mediaStore',() => {
         pageImg.value =  pageImg.value + 1;
         getImages(slug);
     }
-    const updatePosterPageSize = () => {
+    const updatePosterPageSize = (slug) => {
         pagePoster.value =  pagePoster.value + 1;
-        getPosters();
+        getPosters(slug);
     }
     const removeMultipleImages = (ids,type) => {
         removeImages(ids,type);
     }
-    const assignPoster = (id,cat) => {
-        setPoster(id,cat);
+    const assignPoster = (id,cat,slug) => {
+        setPoster(id,cat,slug);
     }
     const flushState = () => {
         pageImg.value = 1;

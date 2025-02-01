@@ -63,7 +63,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
 
             // MEDIA QUERY
             Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
-                Route::get('/media/show/images/{slug}/{id}', 'showImages');
+                Route::get('/media/show/images/{id}', 'showImages');
                 Route::get('/media/show/posters/{id}', 'showPosters');
                 Route::get('/media/{type}/{slug}/{id}', 'index');
                 Route::post('/media/poster_assign', 'store');
@@ -72,17 +72,15 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             // Resources QUERY
             Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
                 Route::get('/movies/{slug}', 'index');
-                Route::get('/movies/{slug}/show/{id}', 'show');
+                Route::get('/movies/show/{id}', 'show');
                 Route::put('/movies/update', 'update');
                 Route::delete('/movies', 'destroy');
-
             });
             Route::controller(\App\Http\Controllers\CelebsController::class)->group(function () {
                 Route::get('/persons', 'index');
                 Route::get('/persons/show/{id}', 'show');
                 Route::patch('/persons/remove_items', 'removeFromFilmography');
                 Route::delete('/persons', 'destroy');
-
             });
             Route::controller(\App\Http\Controllers\CategoriesController::class)->group(function () {
                 Route::get('/categories', 'index');

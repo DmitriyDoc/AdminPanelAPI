@@ -52,7 +52,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const showItem = async () =>{
         if (Object.keys(route.params).length ){
             try {
-                axios.get('/movies/' + route.params.slug + '/show/' + route.params.id
+                axios.get('/movies/show/' + route.params.id
                 ).then((response) => {
                     singleData.value = response.data;
                 });

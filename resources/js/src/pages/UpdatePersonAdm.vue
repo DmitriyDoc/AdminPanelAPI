@@ -42,7 +42,7 @@
                                 <el-table-column prop="id" :label="singleData.locale.id_movie" width="120" />
                                 <el-table-column prop="title" property="id" :label="singleData.locale.title" width="400">
                                     <template v-slot:default="scope">
-                                        <RouterLink :to="{ name: 'showMovie', params: { slug: 'FeatureFilm', id: scope.row.id }}">
+                                        <RouterLink :to="{ name: 'showMovie', params: { id: scope.row.id }}">
                                             {{scope.row.title}}
                                         </RouterLink>
                                     </template>
@@ -58,9 +58,8 @@
             <el-collapse v-if="singleData.info.knowfor.length" v-model="activeAccordionTab" class="m-3" accordion>
                 <el-collapse-item :title="singleData.locale.known_for" name="1">
                     <div class="p-1 m-1 border bg-light" style="display: flex;">
-
                         <template v-for="(item, id) in singleData.info.knowfor" >
-                            <div style="display: flex; flex-direction: column">
+                            <div v-if="item.poster.length" style="display: flex; flex-direction: column">
                                 <p><strong>{{item.type_film}}</strong></p>
                                 <p><em>{{item.original_title}}</em></p>
                                 <div style=" margin-right: 10px">
@@ -232,7 +231,7 @@
                 cancelButtonText: 'Cancel',
                 type: 'warning',
             }).then(() => {
-                mediaStore.removeMultipleImages(multipleSelectImage.value,'images');
+                mediaStore.removeMultipleImages(multipleSelectImage.value,'images','Celebs');
                 multipleTableImage.value!.clearSelection();
                 ElMessage({
                     type: 'success',

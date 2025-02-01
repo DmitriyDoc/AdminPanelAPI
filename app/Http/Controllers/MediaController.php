@@ -14,6 +14,7 @@ class MediaController extends Controller
      */
     public function index( string $imgType, string $slug, string $id )
     {
+        $safeId = trim(strtolower(strip_tags($id)));
         $allowedTypesNames = [
             0=>'images',
             1=>'posters',
@@ -34,18 +35,17 @@ class MediaController extends Controller
             $imgType = 'images';
         }
 
-        if (!empty(strip_tags($id))){
+        if (!empty($safeId)){
             if ($slug == 'Celebs') {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $res = $model::select('id','id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$id)->simplePaginate(10)->toArray();
+                $res = $model::select('id','id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$safeId)->simplePaginate(10)->toArray();
             } elseif (in_array($slug,$allowedTableNames))  {
-
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id);
+                $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$safeId);
                 if ($model->get()->isEmpty()){
                     foreach ($allowedTableNames as $type){
                         $model = convertVariableToModelName(ucfirst($imgType),$type, ['App', 'Models']);
-                        $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id);
+                        $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$safeId);
                         if ($model->get()->isNotEmpty()) break;
                     }
                 }
@@ -160,43 +160,32 @@ class MediaController extends Controller
     }
 
 
-    public function showImages( string $slug, string $id)
+    public function showImages( string $id)
     {
-        $allowedTableNames = [
-            0=>'FeatureFilm',
-            1=>'MiniSeries',
-            2=>'ShortFilm',
-            3=>'TvMovie',
-            4=>'TvSeries',
-            5=>'TvShort',
-            6=>'TvSpecial',
-            7=>'Video',
-        ];
         $res = [];
-        if (in_array($slug,$allowedTableNames) && !empty(strip_tags($id))){
-            $model = convertVariableToModelName('Images',$slug, ['App', 'Models']);
-            $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->whereNotNull('src',)->get();
-            if ($collection->isEmpty()){
-                foreach ($allowedTableNames as $type){
-                    $model = convertVariableToModelName('Images',$type, ['App', 'Models']);
-                    $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$id)->whereNotNull('src',)->get();
-                    if (!$collection->isEmpty()) break;
-                }
-            }
-            $res = $collection->shuffle()->take(50)->toArray();
+        $saveId = strip_tags($id);
+        if (!empty($saveId)){
+            $modelInfo = modelByName('MovieInfo');
+            $typeMovie = $modelInfo->query()->select('type_film')->where('id_movie',$saveId)->first();
+            if (!empty($typeMovie)) {
+                $typeMovie = getTableSegmentOrTypeId($typeMovie->toArray()['type_film']);
+                $model = convertVariableToModelName('Images',$typeMovie, ['App', 'Models']);
+                $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$saveId)->whereNotNull('src',)->get();
+                $res = $collection->shuffle()->take(50)->toArray();
 
-            if (!empty($res)){
-                foreach ($res as &$item){
-                    $imagesArr = explode(',',$item['srcset'] ?? '');
-                    $sortImgArr = [];
-                    foreach ($imagesArr as $key => $img){
-                        $resArr =  explode(' ',$img);
-                        $resArr = array_reverse($resArr);
-                        $sortImgArr[$resArr[0]] = $resArr[1]??'';
+                if (!empty($res)){
+                    foreach ($res as &$item){
+                        $imagesArr = explode(',',$item['srcset'] ?? '');
+                        $sortImgArr = [];
+                        foreach ($imagesArr as $key => $img){
+                            $resArr =  explode(' ',$img);
+                            $resArr = array_reverse($resArr);
+                            $sortImgArr[$resArr[0]] = $resArr[1]??'';
+                        }
+                        ksort($sortImgArr,SORT_NATURAL );
+                        $item['srcset'] = $sortImgArr[array_key_first($sortImgArr)];
+                        $item['src'] = $sortImgArr['1024w'] ?? $sortImgArr[array_key_last($sortImgArr)];
                     }
-                    ksort($sortImgArr,SORT_NATURAL );
-                    $item['srcset'] = $sortImgArr[array_key_first($sortImgArr)];
-                    $item['src'] = $sortImgArr['1024w'] ?? $sortImgArr[array_key_last($sortImgArr)];
                 }
             }
         }
@@ -288,8 +277,8 @@ class MediaController extends Controller
             7=>'Video',
             8=>'Celebs',
         ];
-        $type = $request->get('type','images');
-        $slug = $request->get('slug','Celebs');
+        $type = $request->get('type');
+        $slug = $request->get('slug');
         $data = $request->get('data',[]);
         if (in_array($type,$allowedTypesNames) && in_array($slug,$allowedTableNames)){
             $model = convertVariableToModelName(ucfirst($type),$slug, ['App', 'Models']);

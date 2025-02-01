@@ -101,93 +101,77 @@ class MoviesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $slug, string $id)
+    public function show(string $id)
     {
         $infoMovieData = [];
         $posterSrcSet = null;
-        $allowedTableNames = [
-            0=>'FeatureFilm',
-            1=>'MiniSeries',
-            2=>'ShortFilm',
-            3=>'TvMovie',
-            4=>'TvSeries',
-            5=>'TvShort',
-            6=>'TvSpecial',
-            7=>'Video',
-        ];
-        if (!in_array($slug,$allowedTableNames)){
-            $slug = $slug[0];
-        }
-        $model = modelByName('MovieInfo');
-        $modelPosterName = 'poster'.$slug;
-        $titleFieldName = transformTitleByLocale();
-        $localazingName = 'localazing'.ucfirst(Lang::locale());
-        $currentLocaleLabel = 'label_'.Lang::locale();
-        $relationPosterName = camelToSnake($modelPosterName);
-        $relationLocalizeName = camelToSnake($localazingName);
         $safeId = trim(strtolower(strip_tags($id)));
-        $typeId = getTableSegmentOrTypeId($slug);
-        $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',$typeId)->where('id_movie',$safeId)->first();
+        $model = modelByName('MovieInfo');
+        $typeMovie = $model->query()->select('type_film')->where('id_movie',$id)->first();
+        if (!empty($typeMovie)){
+            $typeMovie = $typeMovie->toArray()['type_film'];
+            $modelPosterName = 'poster'.getTableSegmentOrTypeId($typeMovie);
+            $titleFieldName = transformTitleByLocale();
+            $localazingName = 'localazing'.ucfirst(Lang::locale());
+            $currentLocaleLabel = 'label_'.Lang::locale();
+            $relationPosterName = camelToSnake($modelPosterName);
+            $relationLocalizeName = camelToSnake($localazingName);
+            $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',$typeMovie)->where('id_movie',$safeId)->first();
 
-        if (empty($modelArr)){
-            foreach ($allowedTableNames as $type){
-                $modelArr = $model::with([$modelPosterName,'collection',$localazingName])->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$safeId)->first();
-                if (!empty($modelArr)) break;
-            }
-        }
+            if (!empty($modelArr)){
+                $modelArr = $modelArr->toArray();
+                $typeMovieSlug = getTableSegmentOrTypeId($typeMovie);
+                $infoMovieData = $modelArr[$relationLocalizeName] ?? [];
+                $infoMovieData['type_film'] = __('movies.type_movies.'.$typeMovieSlug);
+                $infoMovieData['slug'] = $typeMovieSlug;
+                $infoMovieData['title'] = $modelArr[$titleFieldName];
+                $infoMovieData['original_title'] = $modelArr['original_title'];
+                $infoMovieData['year_release'] = $modelArr['year_release'];
+                $infoMovieData['restrictions'] = $modelArr['restrictions'];
+                $infoMovieData['runtime'] = $modelArr['runtime'];
+                $infoMovieData['rating'] = $modelArr['rating'];
+                $infoMovieData['budget'] = $modelArr['budget'];
+                $infoMovieData['genres'] = json_decode($modelArr[$relationLocalizeName]['genres'] ??  null) ?? [];
+                $infoMovieData['cast'] = json_decode($modelArr[$relationLocalizeName]['cast'] ?? null) ?? [];
+                $infoMovieData['directors'] = json_decode( $modelArr[$relationLocalizeName]['directors'] ?? null) ?? [];
+                $infoMovieData['writers'] = json_decode($modelArr[$relationLocalizeName]['writers'] ?? null) ?? [];
+                $infoMovieData['countries'] = json_decode($modelArr[$relationLocalizeName]['countries'] ?? null)  ?? [];
+                $infoMovieData['companies'] = (object) unset_serialize_key(unserialize($modelArr['companies'] ?? null)) ?? [];
+                $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr['created_at']  ?? null)) ?? '';
+                $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr['updated_at']  ?? null)) ?? '';
+                $infoMovieData['collection'] = $modelArr['collection'];
+                if (!empty($modelArr[$relationPosterName])){
+                    $posterSrcSet = $modelArr[$relationPosterName][0]['srcset'];
+                    $assignPosterId = AssignPoster::where('id_movie',$safeId)->first('id_poster_original');
 
-        if (!empty($modelArr)){
-            $modelArr = $modelArr->toArray();
-            $infoMovieData = $modelArr[$relationLocalizeName] ?? [];
-            $infoMovieData['type_film'] = __('movies.type_movies.'.$slug) ?? '';
-            $infoMovieData['title'] = $modelArr[$titleFieldName];
-            $infoMovieData['original_title'] = $modelArr['original_title'];
-            $infoMovieData['year_release'] = $modelArr['year_release'];
-            $infoMovieData['restrictions'] = $modelArr['restrictions'];
-            $infoMovieData['runtime'] = $modelArr['runtime'];
-            $infoMovieData['rating'] = $modelArr['rating'];
-            $infoMovieData['budget'] = $modelArr['budget'];
-            $infoMovieData['genres'] = json_decode($modelArr[$relationLocalizeName]['genres'] ??  null) ?? [];
-            $infoMovieData['cast'] = json_decode($modelArr[$relationLocalizeName]['cast'] ?? null) ?? [];
-            $infoMovieData['directors'] = json_decode( $modelArr[$relationLocalizeName]['directors'] ?? null) ?? [];
-            $infoMovieData['writers'] = json_decode($modelArr[$relationLocalizeName]['writers'] ?? null) ?? [];
-            $infoMovieData['countries'] = json_decode($modelArr[$relationLocalizeName]['countries'] ?? null)  ?? [];
-            $infoMovieData['companies'] = (object) unset_serialize_key(unserialize($modelArr['companies'] ?? null)) ?? [];
-            $infoMovieData['created_at'] = date('Y-m-d', strtotime($modelArr['created_at']  ?? null)) ?? '';
-            $infoMovieData['updated_at'] = date('Y-m-d', strtotime($modelArr['updated_at']  ?? null)) ?? '';
-            $infoMovieData['collection'] = $modelArr['collection'];
-            if (!empty($modelArr[$relationPosterName])){
-                $posterSrcSet = $modelArr[$relationPosterName][0]['srcset'];
-                $assignPosterId = AssignPoster::where('id_movie',$safeId)->first('id_poster_original');
-
-                if (!empty($assignPosterId)){
-                    foreach ($modelArr[$relationPosterName] as $poster){
-                        if ($poster['id'] == $assignPosterId->id_poster_original){
-                            $posterSrcSet = $poster['srcset'];
+                    if (!empty($assignPosterId)){
+                        foreach ($modelArr[$relationPosterName] as $poster){
+                            if ($poster['id'] == $assignPosterId->id_poster_original){
+                                $posterSrcSet = $poster['srcset'];
+                            }
                         }
                     }
                 }
-            }
-            $img = explode(',',$posterSrcSet ?? '');
-            $infoMovieData['poster'] = $img[0] ?? '';
-            $infoMovieData['locale'] = LanguageController::localizingMovieShow();
-            if (!empty( $modelArr['collection'])) {
-                foreach ($modelArr['collection'] as $key => $itemCollection) {
-                    $collection = Collection::with('category')->find($itemCollection['collection_id'])->toArray();
-                    $infoMovieData['collection']['id'][$key] = $itemCollection['franchise_id'] ? 'fr_'.$itemCollection['collection_id'].$itemCollection['franchise_id'] : $itemCollection['collection_id'];
-                    $infoMovieData['collection']['catInfo'][$key]['label'] = $collection[$currentLocaleLabel] ?? null;
-                    $infoMovieData['collection']['catInfo'][$key]['category_value'] = $collection['category'][0]['value'] ?? null;
+                $img = explode(',',$posterSrcSet ?? '');
+                $infoMovieData['poster'] = $img[0] ?? '';
+                $infoMovieData['locale'] = LanguageController::localizingMovieShow();
+                if (!empty( $modelArr['collection'])) {
+                    foreach ($modelArr['collection'] as $key => $itemCollection) {
+                        $collection = Collection::with('category')->find($itemCollection['collection_id'])->toArray();
+                        $infoMovieData['collection']['id'][$key] = $itemCollection['franchise_id'] ? 'fr_'.$itemCollection['collection_id'].$itemCollection['franchise_id'] : $itemCollection['collection_id'];
+                        $infoMovieData['collection']['catInfo'][$key]['label'] = $collection[$currentLocaleLabel] ?? null;
+                        $infoMovieData['collection']['catInfo'][$key]['category_value'] = $collection['category'][0]['value'] ?? null;
+                    }
+                    $infoMovieData['collection']['viewed'] = (bool) $modelArr['collection'][0]['viewed'] ?? false;
+                    $infoMovieData['collection']['short'] = (bool) $modelArr['collection'][0]['short'] ?? false;
+                    $infoMovieData['collection']['adult'] = (bool) $modelArr['collection'][0]['adult'] ?? false;
+                    unset( $infoMovieData['collection'][0]);
+                    unset($collection);
+
                 }
-                $infoMovieData['collection']['viewed'] = (bool) $modelArr['collection'][0]['viewed'] ?? false;
-                $infoMovieData['collection']['short'] = (bool) $modelArr['collection'][0]['short'] ?? false;
-                $infoMovieData['collection']['adult'] = (bool) $modelArr['collection'][0]['adult'] ?? false;
-                unset( $infoMovieData['collection'][0]);
-                unset($collection);
-
+                unset($modelArr);
             }
-            unset($modelArr);
         }
-
         return $infoMovieData;
     }
 
