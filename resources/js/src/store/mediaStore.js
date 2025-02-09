@@ -114,12 +114,12 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
-    const removeImages = async (ids,type) =>{
+    const removeImages = async (ids,type,slug) =>{
         try {
             axios.delete('/media/', { data: {
                     'data':ids,
                     'type':type,
-                    'slug':route.params.slug ?? 'Celebs',
+                    'slug':slug,
                 }}).then((response) => {
             });
         } catch (e) {
@@ -155,8 +155,8 @@ export const useMediaStore = defineStore('mediaStore',() => {
         pagePoster.value =  pagePoster.value + 1;
         getPosters(slug);
     }
-    const removeMultipleImages = (ids,type) => {
-        removeImages(ids,type);
+    const removeMultipleImages = (ids,type,slug) => {
+        removeImages(ids,type,slug);
     }
     const assignPoster = (id,cat,slug) => {
         setPoster(id,cat,slug);

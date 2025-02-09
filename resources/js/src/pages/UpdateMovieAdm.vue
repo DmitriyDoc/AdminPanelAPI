@@ -548,7 +548,7 @@
         }).then(() => {
             moviesStore.syncItem({
                 id: route.params.id,
-                type: route.params.slug,
+                type: singleData.value.slug,
                 posterType: posterType.value,
             });
             progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
