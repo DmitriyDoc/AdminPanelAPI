@@ -80,12 +80,14 @@ class CollectionsController extends Controller
                         if (!in_array($sortBy,$allowedFilterFields)){
                             $sortBy = $allowedSortFields[0];
                         }
-                        $collectionSort = $sorted->sortBy($sortBy)->forPage($perPage,$limit);
                         if (in_array($sortDir,$allowedSortFields)){
-                            if ($sortDir == 'asc'){
-                                $collectionSort = $collectionSort->sortByDesc($sortBy);
+                            if ($sortDir == 'desc'){
+                                $sorted = $sorted->sortByDesc($sortBy);
+                            } elseif($sortDir == 'asc'){
+                                $sorted = $sorted->sortBy($sortBy);
                             }
                         }
+                        $collectionSort = $sorted->forPage($perPage,$limit);
                         $collectionSortArr = $collectionSort->values()->toArray();
                         foreach ($collectionSortArr as $movieItem){
                             if ($movieItem['assign_poster']){

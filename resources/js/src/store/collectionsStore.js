@@ -8,7 +8,7 @@ export const useCollectionsStore = defineStore('collectionsStore',() => {
     const state = ref({
         searchQuery: '',
         spinParam: 'desc',
-        sortBy: 'created_at',
+        sortBy: 'updated_at',
         page: 1,
         limit: 50,
     });
