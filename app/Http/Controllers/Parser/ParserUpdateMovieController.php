@@ -80,28 +80,29 @@ class ParserUpdateMovieController extends ParserController
             array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes='.$params['typeImages']);
             array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes='.$params['typePosters']);
         }
+
         session(['tracking.syncMoviePercentageBar' => 10]);
         session()->save();
         $this->linksGetter($this->linksInfo, 'getMoviesInfo');
 
         session(['tracking.syncMoviePercentageBar' => 30]);
         session()->save();
-        $this->linksGetter($this->linksIdsImages, 'getIdImages', $this->update_id_images_table, self::ID_PATTERN);
+        $this->linksGetter($this->linksIdsImages, 'getIdImages', self::ID_PATTERN);
 
         session(['tracking.syncMoviePercentageBar' => 40]);
         session()->save();
-        $this->linksGetter($this->linksIdsPosters, 'getIdImages', $this->update_id_posters_table, self::ID_PATTERN);
+        $this->createIdArrayAndGetImages($this->update_images_table, $this->linksImages);
 
         session(['tracking.syncMoviePercentageBar' => 50]);
         session()->save();
-        $this->createIdArrayAndGetImages($this->update_id_posters_table, $this->update_posters_table, $this->linksPosters, $this->idMovies);
+        $this->linksGetter($this->linksIdsPosters, 'getIdImages',  self::ID_PATTERN);
+
         session(['tracking.syncMoviePercentageBar' => 70]);
         session()->save();
-        $this->createIdArrayAndGetImages($this->update_id_images_table, $this->update_images_table, $this->linksImages, $this->idMovies);
+        $this->createIdArrayAndGetImages($this->update_posters_table, $this->linksPosters);
 
         session(['tracking.syncMoviePercentageBar' => 90]);
         session()->save();
-
         foreach ($this->idMovies as $id) {
             $this->localizing($id);
         }

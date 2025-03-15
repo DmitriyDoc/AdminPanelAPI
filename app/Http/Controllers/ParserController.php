@@ -17,6 +17,7 @@ use App\Traits\ParserTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -154,36 +155,29 @@ class ParserController extends Controller
     public function __call( $name, $arguments ) {
         call_user_func($name, $arguments);
     }
-    protected function createIdArrayAndGetImages( $imagesIdTable, $imagesTable, $linksArray, $dataLinks ) {
-        if ($imgIds = DB::table($imagesIdTable)->whereIn($this->signByField,$dataLinks)->orderBy('id')->get()){
-            if ($imgIds->isNotEmpty()){
-                foreach ($imgIds as $id) {
-                    if ($decodeArrIdImages = json_decode($id->id_images)) {
-                        if (is_array($decodeArrIdImages)) {
-                            foreach ($decodeArrIdImages as $idImage) {
-                                if (!empty($idImage)) {
-                                    $linksArray[$id->{$this->signByField}][] = $this->domen.$this->imgUrlFragment.$id->{$this->signByField}.'/mediaviewer/'.$idImage;
-                                }
-                            }
-                        }
-                    }
+    protected function createIdArrayAndGetImages( $imagesTable, $linksArray) {
+        $picturesIds =  Redis::get('pictures_ids_data');
+        $picturesIdsDecode = json_decode($picturesIds,true);
+        if (!empty($picturesIdsDecode)) {
+            foreach ($picturesIdsDecode as $idMovie =>$imagesIdsArray) {
+                foreach ($imagesIdsArray as $idImage) {
+                    $linksArray[$idMovie][] = $this->domen . $this->imgUrlFragment . $idMovie . '/mediaviewer/' . $idImage;
                 }
             }
-
+            Redis::del('pictures_ids_data');
         }
         if (!empty($linksArray)){
             $this->getImages( $linksArray, $imagesTable );
         }
-
     }
-    protected function linksGetter( $links, $methodName, $table = null, $pattern = null, $columnKey = 'id_movie'){
+    protected function linksGetter( $links, $methodName,  $pattern = null ){
         if (!empty($links)){
             $infoChunks = array_chunk($links, $this->chunkSize);
             $connector = new CurlConnectorController();
             foreach ($infoChunks as $chunk) {
                 $pages = $connector->getCurlMulty($chunk);
                 if (is_array($pages)){
-                    $this->{$methodName}( $pages, $table, $pattern, $columnKey );
+                    $this->{$methodName}( $pages, $pattern );
                 }
             }
         }

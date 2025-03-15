@@ -83,11 +83,11 @@ class ParserUpdateCelebController extends ParserController
 
         session()->put('tracking.syncPersonPercentageBar', 50);
         session()->save();
-        $this->linksGetter($this->linksIdsImages,'getIdImages',$this->update_id_images_table,self::ACTOR_PATTERN, $this->signByField);
+        $this->linksGetter($this->linksIdsImages,'getIdImages',self::ACTOR_PATTERN );
 
         session()->put('tracking.syncPersonPercentageBar', 70);
         session()->save();
-        $this->createIdArrayAndGetImages($this->update_id_images_table,$this->update_images_table,$this->linksImages,$this->idCeleb);
+        $this->createIdArrayAndGetImages($this->update_images_table,$this->linksImages);
 
         foreach ($this->idCeleb as $id) {
             $this->localizing($id);
