@@ -42,7 +42,6 @@ trait ImagesTrait
                             }
                         }
                         $insertData[$this->signByField] = $id;
-                        //Log::info('DATA-->',[$insertData]);
                         $this->insertDB($updateTable,$insertData);
                         unset($insertData);
                     }

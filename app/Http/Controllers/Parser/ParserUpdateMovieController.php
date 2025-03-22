@@ -7,6 +7,7 @@ use App\Http\Controllers\ParserController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class ParserUpdateMovieController extends ParserController
 {
@@ -91,7 +92,7 @@ class ParserUpdateMovieController extends ParserController
 
         session(['tracking.syncMoviePercentageBar' => 40]);
         session()->save();
-        $this->createIdArrayAndGetImages($this->update_images_table, $this->linksImages);
+        $this->createIdArrayAndGetImages($this->update_images_table, $this->linksImages, $this->idMovies);
 
         session(['tracking.syncMoviePercentageBar' => 50]);
         session()->save();
@@ -99,7 +100,7 @@ class ParserUpdateMovieController extends ParserController
 
         session(['tracking.syncMoviePercentageBar' => 70]);
         session()->save();
-        $this->createIdArrayAndGetImages($this->update_posters_table, $this->linksPosters);
+        $this->createIdArrayAndGetImages($this->update_posters_table, $this->linksPosters, $this->idMovies );
 
         session(['tracking.syncMoviePercentageBar' => 90]);
         session()->save();

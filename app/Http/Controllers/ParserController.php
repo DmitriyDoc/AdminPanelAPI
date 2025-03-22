@@ -155,17 +155,17 @@ class ParserController extends Controller
     public function __call( $name, $arguments ) {
         call_user_func($name, $arguments);
     }
-    protected function createIdArrayAndGetImages( $imagesTable, $linksArray) {
-        $picturesIds =  Redis::get('pictures_ids_data');
-        $picturesIdsDecode = json_decode($picturesIds,true);
-        if (!empty($picturesIdsDecode)) {
-            foreach ($picturesIdsDecode as $idMovie =>$imagesIdsArray) {
-                foreach ($imagesIdsArray as $idImage) {
-                    $linksArray[$idMovie][] = $this->domen . $this->imgUrlFragment . $idMovie . '/mediaviewer/' . $idImage;
+    protected function createIdArrayAndGetImages( $imagesTable, $linksArray, $Ids) {
+        foreach ($Ids as $id){
+            if(Redis::exists($id)) {
+                $picsIds = Redis::lrange($id,0, -1);
+                foreach ($picsIds as $picId){
+                    $linksArray[$id][] = $this->domen . $this->imgUrlFragment . $id . '/mediaviewer/' . $picId;
                 }
+                Redis::del($id);
             }
-            Redis::del('pictures_ids_data');
         }
+        //dump(Redis::keys('*'));
         if (!empty($linksArray)){
             $this->getImages( $linksArray, $imagesTable );
         }
