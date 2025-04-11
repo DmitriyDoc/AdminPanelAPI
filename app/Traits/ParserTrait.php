@@ -16,7 +16,7 @@ trait ParserTrait
         gc_collect_cycles(); // принудительный вызов встроенного сборщика мусора PHP
     }
     public function checkExists($table,$idActor){
-        return DB::table($table)->where('actor_id', '=', $idActor)->exists();
+        return DB::table($table)->where('id_celeb', '=', $idActor)->exists();
     }
     public function updateOrInsert($table,$data,$signKey){
         DB::table($table)

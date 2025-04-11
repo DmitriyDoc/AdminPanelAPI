@@ -4,7 +4,7 @@
             <h1>{{ singleData.title }}</h1>
         </el-col>
         <el-col :span="4">
-            <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" />
+            <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" width="250"/>
             <div class="mt-1 mb-2">
                 <h5>{{singleData.locale.poster_type}}</h5>
                 <el-radio-group v-model="posterType" size="small">
@@ -15,8 +15,9 @@
             <el-button type="danger" style="width: 100%;" @click="submitSync()" :loading='!!disabledBtnSync'>
                 {{singleData.locale.sync_imdb}}
             </el-button>
-            <div v-if="percentageSync" class="mt-1">
-                <el-progress :percentage="percentageSync" :status="statusBar"/>
+            <div v-if="Object.keys(percentageSync).length" class="mt-1">
+                <el-progress :percentage="percentageSync.percent" :status="percentageSync.color"/>
+                <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
             </div>
             <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2 mt-2"> {{singleData.locale.sync_notice}}</el-text></div>
             <template v-if="singleData.collection">
@@ -190,7 +191,7 @@
                             </el-table-column>
                             <el-table-column property="src" :label="singleData.locale.photo" width="150">
                                 <template v-slot:default="scope">
-                                    <el-image :src="scope.row.srcset"/>
+                                    <el-image :src="scope.row.src"/>
                                 </template>
                             </el-table-column>
                             <el-table-column property="status_poster" :label="singleData.locale.assign_status" width="150">
@@ -309,7 +310,7 @@
 
     const { singleData, disabledBtnUpdate, disabledBtnSync, locale, error } = storeToRefs(moviesStore);
     const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
-    const { statusBar, percentageSync } = storeToRefs(progressBarStore);
+    const { percentageSync } = storeToRefs(progressBarStore);
     const { optionsCats } = storeToRefs(categoryStore);
     const { watcherLang } = storeToRefs(languageStore);
 
@@ -338,9 +339,9 @@
     });
 
     onMounted(() => {
+        percentageSync.value = {};
         moviesStore.showItem();
         categoryStore.getCategories();
-        percentageSync.value = 0;
     })
 
     const handleCategoryChange = (value) => {
@@ -546,12 +547,12 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
+            progressBarStore.getSyncCurrentPercentage();
             moviesStore.syncItem({
                 id: route.params.id,
                 type: singleData.value.slug,
                 posterType: posterType.value,
             });
-            progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
         }).catch(() => {
             ElMessage({
                 type: 'info',

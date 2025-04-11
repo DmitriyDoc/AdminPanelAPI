@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ParserReportEvent;
 use App\Http\Controllers\Parser\CurlConnectorController;
 use App\Http\Controllers\Parser\ParserIdTypeController;
 use App\Http\Controllers\Parser\ParserStartController;
@@ -38,7 +39,6 @@ class ParserController extends Controller
     protected $update_images_table;
     protected $update_posters_table;
     protected $select_id_table;
-    protected $insert_id_table;
 
     protected $occupations = [
         0 => 'actor',
@@ -137,6 +137,23 @@ class ParserController extends Controller
     protected $linksPosters = [];
     protected $linksCredits = [];
 
+    public static $reportProgress = [
+        'report'=> [
+            'start' => null,
+            'stop' => null,
+            'finishIdsPeriod' => [],
+            'finishLocalizing' => [],
+            'finishInfo' => [],
+            'statusBar'=> [
+                'percent' => 0,
+                'action' => null,
+                'color' => null,
+            ]
+        ],
+    ];
+
+    public static $personGroup;
+
     use ParserTrait,IdByTypeTrait,MoviesInfoTrait,IdImagesTrait,ImagesTrait,CelebsInfoTrait,CelebsCreditsTrait;
 
     public function __construct($params = [])
@@ -190,22 +207,30 @@ class ParserController extends Controller
             new \DateInterval('P1D'),
             new \DateTime($this->dateTo . '23:59')
         );
-        foreach ($allowMovieTypes as $type){
+        foreach ($allowMovieTypes as $k =>$type){
             if (array_key_exists($type, $this->allowedTableNames)) {
                 $arg['segment'] = $this->allowedTableNames[$type]['segment'];
                 $arg['typeImages'] = $this->typeImages;
                 $arg['typePosters'] = $this->typePosters;
                 foreach ($period as $key => $day) {
                     $this->titleType = $this->allowedTableNames[$type]['type'];
+                    self::$reportProgress['report']['statusBar']['percent'] = floor((($k/count($allowMovieTypes))*90));
+                    self::$reportProgress['report']['statusBar']['action'] = __('parser.section_processing_parser',['type'=>strtoupper($this->allowedTableNames[$type]['type']), 'date'=>$day->format('Y-m-d')]);
+                    self::$reportProgress['report']['statusBar']['color'] = 'danger';
+                    if (!$k){
+                        self::$reportProgress['report']['statusBar']['percent'] = 5;
+                    }
+                    event(new ParserReportEvent(self::$reportProgress));
+
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc");
                     array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},desc");
+
                     $this->getIdByType($arg);
-                    session()->push('tracking.report.finishIdsPeriod', $day->format("Y-m-d") . " for movie type: " . $this->allowedTableNames[$type]['type']);
-                    session()->save();
+
+                    array_push(self::$reportProgress['report']['finishIdsPeriod'],__('parser.finish_period_parser',['type'=>strtoupper($this->allowedTableNames[$type]['type']), 'date'=>$day->format('Y-m-d')]));
+                    event(new ParserReportEvent(self::$reportProgress));
                     Log::info(">>> PARSE PERIOD : {$day->format("Y-m-d")} IDS FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
                 }
-                session()->push('tracking.report.finishInfo',$this->allowedTableNames[$type]['type']);
-                session()->save();
                 Log::info(">>>  PARSE INFO FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
             }
         }
@@ -213,38 +238,22 @@ class ParserController extends Controller
 
     public function parsePersons($personsSource,$switchNewUpdate) : void
     {
-        foreach ($personsSource as $group) {
-            $this->insert_id_table = 'celebs_id';
-            $this->titleType = $group;
+        foreach ($personsSource as $k => $group) {
             $this->flagNewUpdate = $switchNewUpdate;
-            array_push($this->urls,"{$this->domen}/search/name/{$this->titleType}&sort={$this->sort},asc");
-            array_push($this->urls,"{$this->domen}/search/name/{$this->titleType}&sort={$this->sort},desc");
+            self::$personGroup = $group['label'];
+            self::$reportProgress['report']['statusBar']['percent'] = floor((($k/count($personsSource))*100));
+            self::$reportProgress['report']['statusBar']['action'] = __('parser.group_processing_parser',['group' => $group['label']]);
+            self::$reportProgress['report']['statusBar']['color'] = 'danger';
+            if (!$k){
+                self::$reportProgress['report']['statusBar']['percent'] = 5;
+            }
+            event(new ParserReportEvent(self::$reportProgress));
+
+            array_push($this->urls,"{$this->domen}/search/name/{$group['value']}&sort={$this->sort},asc");
+            array_push($this->urls,"{$this->domen}/search/name/{$group['value']}&sort={$this->sort},desc");
             $this->getIdByType();
-            session()->push('tracking.report.finishInfo',$group);
-            session()->save();
-            Log::info('>>> PARSE CELEBS ID BY:', [$this->titleType]);
+            Log::info('>>> PARSE CELEBS ID BY:', [$group['value']]);
         }
         Log::info('>>> PARSED CELEBS FINISH');
     }
-//    public function actualizeYearTitleForTableIdType($allowMovieTypes = [])
-//    {
-//        if (!empty($allowMovieTypes)){
-//            foreach ($allowMovieTypes as $table){
-//                $modelInfo = convertVariableToModelName('Info', $table, ['App', 'Models']);
-//                $modelIdType = convertVariableToModelName('IdType', $table, ['App', 'Models']);
-//                $modelInfo = $modelInfo::select('id_movie','title','year_release')->limit(50)->orderBy('created_at','desc')->get();
-//                foreach ($modelInfo as $key => $item){
-//                    if (!empty($item['year_release'])){
-//                        $modelIdType::where('id_movie',$item['id_movie'])->update([
-//                            'title' => $item['title'],
-//                            'year' => $item['year_release']
-//                        ]);
-//                    }
-//                }
-//                session()->push('tracking.report.finishActualize', $table);
-//                session()->save();
-//                Log::info(">>> ACTUALIZE ID TYPE FINISH",[$table]);
-//            }
-//        }
-//    }
 }

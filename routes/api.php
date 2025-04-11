@@ -49,18 +49,11 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
         Route::middleware('localization')->group(function () {
             //PARSER
             Route::post('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
-            Route::get('/updatemovie/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
-
             Route::post('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
-            Route::get('/updateceleb/tracking', [\App\Http\Controllers\TrackingProgressBarController::class,'requestSessionKey']);
-
             Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInitStore']);
             Route::get('/parser/locale', [\App\Http\Controllers\Parser\ParserStartController::class,'parseLocalization']);
-
             // DASHBOARD QUERY
             Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
-            Route::get('/dashboard/tracking',[\App\Http\Controllers\TrackingProgressBarController::class, 'trackingDashboard'])->block();;
-
             // MEDIA QUERY
             Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
                 Route::get('/media/show/images/{id}', 'showImages');

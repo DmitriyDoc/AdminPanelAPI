@@ -17,23 +17,23 @@ trait IdByTypeTrait
             foreach ($this->urls as $url){
                 $document = new Document($url, true);
                 if ($document->has('ul.ipc-metadata-list--dividers-between')) {
-                    $list = $document->find('ul.ipc-metadata-list--dividers-between')[0];
-                    $posts = $list->find('a.ipc-title-link-wrapper');
-
-
-                    foreach ($posts as $k =>$post) {
-                        if ($this->flagType){
-                            if ($idMovie = get_id_from_url($post->attr('href')??null,self::ID_PATTERN)){
-                                array_push($arrayID,$idMovie);
-                            }
-                        } else {
-                            if ($idActor =  get_id_from_url($post->attr('href')??null,self::ACTOR_PATTERN)){
-                                if ($this->flagNewUpdate){
-                                    if (!$this->checkExists($this->insert_id_table,$idActor)) {
+                    $list = $document->find('div.ipc-metadata-list-summary-item__c');
+                    foreach ($list as $item) {
+                        if ($item->has('div.ipc-media__img')){
+                            $title = $item->find('a.ipc-title-link-wrapper')[0];
+                            if ($this->flagType){
+                                if ($idMovie = get_id_from_url($title->attr('href')??null,self::ID_PATTERN)){
+                                    array_push($arrayID,$idMovie);
+                                }
+                            } else {
+                                if ($idActor =  get_id_from_url($title->attr('href')??null,self::ACTOR_PATTERN)){
+                                    if (!$this->flagNewUpdate){
+                                        if (!$this->checkExists('celebs_info',$idActor)) {
+                                            array_push($arrayID, $idActor);
+                                        }
+                                    } else {
                                         array_push($arrayID, $idActor);
                                     }
-                                } else {
-                                    array_push($arrayID, $idActor);
                                 }
                             }
                         }
@@ -56,5 +56,4 @@ trait IdByTypeTrait
             }
         }
     }
-
 }

@@ -1,64 +1,46 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { ref }  from "vue";
-
+import { io } from "socket.io-client";
 export const useProgressBarStore = defineStore('progressBarStore',() => {
-
+    const socketURI = "http://spectrum.local:3000";
     const percentage = ref(0);
-    const statusBar = ref('');
-    const percentageSync = ref(0);
+    const percentageSync = ref({});
     const parserReport = ref({});
-    const toggleButton = ref(true);
 
-    const getCurrentPercentage = async () => {
-          await axios.get('/updatemovie/tracking?sesKey=dashboardPercentageBar'
-        ).then((response) => {
-            percentage.value = response.data.dashboardPercentageBar ?? 0;
-            if (percentage.value < 100){
-                setTimeout(function () {
-                    getCurrentPercentage();
-                }, 1000);
-            }
+    const getCurrentPercentage = () => {
+        const socket = io(socketURI);
+        socket.on("connect", (s) => {
+            //console.log(`connect ${socket.id}`);
+            socket.on('laravel_database_dashboard-bar:App\\Events\\DashboardCurrentPercentageEvent', function (data) {
+                percentage.value = data.dashboardBar;
+            });
         });
     }
-    const getSyncCurrentPercentage = async (key) => {
-        statusBar.value = '';
-        await axios.get('/updateceleb/tracking?sesKey='+key
-        ).then((response) => {
-            percentageSync.value = response.data[key] ?? 0;
-            if (percentageSync.value < 100){
-                setTimeout(function () {
-                    getSyncCurrentPercentage(key);
-                }, 1000);
-            }
-            if (percentageSync.value === 100){
-                setTimeout(() => statusBar.value = 'success', 1000);
-            }
+    const getSyncCurrentPercentage = () => {
+        const socket = io(socketURI);
+        socket.on("connect", (s) => {
+            //console.log(`connect ${socket.id}`);
+            socket.on('laravel_database_sync-bar:App\\Events\\CurrentPercentageEvent', function (data) {
+                percentageSync.value = data.syncBar;
+            });
         });
     }
-    const getReportParser = async () => {
-        await axios.get('/updatemovie/tracking?sesKey=report'
-        ).then((response) => {
-            if (Object.keys(response.data).length){
-                parserReport.value = response.data;
-            }
-            if (parserReport.value.report?.stop){
-                toggleButton.value = false;
-            }
-            if (toggleButton.value){
-                setTimeout(function () {
-                    getReportParser();
-                }, 1000);
-            }
+    const getCurrentReportState = () => {
+        const socket = io(socketURI);
+        socket.on("connect", (s) => {
+            //console.log(`connect ${socket.id}`);
+            socket.on('laravel_database_parser-report:App\\Events\\ParserReportEvent', function (data) {
+                parserReport.value  = data.result;
+            });
         });
     }
     return {
         percentage,
-        statusBar,
         percentageSync,
         parserReport,
+        getCurrentReportState,
         getCurrentPercentage,
         getSyncCurrentPercentage,
-        getReportParser
     }
 });

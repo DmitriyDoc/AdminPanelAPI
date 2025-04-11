@@ -23,7 +23,7 @@
     import { useDashboardStore } from "../store/dashboardStore";
     import { useProgressBarStore } from "../store/progressBarStore";
     import { useLanguageStore } from "../store/languageStore";
-    import { onMounted, watch } from "vue";
+    import { onMounted, ref, watch } from "vue";
 
     const dashboardStore = useDashboardStore();
     const progressBarStore = useProgressBarStore();
@@ -41,8 +41,8 @@
     const getDashboardStore = () => {
         percentage.value = 0;
         if (loader.value){
-            dashboardStore.getMoviesCount();
             progressBarStore.getCurrentPercentage();
+            dashboardStore.getMoviesCount();
         }
     }
     watch(() => watcherLang.value, (newLang) => {

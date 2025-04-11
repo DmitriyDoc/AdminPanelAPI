@@ -12,12 +12,11 @@
                 <span class="logo-char animation-delay-700">U</span>
                 <span class="logo-char animation-delay-800">M</span>
                 <span class="">{{ ' ' }}</span>
-                <span class="logo-char animation-delay-900">a</span>
-                <span class="logo-char animation-delay-1000">d</span>
-                <span class="logo-char animation-delay-1100">m</span>
-                <span class="logo-char animation-delay-1200">i</span>
-                <span class="logo-char animation-delay-1300">n</span>
-
+                <span class="logo-char animation-delay-900">A</span>
+                <span class="logo-char animation-delay-1000">D</span>
+                <span class="logo-char animation-delay-1100">M</span>
+                <span class="logo-char animation-delay-1200">I</span>
+                <span class="logo-char animation-delay-1300">N</span>
             </div>
             <div class="text-2xl font-nabla md:hidden">
                 <span class="logo-char animation-delay-100">R</span>

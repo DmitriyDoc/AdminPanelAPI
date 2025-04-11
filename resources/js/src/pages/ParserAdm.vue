@@ -32,8 +32,9 @@
                         </el-radio-group>
                     </div>
                 </div>
-                <div v-if="percentageSync" class="mt-1">
-                    <el-progress :percentage="percentageSync" :status="statusBar"/>
+                <div v-if="Object.keys(percentageSync).length" class="mt-1">
+                    <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
+                    <el-progress :percentage="percentageSync.percent" :status="percentageSync.color"/>
                 </div>
                 <div class="mt-3">
                     <el-button type="primary" @click="handleAddMovie" class="btn btn-primary" :loading="!!disabledBtnSync">{{locale.add_movie}}</el-button>
@@ -53,8 +54,9 @@
                         />
                     </div>
                 </div>
-                <div v-if="percentageSync" class="mt-1">
-                    <el-progress :percentage="percentageSync" :status="statusBar"/>
+                <div v-if="Object.keys(percentageSync).length" class="mt-1">
+                    <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
+                    <el-progress :percentage="percentageSync.percent" :status="percentageSync.color"/>
                 </div>
                 <div>
                     <el-button type="primary" @click="handleAddCeleb" class="btn btn-primary" :loading="!!disabledBtnAddCeleb">{{locale.add_person}}</el-button>
@@ -163,7 +165,7 @@
                                 v-for="item in filters"
                                 :key="item.value"
                                 :label="item.label"
-                                :value="item.value"
+                                :value="item"
                             />
                         </el-select>
                     </div>
@@ -207,50 +209,38 @@
             :before-close="handleClose"
         >
             <template v-if="parserReport.report">
-                <el-result
-                    :icon="parserReport.report.stop ? 'success' : 'info'"
-                    :title="parserReport.report.stop ?? parserReport.report.start"
-                >
-                </el-result>
+                <el-result :icon="parserReport.report.icon" :title="parserReport.report.status"></el-result>
             </template>
-            <template v-if="parserReport.report">
+            <template v-if="parserReport.report.statusBar.color">
                 <h4 class="mt-2">{{locale.current_bar_progress}}</h4>
-                <el-progress :percentage="parserReport.report?.finishIdsPeriod ? parserReport.syncMoviePercentageBar : parserReport.syncPersonPercentageBar" :stroke-width="15" striped />
+                <el-text :type="parserReport.report.statusBar.color">{{parserReport.report.statusBar.action}}</el-text>
+                <el-progress :percentage="parserReport.report.statusBar.percent" :stroke-width="15" striped />
             </template>
-            <template v-if="parserReport.report.finishIdsPeriod">
+            <template v-if="parserReport.report.finishIdsPeriod.length">
                 <h4 class="mt-2">{{locale.finish_id_parse_by_date_period}}</h4>
                 <ul v-for="(item, index) in parserReport.report.finishIdsPeriod" class="list-group">
                     <li class="list-group-item">{{index+1}}{{'. '}}{{item}}</li>
                 </ul>
             </template>
-            <template v-if="parserReport.report.finishLocalizing">
-                <el-collapse>
-                    <el-collapse-item >
-                        <template #title>
-                            <el-badge :value="parserReport.report.finishLocalizing.length" :max="1000"class="item">
-                                {{locale.parsed_and_localizing}}<el-icon class="header-icon"><info-filled /></el-icon>
-                            </el-badge>
-                        </template>
-                        <span v-for="item in parserReport.report.finishLocalizing">
-                            <el-tag type="success" class="m-1">{{item}}</el-tag>
-                        </span>
-                    </el-collapse-item>
-                </el-collapse>
-            </template>
-            <template v-if="parserReport.report.finishInfo">
+            <template v-if="Object.keys(parserReport.report.finishInfo).length">
                 <h4 class="mt-2">{{locale.finish_parse_for_types}}</h4>
                 <ul class="list-group-flush">
-                    <template v-for="item in parserReport.report.finishInfo">
-                        <li class="list-group-item"><el-icon color="#67C23A"  ><Check /></el-icon>{{item}}</li>
+                    <template v-for="(item,key) in parserReport.report.finishInfo">
+                        <el-collapse>
+                            <el-collapse-item >
+                                <template #title>
+                                    <el-badge :value="item.length" :max="1000" :offset="[15, 0]" >
+                                        <li class="list-group-item"><el-icon color="#67C23A" ><Check /></el-icon> {{key}} </li>
+                                    </el-badge>
+                                </template>
+                                <span v-for="id in item">
+                                    <el-tag type="success" class="m-1">{{id}}</el-tag>
+                                </span>
+                            </el-collapse-item >
+                        </el-collapse>
                     </template>
                 </ul>
             </template>
-    <!--        <template v-if="parserReport.report.finishActualize">-->
-    <!--            <h4 class="mt-2">Finish Actualize Table(s):</h4>-->
-    <!--            <span v-for="item in parserReport.report.finishActualize" >-->
-    <!--                <el-tag type="primary" class="m-1">{{item}}</el-tag>-->
-    <!--            </span>-->
-    <!--        </template>-->
         </el-dialog>
     </template>
     <template v-else>
@@ -267,6 +257,7 @@
     import { useMoviesStore } from "../store/moviesStore";
     import { useLanguageStore } from "../store/languageStore";
     import { Check } from '@element-plus/icons-vue'
+    //import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js"
 
     const parserStore = useParserStore();
     const progressBarStore = useProgressBarStore();
@@ -275,7 +266,7 @@
 
     const { loader, locale, filters, disabledBtnAddCeleb, localeDatePicker, types, error } = storeToRefs(parserStore);
     const { disabledBtnSync } = storeToRefs(moviesStore);
-    const { percentage, statusBar, percentageSync, parserReport } = storeToRefs(progressBarStore);
+    const { percentage, percentageSync, parserReport } = storeToRefs(progressBarStore);
     const { watcherLang } = storeToRefs( languageStore );
     const celeb_ID = ref('nm');
     const movie_ID = ref('tt');
@@ -440,9 +431,11 @@
     };
 
     const handleCheckAllPersonsSource = (val) => {
-        indeterminatePersonsSource.value = false
+        indeterminatePersonsSource.value = false;
         if (val) {
-            personsSource.value = filters.value.map((_) => _.value)
+            //personsSource.value = filters.value.map((_) => _.value);
+            personsSource.value = filters.value;
+
         } else {
             personsSource.value = []
         }
@@ -454,8 +447,8 @@
             type: 'warning',
         }).then(() => {
             if (inputLengthCelebId.value > 2) {
-                parserStore.addCelebById(celeb_ID.value);
                 progressBarStore.getSyncCurrentPercentage();
+                parserStore.addCelebById();
                 celeb_ID.value = 'nm';
             } else {
                 ElMessage({
@@ -477,12 +470,12 @@
             type: 'warning',
         }).then(() => {
             if (selectType.value && inputLengthMoviebId.value > 2) {
+                progressBarStore.getSyncCurrentPercentage();
                 moviesStore.syncItem({
                     id: movie_ID.value,
                     type: selectType.value,
                     posterType: posterType.value,
                 });
-                progressBarStore.getSyncCurrentPercentage('syncMoviePercentageBar');
                 celeb_ID.value = 'nm';
             } else {
                 ElMessage({
@@ -504,6 +497,7 @@
             type: 'warning',
         }).then(() => {
             if (selectSort.value && selectTypeImages.value){
+                progressBarStore.getCurrentReportState();
                 parserStore.parserStart({
                     'flag': radioTypeToggle.value,
                     'date_from': pickerFrom.value?pickerFrom.value:"1900-01-01",
@@ -516,7 +510,6 @@
                     'switch_new_update': switchAddNewOrUpdate.value,
                 });
                 handleSelectsClear();
-                progressBarStore.getReportParser();
                 toggleButton.value = false;
             }
         }).catch(() => {

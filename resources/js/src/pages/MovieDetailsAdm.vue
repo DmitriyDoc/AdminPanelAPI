@@ -12,7 +12,7 @@
             </el-button>
         </el-col>
         <el-col :span="4">
-            <el-image :src="singleData.poster" fit="cover" />
+            <el-image :src="singleData.poster" fit="cover" width="200"/>
             <ul class="list-group">
                 <li class="list-group-item bg-light"><strong>{{ singleData.type_film ?? singleData.locale.empty }}</strong></li>
 

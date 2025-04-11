@@ -215,7 +215,6 @@ class CelebsController extends Controller
             1=>'CelebsInfoEn',
             2=>'CelebsInfoRu',
             3=>'ImagesCelebs',
-            4=>'IdImagesCelebs',
         ];
         $dataRequest = $request->all();
         $match = preg_match("/nm\d{1,10}/",$dataRequest['id'],$matches, PREG_UNMATCHED_AS_NULL);

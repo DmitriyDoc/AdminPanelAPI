@@ -3,12 +3,19 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
+use App\Events\DashboardCurrentPercentageEvent;
 
 class DashboardController
 {
+    private $dashboardCountTable = 9;
     public function index()
     {
+//        Redis::set('name','test');
+//        dd(Redis::get('name'));
+//        Cache::put('some',1);
+//        dd(Cache::get('some'));
         $data = [];
         $allowedTableNames = [
             0=>'FeatureFilm',
@@ -22,10 +29,6 @@ class DashboardController
             8=>'Celebs',
         ];
 
-        session()->forget('tracking.dashboardPercentageBar');
-        session(['tracking.dashboardPercentageBar' => 0]);
-        session()->save();
-
         $model = modelByName('MovieInfo');
         foreach ($allowedTableNames as $index => $name) {
             if ($name !== 'Celebs'){
@@ -36,14 +39,12 @@ class DashboardController
                 $count = $model->count();
                 $update = $model::where('created_at','>=',Carbon::now()->subdays(1))->count();
             }
-
             $data['data'][$index]['key'] = $index.'_'.$name;
             $data['data'][$index]['title'] =  $name !== 'Celebs' ? __('movies.type_movies.'.$name) : __('movies.celebs');
             $data['data'][$index]['count'] = $count;
             $data['data'][$index]['lastAddCount'] = $update;
-
-            session()->increment('tracking.dashboardPercentageBar',1);
-            session()->save();
+            $progressBarTotal = ceil( (($index++ + 1) * 100) / $this->dashboardCountTable) ?? 0 ;
+            event(new DashboardCurrentPercentageEvent($progressBarTotal));
         }
         if (!empty($data)){
             $data['locale'] = LanguageController::localizingDashboardInfo();
@@ -51,8 +52,9 @@ class DashboardController
         return $data;
     }
 
-    public function test(){
-        dd('test');
+    public function test(\Illuminate\Http\Request $request){
+        dd(1);
+        return [];
     }
 
 }

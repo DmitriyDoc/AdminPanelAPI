@@ -15,8 +15,9 @@
             <el-button type="danger" style="width: 100%;" @click="submitSync()" :loading="!!disabledBtnSync">
                 {{singleData.locale.sync_imdb}}
             </el-button>
-            <div v-if="percentageSync" class="mt-1">
-                <el-progress :percentage="percentageSync" :status="statusBar"/>
+            <div v-if="Object.keys(percentageSync).length" class="mt-1">
+                <el-progress :percentage="percentageSync.percent" :status="percentageSync.color"/>
+                <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
             </div>
             <ul class="list-group mt-2">
                 <li class="list-group-item"><span><strong>{{singleData.locale.birthday}}</strong></span> {{ singleData.info.birthday ?? singleData.locale.empty }}</li>
@@ -257,8 +258,8 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
+            progressBarStore.getSyncCurrentPercentage();
             personsStore.syncItem(imageType.value);
-            progressBarStore.getSyncCurrentPercentage('syncPersonPercentageBar');
         }).catch(() => {
             ElMessage({
                 type: 'info',

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    "search_by_title_id"=>"Поиск по названию и ID фильма:",
+    "search_by_title_id"=>"Поиск по названию или ID фильма:",
     "search_by_name_id"=>"Поиск по имени и ID персоны:",
     "search_by_tag_name"=>"Поиск по имени тега:",
     "search_by_title"=>"Поиск по названию фильма:",

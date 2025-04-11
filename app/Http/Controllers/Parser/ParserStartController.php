@@ -2,6 +2,8 @@
 
 
 namespace App\Http\Controllers\Parser;
+use App\Events\ParserReportEvent;
+use App\Events\SyncCurrentPercentage;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
 use Illuminate\Http\Request;
@@ -14,16 +16,13 @@ class ParserStartController
     public function parseInitStore(Request $request)
     {
         Redis::flushDB();
-        session()->forget('tracking.report');
-        session()->put('tracking.report.start', __('parser.start_parser'));
-        session()->save();
         $validator = Validator::make($request->all()['data'],[
             'flag' => 'required|boolean',
             'date_from' => 'date_format:"Y-m-d"',
             'date_till' => 'date_format:"Y-m-d"|after_or_equal:date_from',
             'movie_types' => 'array|max:8',
             'sort' => 'required|string|max:15',
-            'persons_source' => 'array|max:40',
+            'persons_source' => 'array|max:20',
             'type_images' => 'required|string|max:15',
             'type_posters' => 'max:10',
             'switch_new_update' => 'boolean',
@@ -36,8 +35,19 @@ class ParserStartController
         }
         if ($data = $validator->getData()){
             $parserStart = new ParserController($data);
+
+            ParserController::$reportProgress['report']['icon'] = 'info';
+            ParserController::$reportProgress['report']['status'] = __('parser.start_parser');
+
+            event(new ParserReportEvent(ParserController::$reportProgress));
             $data['flag'] ? $parserStart->parseMoviesByPeriod($data['movie_types']) : $parserStart->parsePersons($data['persons_source'],$data['switch_new_update']);
-            session()->put('tracking.report.stop',  __('parser.completed_parser'));
+
+            ParserController::$reportProgress['report']['icon'] = 'success';
+            ParserController::$reportProgress['report']['status'] = __('parser.completed_parser');
+            ParserController::$reportProgress['report']['statusBar']['percent'] = 100;
+            ParserController::$reportProgress['report']['statusBar']['action'] = __('parser.finish_parser');
+            ParserController::$reportProgress['report']['statusBar']['color'] = 'success';
+            event(new ParserReportEvent(ParserController::$reportProgress));
         }
     }
 

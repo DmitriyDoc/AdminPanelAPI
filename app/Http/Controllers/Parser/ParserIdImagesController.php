@@ -72,7 +72,7 @@ class ParserIdImagesController extends ParserController
             $pages = (new CurlConnectorController())->getCurlMulty($this->links);
             $this->links = [];
             if (is_array($pages)){
-                $this->getIdImages($pages,$this->update_id_images_table,self::ID_PATTERN);
+                $this->getIdImages($pages,self::ID_PATTERN);
             }
         });
     }

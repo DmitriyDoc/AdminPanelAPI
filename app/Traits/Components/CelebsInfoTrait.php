@@ -69,9 +69,8 @@ trait CelebsInfoTrait
                             'birthdayLocation' => $insertData['birthdayLocation'] ?? null,
                             'dieLocation' => $insertData['dieLocation'] ?? null]
                         ,$this->signByField);
-                        $this->localizing($insertData);
+                        $this->localizing($insertData['id_celeb']);
                     });
-
                 }
             }
         }
