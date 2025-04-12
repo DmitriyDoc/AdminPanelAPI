@@ -207,19 +207,22 @@
             width="615"
             style="overflow-y: scroll;height: calc(100vh - 200px);"
             :before-close="handleClose"
+            class="bg-light"
         >
-            <template v-if="parserReport.report">
-                <el-result :icon="parserReport.report.icon" :title="parserReport.report.status"></el-result>
-            </template>
-            <template v-if="parserReport.report.statusBar.color">
-                <h4 class="mt-2">{{locale.current_bar_progress}}</h4>
-                <el-text :type="parserReport.report.statusBar.color">{{parserReport.report.statusBar.action}}</el-text>
-                <el-progress :percentage="parserReport.report.statusBar.percent" :stroke-width="15" striped />
+            <template v-if="parserReport.report" class="sticky-top">
+                <div class="sticky-top bg-light">
+                    <el-result :icon="parserReport.report.icon" :title="parserReport.report.status"></el-result>
+                    <div v-if="parserReport.report.statusBar.color">
+                        <h4 class="mt-2">{{locale.current_bar_progress}}</h4>
+                        <el-text :type="parserReport.report.statusBar.color">{{parserReport.report.statusBar.action}}</el-text>
+                        <el-progress :percentage="parserReport.report.statusBar.percent" :stroke-width="15" striped />
+                    </div>
+                </div>
             </template>
             <template v-if="parserReport.report.finishIdsPeriod.length">
                 <h4 class="mt-2">{{locale.finish_id_parse_by_date_period}}</h4>
                 <ul v-for="(item, index) in parserReport.report.finishIdsPeriod" class="list-group">
-                    <li class="list-group-item">{{index+1}}{{'. '}}{{item}}</li>
+                    <li class="list-group-item mb-1">{{index+1}}{{'. '}}{{item}}</li>
                 </ul>
             </template>
             <template v-if="Object.keys(parserReport.report.finishInfo).length">
@@ -230,7 +233,7 @@
                             <el-collapse-item >
                                 <template #title>
                                     <el-badge :value="item.length" :max="1000" :offset="[15, 0]" >
-                                        <li class="list-group-item"><el-icon color="#67C23A" ><Check /></el-icon> {{key}} </li>
+                                        <li class="list-group-item ml-4"><el-icon color="#67C23A" ><Check /></el-icon> {{key}} </li>
                                     </el-badge>
                                 </template>
                                 <span v-for="id in item">
