@@ -3,6 +3,7 @@
 return [
     "clear_selection"=>"Clear Selection",
     "delete_selection"=>"Delete Selection",
+    "move_selection"=>"Move to Posters",
     "next_page"=>"Next Page",
     "original"=>"Original",
     "russian"=>"Russian",

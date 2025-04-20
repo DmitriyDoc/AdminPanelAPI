@@ -288,6 +288,7 @@ class LanguageController
             'sync_imdb' => __('buttons.sync_imdb'),
             'clear_selection' => __('buttons.clear_selection'),
             'delete_selection' => __('buttons.delete_selection'),
+            'move_selection' => __('buttons.move_selection'),
             'next_page' => __('buttons.next_page'),
             'original' => __('buttons.original'),
             'russian' => __('buttons.russian'),

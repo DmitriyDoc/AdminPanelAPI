@@ -129,6 +129,20 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
+    const moveImagesToPosters = async (ids,slug) =>{
+        try {
+            axios.patch('/media/move', {
+                    'data':ids,
+                    'slug':slug,
+                }).then((response) => {
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {
+            //loader.value = false;
+        }
+    }
     const setPoster = async (id,cat,slug) =>{
         try {
             axios.post('/media/poster_assign', {
@@ -158,6 +172,10 @@ export const useMediaStore = defineStore('mediaStore',() => {
     const removeMultipleImages = (ids,type,slug) => {
         removeImages(ids,type,slug);
     }
+
+    const moveMultipleImages = (ids,slug) => {
+        moveImagesToPosters(ids,slug);
+    }
     const assignPoster = (id,cat,slug) => {
         setPoster(id,cat,slug);
     }
@@ -179,6 +197,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
         countPoster,
         postersAssignInfo,
         removeMultipleImages,
+        moveMultipleImages,
         assignPoster,
         flushState,
         updatePosterPageSize,

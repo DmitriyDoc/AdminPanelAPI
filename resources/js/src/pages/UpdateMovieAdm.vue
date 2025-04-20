@@ -151,7 +151,9 @@
                         <div style="margin-top: 20px">
                             <el-button @click="toggleSelectImage()" type="info">{{singleData.locale.clear_selection}}</el-button>
                             <el-button @click="toggleRemoveImage()" type="danger">{{singleData.locale.delete_selection}}</el-button>
-                            <template v-if="countImg" >
+                            <el-button @click="moveImageToPosters()" type="primary">{{singleData.locale.move_selection}}</el-button>
+
+                            <template v-if="countImg > 50" >
                                 <el-button type="info" @click="handleImageLoadMore" >{{singleData.locale.next_page}}
                                     <el-icon class="el-icon--right">
                                         <ArrowRight/>
@@ -213,7 +215,7 @@
 
                         <div style="margin-top: 20px">
                             <div class="mt-3">
-                                <template v-if="countPoster" >
+                                <template v-if="countPoster > 50" >
                                     <el-button type="info" @click="handlePosterLoadMore" class="w-100">
                                         {{singleData.locale.next_page}}
                                         <el-icon class="el-icon--right">
@@ -449,6 +451,31 @@
                 ElMessage({
                     type: 'info',
                     message: 'Delete canceled',
+                })
+            })
+        } else {
+            ElMessage.error('No pictures have been selected');
+        }
+    }
+
+    const moveImageToPosters = () => {
+        if (multipleSelectImage.value.length){
+            getUnique(multipleSelectImage.value);
+            ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectImage.value.length} pictures will be moved to posters. Continue?`, 'WARNING', {
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel',
+                type: 'warning',
+            }).then(() => {
+                mediaStore.moveMultipleImages(multipleSelectImage.value,singleData.value.slug);
+                multipleTableImage.value!.clearSelection();
+                ElMessage({
+                    type: 'success',
+                    message: 'Move to posters completed',
+                })
+            }).catch(() => {
+                ElMessage({
+                    type: 'info',
+                    message: 'Move to posters canceled',
                 })
             })
         } else {

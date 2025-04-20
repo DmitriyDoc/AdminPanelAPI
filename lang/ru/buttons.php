@@ -3,6 +3,7 @@
 return [
     "clear_selection"=>"Очистить выбранное",
     "delete_selection"=>"Удалить выбранное",
+    "move_selection"=>"Переместить в постеры",
     "next_page"=>"Следующая страница",
     "original"=>"Оригинальное",
     "russian"=>"Русское",

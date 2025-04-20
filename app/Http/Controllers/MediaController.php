@@ -53,7 +53,7 @@ class MediaController extends Controller
                 if ($imgType == 'posters' && $model->get()->isNotEmpty()){
                     $model->with('assignPosters');
                 }
-                $res = $model->simplePaginate(10)->toArray();
+                $res = $model->simplePaginate(51)->toArray();
             }
             if (!empty($res)){
                 foreach ($res['data'] as &$item){
@@ -170,7 +170,7 @@ class MediaController extends Controller
             if (!empty($typeMovie)) {
                 $typeMovie = getTableSegmentOrTypeId($typeMovie->toArray()['type_film']);
                 $model = convertVariableToModelName('Images',$typeMovie, ['App', 'Models']);
-                $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$saveId)->whereNotNull('src',)->get();
+                $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$saveId)->whereNotNull('src')->get();
                 $res = $collection->shuffle()->take(50)->toArray();
 
                 if (!empty($res)){
@@ -290,6 +290,42 @@ class MediaController extends Controller
                 ];
             }
 
+        }
+        return [];
+    }
+    /**
+     * Move all checked images to posters table.
+     */
+    public function moveImagesToPosters(Request $request):array
+    {
+        $allowedTableNames = [
+            0=>'FeatureFilm',
+            1=>'MiniSeries',
+            2=>'ShortFilm',
+            3=>'TvMovie',
+            4=>'TvSeries',
+            5=>'TvShort',
+            6=>'TvSpecial',
+            7=>'Video',
+            8=>'Celebs',
+        ];
+        $slug = $request->get('slug');
+        $data = $request->get('data',[]);
+
+        if (in_array($slug,$allowedTableNames) && !empty($data)){
+            $ImagesModel = convertVariableToModelName('Images',$slug, ['App', 'Models']);
+            transaction( function () use ( $ImagesModel, $data, $slug ){
+                $images = $ImagesModel::whereIn('id', $data)->get(['id_movie','src','srcset','namesCelebsImg'])->toArray();
+                if (!empty($images)){
+                    $postersModel = convertVariableToModelName('Posters',$slug, ['App', 'Models']);
+                    $postersModel::query()->insert($images);
+                    $ImagesModel::whereIn('id', $data)->delete();
+                    return [
+                        'success' => true,
+                        'status' => 200,
+                    ];
+                }
+            });
         }
         return [];
     }
