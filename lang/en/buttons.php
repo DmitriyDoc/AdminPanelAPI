@@ -13,6 +13,7 @@ return [
     'edit'=>'Edit',
     'update'=>'Update',
     'sync_imdb'=>'Sync with IMDB',
+    'submit_resize'=>'Resize all Images',
     'add_movie' => 'Add movie',
     'add_person' => 'Add person',
     'start' => 'Start',
