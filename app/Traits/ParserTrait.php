@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 trait ParserTrait
 {
-    public function selectDB($table,$celebId,$signKey,$getKey){
-        return DB::table($table)->where($signKey, '=',$celebId)->get()->pluck($getKey)->toArray();
+    public function selectDB($table,$id,$signKey,$getKey){
+        return DB::table($table)->where($signKey, '=',$id)->get()->pluck($getKey)->toArray();
     }
     public function insertDB($table,$data){
         DB::table($table)->insertOrIgnore($data);

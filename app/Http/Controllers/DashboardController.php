@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssignPoster;
+use App\Models\Category;
+use App\Models\CollectionsCategoriesPivot;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use App\Events\DashboardCurrentPercentageEvent;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Laravel\Facades\Image;
 
 class DashboardController
 {
@@ -52,8 +59,8 @@ class DashboardController
         return $data;
     }
 
-    public function test(\Illuminate\Http\Request $request){
-        dd(1);
+    public function test()
+    {
         return [];
     }
 

@@ -20,6 +20,9 @@
                 <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
             </div>
             <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2 mt-2"> {{singleData.locale.sync_notice}}</el-text></div>
+            <el-button type="warning" class="mt-2" style="width: 100%;" @click="submitResize()" :loading='!!disabledBtnResize'>
+                {{singleData.locale.submit_resize}}
+            </el-button>
             <template v-if="singleData.collection">
                 <div class="mt-3">
                     <h5>{{singleData.locale.check_viewed}}</h5>
@@ -311,7 +314,7 @@
     const languageStore = useLanguageStore();
 
     const { singleData, disabledBtnUpdate, disabledBtnSync, locale, error } = storeToRefs(moviesStore);
-    const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, countImg, countPoster } = storeToRefs(mediaStore);
+    const { postersAssignInfo, imagesData, postersData, srcListImages, srcListPosters, disabledBtnResize, countImg, countPoster } = storeToRefs(mediaStore);
     const { percentageSync } = storeToRefs(progressBarStore);
     const { optionsCats } = storeToRefs(categoryStore);
     const { watcherLang } = storeToRefs(languageStore);
@@ -587,7 +590,20 @@
             })
         })
     }
-
+    const submitResize = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            mediaStore.resizeAllImages(route.params.id);
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Resize canceled',
+            })
+        })
+    }
 </script>
 
 <style lang="scss" scoped>

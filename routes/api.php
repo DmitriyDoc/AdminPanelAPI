@@ -55,6 +55,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             // DASHBOARD QUERY
             Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
             // MEDIA QUERY
+            Route::post('/resizing',[\App\Http\Controllers\ResizeImagesController::class, 'index']);
             Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
                 Route::get('/media/show/images/{id}', 'showImages');
                 Route::get('/media/show/posters/{id}', 'showPosters');

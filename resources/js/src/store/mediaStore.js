@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
 import { onMounted, onUpdated,onBeforeUnmount, ref,reactive} from "vue";
+import {ElMessage} from "element-plus";
 
 export const useMediaStore = defineStore('mediaStore',() => {
     const route = useRoute();
@@ -14,6 +15,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
     const countImg = ref(null);
     const countPoster = ref(null);
     const error = ref();
+    const disabledBtnResize = ref(false);
     const postersAssignInfo = reactive({
         id_poster_original: {
             locale: 'Original',
@@ -161,6 +163,30 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
+    const resizeAllImages = (id) => {
+        disabledBtnResize.value = true;
+        try {
+            axios.post('/resizing', { id_movie: id }).then((response) => {
+                if (response.status === 200){
+                    disabledBtnResize.value = false;
+                    ElMessage({
+                        type: 'success',
+                        message: 'Resize images completed',
+                    })
+                } else {
+                    ElMessage({
+                        type: 'error',
+                        message: 'Resize images is not finished',
+                    });
+                }
+            });
+        } catch (e) {
+            error.value = e;
+            console.log('error',e);
+        } finally {
+            //loader.value = false;
+        }
+    }
     const updateImagePageSize = (slug) => {
         pageImg.value =  pageImg.value + 1;
         getImages(slug);
@@ -192,10 +218,12 @@ export const useMediaStore = defineStore('mediaStore',() => {
         imagesData,
         postersData,
         srcListImages,
+        disabledBtnResize,
         srcListPosters,
         countImg,
         countPoster,
         postersAssignInfo,
+        resizeAllImages,
         removeMultipleImages,
         moveMultipleImages,
         assignPoster,

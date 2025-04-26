@@ -91,15 +91,6 @@ class MediaController extends Controller
         }
 
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
     /**
      * Store a newly created resource in storage.
      */
@@ -158,8 +149,6 @@ class MediaController extends Controller
             }
         }
     }
-
-
     public function showImages( string $id)
     {
         $res = [];
@@ -192,7 +181,6 @@ class MediaController extends Controller
 
         return $res;
     }
-
     public function showPosters( string $idMovie)
     {
         $res = [];
@@ -241,22 +229,6 @@ class MediaController extends Controller
 
         return $res;
     }
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
     /**
      * Remove the specified resource from storage.
      */

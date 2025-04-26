@@ -3,7 +3,6 @@
 
 namespace App\Http\Controllers\Parser;
 use App\Events\ParserReportEvent;
-use App\Events\SyncCurrentPercentage;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
 use Illuminate\Http\Request;
