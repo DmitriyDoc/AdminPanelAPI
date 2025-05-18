@@ -1,0 +1,12 @@
+README.md
+.gitignore
+Dockerfile
+docker-compose.yml
+
+**/*.env
+
+# Dependencies
+**/node_modules
+
+# Other unnecessary files or directories
+.git/

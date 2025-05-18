@@ -8,9 +8,23 @@ import i18n from 'laravel-vue-i18n/vite';
 import path from 'path'
 
 export default defineConfig({
+    // server: {
+    //     watch: {
+    //         usePolling: true,
+    //     },
+    //     host: "0.0.0.0",
+    //     port: 5173,
+    // },
     server: {
-        hmr : {
-            host: 'admin.local'
+        watch: {
+            usePolling: true,
+        },
+        port: 5173,
+        cors: {
+            origin: "http://spectrum.local",
+            methods: ["GET", "POST"],
+            allowedHeaders: ["Content-Type", "Authorization"],
+            preflightContinue: true
         }
     },
     plugins: [
@@ -27,9 +41,9 @@ export default defineConfig({
         }),
         i18n(),
     ],
-   resolve: {
-       alias: {
-           '@': path.resolve(__dirname,'resources/js/src')
-       }
-   }
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname,'resources/js/src')
+        }
+    }
 });

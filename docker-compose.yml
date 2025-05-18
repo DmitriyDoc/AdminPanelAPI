@@ -1,0 +1,115 @@
+version: '3'
+services:
+    #PHP Service
+    php:
+        container_name: php
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: digitalocean.com/php
+        restart: unless-stopped
+        tty: true
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: dev
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - ./.env:/var/www/.env
+            - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - app-network
+    #Nginx Service
+    webserver:
+        container_name: webserver
+        image: nginx:alpine
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+        volumes:
+            - ./:/var/www
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+        networks:
+            - app-network
+    #MySQL Service
+    db:
+        container_name: db
+        image: mysql:5.7.22
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        volumes:
+            - dbdata:/var/lib/mysql/
+            - ./mysql/my.cnf:/etc/mysql/my.cnf
+        networks:
+            - app-network
+    #Redis Service
+    redis:
+        container_name: redis
+        image: redis:latest
+        ports:
+            - "6379:6379"
+        volumes:
+            - ./redisdata:/data
+        command: ["redis-server", "--bind", "redis", "--port", "6379"]
+        networks:
+            - app-network
+    #Adminer client
+    adminer:
+        container_name: adminer
+        restart: unless-stopped
+        image: adminer:4
+        environment:
+            ADMINER_DEFAULT_DB_DRIVER: mysql
+            ADMINER_DEFAULT_DB_HOST: db:3306
+            ADMINER_DEFAULT_DB_NAME: database_spectrum
+        depends_on:
+            - db
+        ports:
+            - ${ADMINER_PORT:-8080}:8080
+        networks:
+            - app-network
+    #Composer
+    composer:
+        container_name: composer
+        image: composer:latest
+        tty: true
+        volumes:
+            - .:/var/www
+        working_dir: /var/www
+        depends_on:
+            - php
+        networks:
+            - app-network
+    #NPM
+    npm:
+        container_name: npm
+        build:
+            context: .
+            dockerfile: Dockerfile.node
+        tty: true
+        ports:
+            - "5173:5173"
+            - "3000:3000"
+        volumes:
+            - .:/var/www
+        working_dir: /var/www
+        networks:
+            - app-network
+#Docker Networks
+networks:
+    app-network:
+        driver: bridge
+#Volumes
+volumes:
+    dbdata:
+        driver: local
