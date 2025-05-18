@@ -48,7 +48,7 @@
             </template>
         </el-col>
         <el-col :span="20">
-            <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick()">
+            <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
                 <el-tab-pane :label="singleData.locale.genres" name="first">
                     <li class="list-group-item">
                         <template v-for="(genre, index) in singleData.genres">
@@ -400,9 +400,9 @@
     const handlePosterLoadMore = () => {
         mediaStore.updatePosterPageSize(singleData.value.slug);
     }
-    // const handleClick = (tab: TabsPaneContext, event: Event) => {
-    //     //console.log(tab, event)
-    // }
+    const handleClick = (tab: TabsPaneContext, event: Event) => {
+        //console.log(tab, event)
+    }
 
     const toggleSelectImage = (rows?: []) => {
         if (rows) {
