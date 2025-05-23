@@ -15,7 +15,6 @@ class PostersMiniSeries extends Model
         'id_movie',
         'src',
         'srcset',
-        'namesCelebsImg',
         'created_at',
         'updated_at',
     ];
