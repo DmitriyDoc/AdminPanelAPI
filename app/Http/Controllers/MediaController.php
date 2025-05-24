@@ -38,14 +38,14 @@ class MediaController extends Controller
         if (!empty($safeId)){
             if ($slug == 'Celebs') {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $res = $model::select('id','id_celeb','src','srcset','namesCelebsImg')->where('id_celeb',$safeId)->simplePaginate(10)->toArray();
+                $res = $model::select('id','id_celeb','src','srcset')->where('id_celeb',$safeId)->simplePaginate(10)->toArray();
             } elseif (in_array($slug,$allowedTableNames))  {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$safeId);
+                $model = $model::select('id','id_movie','src','srcset')->where('id_movie',$safeId);
                 if ($model->get()->isEmpty()){
                     foreach ($allowedTableNames as $type){
                         $model = convertVariableToModelName(ucfirst($imgType),$type, ['App', 'Models']);
-                        $model = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$safeId);
+                        $model = $model::select('id','id_movie','src','srcset')->where('id_movie',$safeId);
                         if ($model->get()->isNotEmpty()) break;
                     }
                 }
@@ -159,7 +159,7 @@ class MediaController extends Controller
             if (!empty($typeMovie)) {
                 $typeMovie = getTableSegmentOrTypeId($typeMovie->toArray()['type_film']);
                 $model = convertVariableToModelName('Images',$typeMovie, ['App', 'Models']);
-                $collection = $model::select('id','id_movie','src','srcset','namesCelebsImg')->where('id_movie',$saveId)->whereNotNull('src')->get();
+                $collection = $model::select('id','id_movie','src','srcset')->where('id_movie',$saveId)->whereNotNull('src')->get();
                 $res = $collection->shuffle()->take(50)->toArray();
 
                 if (!empty($res)){
@@ -287,7 +287,7 @@ class MediaController extends Controller
         if (in_array($slug,$allowedTableNames) && !empty($data)){
             $ImagesModel = convertVariableToModelName('Images',$slug, ['App', 'Models']);
             transaction( function () use ( $ImagesModel, $data, $slug ){
-                $images = $ImagesModel::whereIn('id', $data)->get(['id_movie','src','srcset','namesCelebsImg'])->toArray();
+                $images = $ImagesModel::whereIn('id', $data)->get(['id_movie','src','srcset'])->toArray();
                 if (!empty($images)){
                     $postersModel = convertVariableToModelName('Posters',$slug, ['App', 'Models']);
                     $postersModel::query()->insert($images);
