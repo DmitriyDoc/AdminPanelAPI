@@ -196,7 +196,7 @@
                             </el-table-column>
                             <el-table-column property="src" :label="singleData.locale.photo" width="150">
                                 <template v-slot:default="scope">
-                                    <el-image :src="scope.row.src"/>
+                                    <el-image :src="scope.row.srcset"/>
                                 </template>
                             </el-table-column>
                             <el-table-column property="status_poster" :label="singleData.locale.assign_status" width="150">
