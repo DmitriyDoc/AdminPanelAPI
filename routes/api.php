@@ -47,7 +47,9 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
         Route::get('/locale',[\App\Http\Controllers\LanguageController::class, 'changeLocale'])->withoutMiddleware('localization');
         // CHECK  LANGUAGE
         Route::middleware('localization')->group(function () {
-            //PARSER
+            // BALANCER ALLOHA
+            Route::get('/balancer', [\App\Http\Controllers\BalancerController::class, 'getMovieByImdb']);
+            // PARSER
             Route::post('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
             Route::post('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
             Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInitStore']);
