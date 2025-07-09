@@ -33,7 +33,7 @@ return [
         'images' => [
             'driver' => 'local',
             'root' => storage_path('uploads/images'),
-            'throw' => false,
+            'visibility' => 'public',
         ],
 
         'local' => [

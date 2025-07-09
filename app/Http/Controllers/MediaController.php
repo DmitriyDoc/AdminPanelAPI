@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssignPoster;
-use App\Models\InfoCelebs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -14,6 +13,7 @@ class MediaController extends Controller
      */
     public function index( string $imgType, string $slug, string $id )
     {
+        $res = [];
         $safeId = trim(strtolower(strip_tags($id)));
         $allowedTypesNames = [
             0=>'images',
@@ -41,11 +41,11 @@ class MediaController extends Controller
                 $res = $model::select('id','id_celeb','src','srcset')->where('id_celeb',$safeId)->simplePaginate(10)->toArray();
             } elseif (in_array($slug,$allowedTableNames))  {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $model = $model::select('id','id_movie','src','srcset')->where('id_movie',$safeId);
+                $model = $model::select('id','id_movie','srcset')->where('id_movie',$safeId);
                 if ($model->get()->isEmpty()){
                     foreach ($allowedTableNames as $type){
                         $model = convertVariableToModelName(ucfirst($imgType),$type, ['App', 'Models']);
-                        $model = $model::select('id','id_movie','src','srcset')->where('id_movie',$safeId);
+                        $model = $model::select('id','id_movie','srcset')->where('id_movie',$safeId);
                         if ($model->get()->isNotEmpty()) break;
                     }
                 }
@@ -57,16 +57,8 @@ class MediaController extends Controller
             }
             if (!empty($res)){
                 foreach ($res['data'] as &$item){
-                    $imagesArr = explode(',',$item['srcset'] ?? '');
-                    $sortImgArr = [];
-                    foreach ($imagesArr as $key => $img){
-                        $resArr =  explode(' ',$img);
-                        $resArr = array_reverse($resArr);
-                        $sortImgArr[$resArr[0]] = $resArr[1]??'';
-                    }
-                    ksort($sortImgArr,SORT_NATURAL );
-                    $item['srcset'] = $sortImgArr[array_key_first($sortImgArr)];
-                    $item['src'] = $sortImgArr['1024w'] ?? $sortImgArr[array_key_last($sortImgArr)];
+                    $item['src'] = getImageUrlByWidth($item['srcset']);
+                    $item['srcset'] = getImageUrlByWidth($item['srcset'],true);
                     if ($imgType == 'posters'){
                         $item['status_poster'] = $this->checkAssignPoster($item['id'],$item['assign_posters']);
                     }
@@ -86,10 +78,8 @@ class MediaController extends Controller
                 $res['poster_count']['id_wallpaper'] = $arrayAssignPoster[0]['id_wallpaper'] ? 1 : 0;
                 $res['locale']['id_wallpaper'] =  __('buttons.wallpaper');
             }
-
-            return $res ?? [];
         }
-
+        return $res ?? [];
     }
     /**
      * Store a newly created resource in storage.
@@ -178,7 +168,6 @@ class MediaController extends Controller
                 }
             }
         }
-
         return $res;
     }
     public function showPosters( string $idMovie)
@@ -226,7 +215,6 @@ class MediaController extends Controller
 
             }
         }
-
         return $res;
     }
     /**
@@ -297,6 +285,7 @@ class MediaController extends Controller
                         'status' => 200,
                     ];
                 }
+                return [];
             });
         }
         return [];
@@ -344,4 +333,5 @@ class MediaController extends Controller
         }
         return null;
     }
+
 }

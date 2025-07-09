@@ -8,6 +8,7 @@ use App\Models\CollectionsCategoriesPivot;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use App\Events\DashboardCurrentPercentageEvent;
@@ -61,6 +62,13 @@ class DashboardController
 
     public function test()
     {
+//        $response = Http::get('https://api.alloha.tv/', [
+//            'token' => '5009a7a2d05cb714cc53c8408471e3',
+//            'imdb' => 'tt0115710',
+//        ]);
+//        $body = $response->getBody();
+//        $data = json_decode($body, true);
+//        dd($data);
         return [];
     }
 

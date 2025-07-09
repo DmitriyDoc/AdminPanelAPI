@@ -196,4 +196,38 @@ if (!function_exists('cascaderStructure')) {
             return $head;
         }
     }
+    if (!function_exists('getImageUrlByWidth')) {
+        function getImageUrlByWidth(string $imageString, bool $useSmallest = false): ?string {
+            $images = [];
+            $pattern = '/(https:\/\/[^\s]+)\s+(\d+)w/';
+            preg_match_all($pattern, $imageString, $matches, PREG_SET_ORDER);
+
+            foreach ($matches as $match) {
+                $images[$match[2] . 'w'] = $match[1];
+            }
+            $widths = array_map(function ($key) {
+                return (int) str_replace('w', '', $key);
+            }, array_keys($images));
+
+            if (empty($widths)) {
+                return null;
+            }
+
+            if ($useSmallest) {
+                return $images[min($widths) . 'w'];
+            }
+
+            rsort($widths);
+
+            $preferredWidth = 1024;
+
+            foreach ($widths as $width) {
+                if ($width <= $preferredWidth) {
+                    return $images[$width . 'w'];
+                }
+            }
+
+            return $images[min($widths) . 'w'];
+        }
+    }
 }

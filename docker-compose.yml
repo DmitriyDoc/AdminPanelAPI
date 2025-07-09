@@ -19,6 +19,8 @@ services:
             - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
         networks:
             - app-network
+        extra_hosts:
+            - "m.media-amazon.com:212.188.39.27"
     #Nginx Service
     webserver:
         container_name: webserver
