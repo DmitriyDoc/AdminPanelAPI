@@ -285,6 +285,7 @@ class LanguageController
         return [
             'edit' => __('buttons.edit'),
             'update' => __('buttons.update'),
+            'back_to_show' => __('buttons.back_to_show'),
             'sync_imdb' => __('buttons.sync_imdb'),
             'submit_resize' => __('buttons.submit_resize'),
             'clear_selection' => __('buttons.clear_selection'),

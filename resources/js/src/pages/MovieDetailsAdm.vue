@@ -6,7 +6,7 @@
         </el-col>
         <el-col :span="4" >
             <el-button type="danger" class="mt-2 mb-2" style="width: 100%;">
-                <RouterLink :to="{ name: 'editMovie', params: { slug: routeParams.slug, id: routeParams.id }}">
+                <RouterLink :to="{ name: 'editMovie', params: { id: routeParams.id }}">
                     {{ singleData.locale.edit }}
                 </RouterLink>
             </el-button>
