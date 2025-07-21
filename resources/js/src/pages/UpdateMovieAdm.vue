@@ -1,9 +1,15 @@
 <template>
+
     <el-row v-if="singleData.locale">
-        <el-col :span="24">
+        <el-col :span="24" class="mt-3">
             <h1>{{ singleData.title }}</h1>
         </el-col>
         <el-col :span="4">
+            <el-button  type="info" class="mt-2 mb-2" style="width: 100%;">
+                <RouterLink :to="{ name: 'showMovie', params: { id: route.params.id }}">
+                    {{ singleData.locale.back_to_show }}
+                </RouterLink>
+            </el-button >
             <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" width="250"/>
             <div class="mt-1 mb-2">
                 <h5>{{singleData.locale.poster_type}}</h5>
@@ -300,7 +306,7 @@
     import { useCategoriesStore } from "../store/categoriesStore";
     import { useProgressBarStore } from "../store/progressBarStore";
     import { useLanguageStore } from "../store/languageStore";
-    import type { TabsPaneContext } from 'element-plus';
+    import {ElButton, TabsPaneContext} from 'element-plus';
     import { ElMessage, ElMessageBox, ElTable } from 'element-plus'
     import { ArrowRight } from '@element-plus/icons-vue'
     import { ref, watch, onMounted } from "vue";

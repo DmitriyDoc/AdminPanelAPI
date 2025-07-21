@@ -11,6 +11,7 @@ return [
     "alternative"=>"Alternative",
     "wallpaper"=>"Wallpaper",
     'edit'=>'Edit',
+    'back_to_show'=>'Back to view',
     'update'=>'Update',
     'sync_imdb'=>'Sync with IMDB',
     'submit_resize'=>'Resize all Images',

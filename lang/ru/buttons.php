@@ -11,6 +11,7 @@ return [
     "alternative"=>"Альтернативные",
     "wallpaper"=>"Фоновое",
     'edit'=>'Редактировать',
+    'back_to_show'=>'Назад к просмотру',
     'update'=>'Обновить',
     'sync_imdb'=>'Синхронизация с IMDB',
     'submit_resize'=>'Компрессия изображений',

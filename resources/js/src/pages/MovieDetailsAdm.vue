@@ -4,14 +4,12 @@
             <h1>{{ singleData.title }}</h1>
             <span>{{ singleData.original_title }}</span>
         </el-col>
-        <el-col >
-            <el-button type="success" link >
+        <el-col :span="4" >
+            <el-button type="danger" class="mt-2 mb-2" style="width: 100%;">
                 <RouterLink :to="{ name: 'editMovie', params: { slug: routeParams.slug, id: routeParams.id }}">
-                    <el-button type="danger">{{ singleData.locale.edit }}</el-button>
+                    {{ singleData.locale.edit }}
                 </RouterLink>
             </el-button>
-        </el-col>
-        <el-col :span="4">
             <el-image :src="singleData.poster" fit="cover" width="200"/>
             <ul class="list-group">
                 <li class="list-group-item bg-light"><strong>{{ singleData.type_film ?? singleData.locale.empty }}</strong></li>
