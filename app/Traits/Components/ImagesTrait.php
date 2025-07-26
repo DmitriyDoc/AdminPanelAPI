@@ -10,8 +10,9 @@ trait ImagesTrait
 {
     protected function getImages($linksArray,$updateTable){
         foreach($linksArray as $id => $links) {
+            sleep(1);
             $this->deleteById($updateTable,$this->signByField,$id);
-            foreach (array_chunk($links, 30) as $chunk) {
+            foreach (array_chunk($links, 10) as $chunk) {
                 $pages = [];
                 $pages[] = (new CurlConnectorController())->getCurlMulty($chunk);
                 foreach ($pages[0] as $link => $page) {

@@ -4,9 +4,7 @@
 namespace App\Http\Controllers\Parser;
 
 use App\Events\CurrentPercentageEvent;
-use App\Events\MovieSyncCurrentPercentage;
 use App\Events\ParserReportEvent;
-use App\Events\SyncCurrentPercentage;
 use App\Http\Controllers\ParserController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -84,8 +82,8 @@ class ParserUpdateMovieController extends ParserController
         event(new CurrentPercentageEvent(['percent'=>10,'action'=>__('parser.general_data_parser'),'color'=>'']));
         foreach ($this->idMovies as $id) {
             array_push($this->linksInfo, $this->domen . $this->imgUrlFragment . $id);
-            array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes='.$params['typeImages']);
-            array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex/?contentTypes='.$params['typePosters']);
+            array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes=still_frame');
+            array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes=poster');
         }
         $this->linksGetter($this->linksInfo, 'getMoviesInfo');
 

@@ -108,7 +108,7 @@ class ParserController extends Controller
         ],
     ];
 
-    protected $domen = 'https://www.imdb.com';
+    protected $domen = 'https://imdb.com';
     protected $signByField;
     protected $typeFilm;
     protected $imgUrlFragment;
