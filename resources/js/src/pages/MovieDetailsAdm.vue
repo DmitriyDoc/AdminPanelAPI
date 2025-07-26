@@ -4,13 +4,13 @@
             <h1>{{ singleData.title }}</h1>
             <span>{{ singleData.original_title }}</span>
         </el-col>
-        <el-col :span="4" >
+        <el-col :span="6" >
             <el-button type="danger" class="mt-2 mb-2" style="width: 100%;">
                 <RouterLink :to="{ name: 'editMovie', params: { id: routeParams.id }}">
                     {{ singleData.locale.edit }}
                 </RouterLink>
             </el-button>
-            <el-image :src="singleData.poster" fit="cover" width="200"/>
+            <el-image :src="singleData.poster" fit="cover" class="w-full"/>
             <ul class="list-group">
                 <li class="list-group-item bg-light"><strong>{{ singleData.type_film ?? singleData.locale.empty }}</strong></li>
 
@@ -32,7 +32,7 @@
                 <li class="list-group-item"><span><strong>{{ singleData.locale.budget }}</strong></span> {{ singleData.budget ?? singleData.locale.empty }}</li>
             </ul>
         </el-col>
-        <el-col :span="20" >
+        <el-col :span="18" >
             <el-tabs v-model="activeTabName" class="demo-tabs m-3">
                 <el-tab-pane :label="singleData.locale.genres" name="first">
                     <li class="list-group-item">
