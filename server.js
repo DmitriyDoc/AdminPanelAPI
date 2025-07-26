@@ -6,7 +6,7 @@ const io = require("socket.io")(http,{
     }
 });
 const Redis = require('ioredis');
-const redis = new Redis({ host: 'redis' });
+const redis = new Redis({ host: 'spectrum_redis' });
 
 io.on("connection", (socket) => {
     console.log('connection socket id:',socket.id);
