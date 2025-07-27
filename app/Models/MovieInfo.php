@@ -13,6 +13,7 @@ class MovieInfo extends Model
     protected $fillable = [
         'id',
         'id_movie',
+        'published',
         'type_film',
         'title',
         'original_title',
