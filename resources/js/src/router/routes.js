@@ -1,5 +1,6 @@
 import DashboardAdm from "@/pages/DashboardAdm.vue";
 import ParserAdm from "@/pages/ParserAdm.vue";
+import ExportAdm from "@/pages/ExportAdm.vue";
 import MoviesInfoAdm from "@/pages/MoviesInfoAdm.vue";
 import SectionsInfoAdm from "@/pages/SectionsInfoAdm.vue";
 import CollectionsInfoAdm from "@/pages/CollectionsInfoAdm.vue";
@@ -69,6 +70,15 @@ const routes = [
         path: '/parser',
         name: 'parser',
         component: ParserAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/export',
+        name: 'export',
+        component: ExportAdm,
         meta: {
             layout: 'full',
             permissions: [],
