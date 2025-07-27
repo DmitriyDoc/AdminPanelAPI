@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class LocalizingFranchise extends Model
 {
     use HasFactory;
-    protected $table = 'localizing_franchise';
+    protected $table = 'franchises';
     public $timestamps = false;
 
     protected $fillable = [
