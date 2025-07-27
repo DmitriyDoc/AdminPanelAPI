@@ -230,4 +230,23 @@ if (!function_exists('cascaderStructure')) {
             return $images[min($widths) . 'w'];
         }
     }
+    if (!function_exists('collectPosterUrls')) {
+        function collectPosterUrls($array)
+        {
+            $urls = [];
+            foreach ($array as $key => $item) {
+                $result = array_map(function($fullSize, $small) {
+                    return [
+                        'src' => $fullSize['url']??'',
+                        'srcset' => $small['url']??''
+                    ];
+                }, $array[$key]['full_size'], $array[$key]['small']??$array[$key]['full_size']);
+
+                foreach ($result as $item) {
+                    $urls[] = $item;
+                }
+            }
+            return $urls;
+        }
+    }
 }
