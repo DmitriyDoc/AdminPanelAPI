@@ -8,6 +8,8 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
+use App\Services\ApiRequestImages;
+use App\Services\IdHasher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
@@ -37,6 +39,8 @@ class CollectionsController extends Controller
             $collectionFranchise = [];
             $collectionId = null;
             $collectionTitle = null;
+            $hashedIds = [];
+            $apiPreviewLinks = [];
             $sectionId = Category::where('value',$slugSect)->get('id')->toArray();
             $localizingFranchiseModel = LocalizingFranchise::query()->get();
             if ($sectionId[0]){
@@ -89,6 +93,7 @@ class CollectionsController extends Controller
                         }
                         $collectionSort = $sorted->forPage($perPage,$limit);
                         $collectionSortArr = $collectionSort->values()->toArray();
+
                         foreach ($collectionSortArr as $movieItem){
                             if ($movieItem['assign_poster']){
                                 $idsPostersArr[getTableSegmentOrTypeId($movieItem['assign_poster']['type_film'])][] = $movieItem['assign_poster']['id_poster_original'];
@@ -102,6 +107,27 @@ class CollectionsController extends Controller
                             }
                             $collapsedPosters = $posterCollection->collapse()->toArray();
                         }
+                        foreach ($collectionSortArr as $movieItem){
+                            $hasher = new IdHasher($movieItem['id_movie']);
+                            $hashedIds[$hasher->getResult()??''][] = ['old_id'=>$movieItem['id_movie']];
+                            $hashedIds['api'][] = $hasher->getResult();
+                        }
+
+                        if (!empty($hashedIds)){
+                            $data = ['movieIds' => $hashedIds['api']];
+                            $apiService = new ApiRequestImages();
+                            $previewImagesApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/batch/types/original_poster/small", 'POST', $data, true);
+                            if ($previewImagesApi['status'] === 200 && $previewImagesApi['data']['success']){
+                                unset($hashedIds['api']);
+                                foreach ($previewImagesApi['data']['images'] as $k =>$image){
+                                    if (!empty($image)){
+                                        $apiPreviewLinks[$k] = $image;
+                                    }
+                                }
+
+                            }
+                        }
+
                         foreach ($collectionSortArr as $k => $item) {
                             if (!empty($collectionFranchise)){
                                 foreach ($item['categories'] as $key => $cat){
@@ -116,10 +142,14 @@ class CollectionsController extends Controller
                                 }
                             }
                             if (!empty($collapsedPosters)){
-                                foreach ($collapsedPosters as $posterItem){
-                                    if ($item['id_movie'] == $posterItem['id_movie']){
-                                        $img = explode(',',$posterItem['srcset'] ?? '');
-                                        $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
+                                foreach ($hashedIds as $hashKey => $ids) {
+                                    foreach ($collapsedPosters as $posterItem){
+                                        if ($item['id_movie'] == $posterItem['id_movie']){
+                                            $img = explode(',',$posterItem['srcset'] ?? '');
+                                            if ($posterItem['id_movie'] == $ids[0]['old_id']){
+                                                $collectionResponse['data'][$k]['poster'] = (!empty($previewImagesApi['data']['images'][$hashKey])) ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : $img[0] ?? '';
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -130,6 +160,8 @@ class CollectionsController extends Controller
                             $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
                             $collectionResponse['data'][$k]['type_film'] = getTableSegmentOrTypeId($item['type_film']) ?? '';
                         }
+                        unset($hashedIds);
+                        unset($previewImagesApi);
                         if (!empty($collectionResponse['data'])){
                             foreach ($collectionResponse['data'] as $dataMovie){
                                 if (!empty($dataMovie['franchise'])){

@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssignPoster;
+use App\Services\ApiRequestImages;
+use App\Services\IdHasher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class MediaController extends Controller
@@ -57,10 +61,12 @@ class MediaController extends Controller
             }
             if (!empty($res)){
                 foreach ($res['data'] as &$item){
-                    $item['src'] = getImageUrlByWidth($item['srcset']);
-                    $item['srcset'] = getImageUrlByWidth($item['srcset'],true);
-                    if ($imgType == 'posters'){
-                        $item['status_poster'] = $this->checkAssignPoster($item['id'],$item['assign_posters']);
+                    if (!empty($item) && isset($item['srcset'])) {
+                        $item['src'] = getImageUrlByWidth($item['srcset']);
+                        $item['srcset'] = getImageUrlByWidth($item['srcset'],true);
+                        if ($imgType == 'posters'){
+                            $item['status_poster'] = $this->checkAssignPoster($item['id'],$item['assign_posters']);
+                        }
                     }
                 }
             }
@@ -81,6 +87,83 @@ class MediaController extends Controller
         }
         return $res ?? [];
     }
+
+    /**
+     * Send a GET request to the specified API URL and return the JSON response.
+     */
+//    public static function sendApiRequest($url, $method = 'GET', $data = [], $useToken = false)
+//    {
+//        try {
+//            $http = Http::withHeaders([
+//                'Accept' => 'application/json',
+//            ]);
+//
+//            if ($useToken) {
+//                $token = env('API_TOKEN');
+//                if (empty($token)) {
+//                    Log::error("API-REQUEST-ERROR ---> URL: {$url}, METHOD: {$method}, ERROR: API_TOKEN is not set in environment");
+//                    return [
+//                        'success' => false,
+//                        'status' => 500,
+//                        'message' => 'API token is not configured',
+//                        'data' => null,
+//                    ];
+//                }
+//                $http = $http->withToken($token);
+//            }
+//
+//            //Log::debug("API-REQUEST-START ---> URL: {$url}, METHOD: {$method}, USE-TOKEN: " . ($useToken ? 'true' : 'false') . ", DATA: " . json_encode($data));
+//
+//            if (strtoupper($method) === 'POST') {
+//                $response = $http->post($url, $data);
+//            } else {
+//                $response = $http->get($url);
+//            }
+//
+//            if ($response->successful()) {
+//                $responseData = $response->json();
+//                //Log::debug("API-REQUEST-SUCCESS ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($responseData));
+//                return [
+//                    'success' => true,
+//                    'status' => $response->status(),
+//                    'data' => $responseData,
+//                ];
+//            } elseif ($response->status() === 404) {
+//                $responseData = $response->json();
+//                Log::warning("API-REQUEST-NOT-FOUND ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($responseData));
+//                return [
+//                    'success' => false,
+//                    'status' => 404,
+//                    'message' => 'Resource not found',
+//                    'data' => $responseData,
+//                ];
+//            } elseif ($response->status() === 401) {
+//                Log::warning("API-REQUEST-UNAUTHORIZED ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($response->body()));
+//                return [
+//                    'success' => false,
+//                    'status' => 401,
+//                    'message' => 'Unauthorized access',
+//                    'data' => null,
+//                ];
+//            } else {
+//                Log::error("API-REQUEST-FAILED ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($response->body()));
+//                return [
+//                    'success' => false,
+//                    'status' => $response->status(),
+//                    'message' => 'Request failed',
+//                    'data' => $response->json(),
+//                ];
+//            }
+//        } catch (\Exception $e) {
+//            Log::error("API-REQUEST-EXCEPTION ---> URL: {$url}, METHOD: {$method}, ERROR: {$e->getMessage()}");
+//            return [
+//                'success' => false,
+//                'status' => 500,
+//                'message' => 'Internal server error: ' . $e->getMessage(),
+//                'data' => null,
+//            ];
+//        }
+//    }
     /**
      * Store a newly created resource in storage.
      */
@@ -141,34 +224,48 @@ class MediaController extends Controller
     }
     public function showImages( string $id)
     {
-        $res = [];
+        $resMediaDB = [];
+        $resLinks = [];
         $saveId = strip_tags($id);
         if (!empty($saveId)){
             $modelInfo = modelByName('MovieInfo');
-            $typeMovie = $modelInfo->query()->select('type_film')->where('id_movie',$saveId)->first();
-            if (!empty($typeMovie)) {
-                $typeMovie = getTableSegmentOrTypeId($typeMovie->toArray()['type_film']);
-                $model = convertVariableToModelName('Images',$typeMovie, ['App', 'Models']);
+            $typeMovieId = $modelInfo->query()->select('type_film')->where('id_movie',$saveId)->first();
+            if (!empty($typeMovieId = $typeMovieId->type_film)) {
+                $typeMovieSegment = getTableSegmentOrTypeId($typeMovieId);
+                $model = convertVariableToModelName('Images',$typeMovieSegment, ['App', 'Models']);
                 $collection = $model::select('id','id_movie','src','srcset')->where('id_movie',$saveId)->whereNotNull('src')->get();
-                $res = $collection->shuffle()->take(50)->toArray();
+                $resMediaDB = $collection->shuffle()->take(50)->toArray();
 
-                if (!empty($res)){
-                    foreach ($res as &$item){
+                if (!empty($resMediaDB)){
+                    $hasher = new IdHasher($id);
+                    $hashDecodeId = $hasher->getResult();
+                    $apiService = new ApiRequestImages();
+                    $imagesApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/{$typeMovieId}/{$hashDecodeId}/images");
+                    if ($imagesApi['status'] === 200 && $imagesApi['data']['success']){
+                        foreach ($imagesApi['data']['images']['small'] as $i => $image){
+                            $resLinks[$i]['srcset'] = $image['url'];
+                        }
+                        foreach ($imagesApi['data']['images']['full_size'] as $i => $image){
+                            $resLinks[$i]['src'] = $image['url'];
+                        }
+                        return $resLinks;
+                    }
+                    foreach ($resMediaDB as $i => $item){
                         $imagesArr = explode(',',$item['srcset'] ?? '');
                         $sortImgArr = [];
-                        foreach ($imagesArr as $key => $img){
+                        foreach ($imagesArr as $img){
                             $resArr =  explode(' ',$img);
                             $resArr = array_reverse($resArr);
                             $sortImgArr[$resArr[0]] = $resArr[1]??'';
                         }
                         ksort($sortImgArr,SORT_NATURAL );
-                        $item['srcset'] = $sortImgArr[array_key_first($sortImgArr)];
-                        $item['src'] = $sortImgArr['1024w'] ?? $sortImgArr[array_key_last($sortImgArr)];
+                        $resLinks[$i]['srcset'] = $sortImgArr[array_key_first($sortImgArr)];
+                        $resLinks[$i]['src'] = $sortImgArr['1024w'] ?? $sortImgArr[array_key_last($sortImgArr)];
                     }
                 }
             }
         }
-        return $res;
+        return $resLinks;
     }
     public function showPosters( string $idMovie)
     {
@@ -182,6 +279,13 @@ class MediaController extends Controller
                 unset($assignPostersArr['type_film']);
                 unset($assignPostersArr['id_movie']);
                 unset($assignPostersArr['id']);
+                $hasher = new IdHasher($idMovie);
+                $hashDecodeId = $hasher->getResult();
+                $apiService = new ApiRequestImages();
+                $postersApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/{$type}/{$hashDecodeId}/posters/");
+                if ($postersApi['status'] === 200 && $postersApi['data']['success']){
+                    return collectPosterUrls($postersApi['data']['images']) ?? [];
+                }
                 foreach ($assignPostersArr as $item){
                     if ($item){
                         if (is_string($item)){
@@ -197,7 +301,6 @@ class MediaController extends Controller
                 unset($assignPostersArr);
                 $model = convertVariableToModelName('Posters',getTableSegmentOrTypeId($type), ['App', 'Models']);
                 $res = $model::select('id','id_movie','src','srcset')->whereIn('id',$idArr)->get()->toArray();
-
                 if (!empty($res)){
                     foreach ($res as &$item){
                         $imagesArr = explode(',',$item['srcset'] ?? '');

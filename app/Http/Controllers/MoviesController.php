@@ -12,6 +12,9 @@ use App\Models\MovieInfo;
 use App\Models\MoviesInfoEn;
 use App\Models\MoviesInfoRu;
 use App\Models\TagsMoviesPivot;
+
+use App\Services\ApiRequestImages;
+use App\Services\IdHasher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -83,22 +86,6 @@ class MoviesController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(string $id)
@@ -125,6 +112,7 @@ class MoviesController extends Controller
                 $infoMovieData['type_film'] = __('movies.type_movies.'.$typeMovieSlug);
                 $infoMovieData['slug'] = $typeMovieSlug;
                 $infoMovieData['title'] = $modelArr[$titleFieldName];
+                $infoMovieData['published'] = $modelArr['published'];
                 $infoMovieData['original_title'] = $modelArr['original_title'];
                 $infoMovieData['year_release'] = $modelArr['year_release'];
                 $infoMovieData['restrictions'] = $modelArr['restrictions'];
@@ -145,15 +133,25 @@ class MoviesController extends Controller
                     $assignPosterId = AssignPoster::where('id_movie',$safeId)->first('id_poster_original');
 
                     if (!empty($assignPosterId)){
+                        $infoMovieData['assign_posters'] = true;
                         foreach ($modelArr[$relationPosterName] as $poster){
                             if ($poster['id'] == $assignPosterId->id_poster_original){
                                 $posterSrcSet = $poster['srcset'];
                             }
                         }
+                    } else {
+                        $infoMovieData['assign_posters'] = false;
                     }
                 }
                 $img = explode(',',$posterSrcSet ?? '');
-                $infoMovieData['poster'] = $img[0] ?? '';
+                $hasher = new IdHasher($id);
+                $hashDecodeId = $hasher->getResult();
+                $apiService = new ApiRequestImages();
+                $posterApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/{$typeMovie}/{$hashDecodeId}/original_poster");
+                if ($posterApi['status'] === 200 && $posterApi['data']['success']){
+                    $mediaPosterApi = $posterApi['data']['images']['medium'][0]['url'] ?? null;
+                }
+                $infoMovieData['poster'] = $mediaPosterApi ?? ($img[0] ?? '');
                 $infoMovieData['locale'] = LanguageController::localizingMovieShow();
                 if (!empty( $modelArr['collection'])) {
                     foreach ($modelArr['collection'] as $key => $itemCollection) {
@@ -176,11 +174,49 @@ class MoviesController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Publication
      */
-    public function edit(string $id)
+    public function publication(Request $request):array
     {
-        //
+        try {
+            $dataRequest = $request->all();
+            if (!empty($dataRequest)){
+                $movieId = $dataRequest['data']['movie_id']??null;
+                $colExists = CollectionsCategoriesPivot::query()->where('id_movie',$movieId)->exists();
+                if ($colExists) {
+                    $posterExists = AssignPoster::query()->where('id_movie',$movieId)->whereNotNull('id_poster_original')->exists();
+                    if ($posterExists) {
+                        $movieInfo = MovieInfo::query()->where('id_movie',$movieId)->update(['published' => 1]);
+                        if ($movieInfo){
+                            return [
+                                'success' => true,
+                                'status' => 200,
+                                'message' => 'The movie is awaiting for export',
+                            ];
+                        }
+                    } else {
+                        return [
+                            'success' => false,
+                            'status' => 200,
+                            'message' => 'The movie is not assign for posters table',
+                        ];
+                    }
+                } else {
+                    return [
+                        'success' => false,
+                        'status' => 200,
+                        'message' => 'The movie is not add for any collection',
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => $e->getMessage(),
+            ];
+        }
+        return ['success' => false];
     }
 
     /**

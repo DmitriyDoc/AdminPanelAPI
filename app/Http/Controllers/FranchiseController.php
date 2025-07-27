@@ -7,6 +7,8 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
+use App\Services\ApiRequestImages;
+use App\Services\IdHasher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
@@ -17,6 +19,8 @@ class FranchiseController extends Controller
 
     public function index(Request $request,$slugSect,$slugFran): array
     {
+        $hashedIds = [];
+        $apiPreviewLinks = [];
         $allowedSectionsNames = [
             0=>'yellow',
             1=>'green',
@@ -88,15 +92,40 @@ class FranchiseController extends Controller
                         }
                         $collapsedPosters = $posterCollection->collapse()->toArray();
                     }
+                    foreach ($collectionSortArr as $movieItem){
+                        $hasher = new IdHasher($movieItem['id_movie']);
+                        $hashedIds[$hasher->getResult()??''][] = ['old_id'=>$movieItem['id_movie']];
+                        $hashedIds['api'][] = $hasher->getResult();
+                    }
+
+                    if (!empty($hashedIds)){
+                        $data = ['movieIds' => $hashedIds['api']];
+                        $apiService = new ApiRequestImages();
+                        $previewImagesApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/batch/types/original_poster/small", 'POST', $data, true);
+                        if ($previewImagesApi['status'] === 200 && $previewImagesApi['data']['success']){
+                            unset($hashedIds['api']);
+                            foreach ($previewImagesApi['data']['images'] as $k =>$image){
+                                if (!empty($image)){
+                                    $apiPreviewLinks[$k] = $image;
+                                }
+                            }
+
+                        }
+                    }
                     foreach ($collectionSort->values()->toArray() as $k => $item) {
                         $typeKey = getTableSegmentOrTypeId($item['type_film']);
                         if (!empty($collapsedPosters)){
-                            foreach ($collapsedPosters as $posterItem){
-                                if ($item['id_movie'] == $posterItem['id_movie']){
-                                    $img = explode(',',$posterItem['srcset'] ?? '');
-                                    $collectionResponse['data'][$k]['poster'] = $img[0] ?? '';
+                            foreach ($hashedIds as $hashKey => $ids) {
+                                foreach ($collapsedPosters as $posterItem){
+                                    if ($item['id_movie'] == $posterItem['id_movie']){
+                                        $img = explode(',',$posterItem['srcset'] ?? '');
+                                        if ($posterItem['id_movie'] == $ids[0]['old_id']){
+                                            $collectionResponse['data'][$k]['poster'] = (!empty($previewImagesApi['data']['images'][$hashKey])) ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : $img[0] ?? '';
+                                        }
+                                    }
                                 }
                             }
+
                         }
                         $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                         $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
@@ -106,6 +135,8 @@ class FranchiseController extends Controller
                         $collectionResponse['data'][$k]['type_film'] = __('movies.type_movies.'.$typeKey) ?? '';
                         $collectionResponse['data'][$k]['type_film_link'] = $typeKey;
                     }
+                    unset($hashedIds);
+                    unset($previewImagesApi);
                 }
                 $collectionResponse['title'] = $collectionTitle;
                 $collectionResponse['total'] = $collapsed->count();
