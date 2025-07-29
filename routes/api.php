@@ -45,6 +45,10 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
     Route::middleware('auth:sanctum')->group(function () {
         // SET LOCALE
         Route::get('/locale',[\App\Http\Controllers\LanguageController::class, 'changeLocale'])->withoutMiddleware('localization');
+        // EXPORT
+        Route::post('/movies/send', [\App\Http\Controllers\AdminMovieController::class, 'send']);
+        Route::post('/taxonomies/send', [\App\Http\Controllers\AdminTaxonomyController::class, 'send']);
+        Route::post('/tags/send', [\App\Http\Controllers\AdminTagsController::class, 'send']);
         // CHECK  LANGUAGE
         Route::middleware('localization')->group(function () {
             // BALANCER ALLOHA
@@ -71,6 +75,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
                 Route::get('/movies/{slug}', 'index');
                 Route::get('/movies/show/{id}', 'show');
                 Route::put('/movies/update', 'update');
+                Route::post('/publication','publication');
                 Route::delete('/movies', 'destroy');
             });
             Route::controller(\App\Http\Controllers\CelebsController::class)->group(function () {
