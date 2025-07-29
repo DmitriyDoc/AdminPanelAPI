@@ -2,15 +2,108 @@ import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
 import { ref,reactive} from "vue";
-import {ElMessage} from "element-plus";
+import { ElMessage } from "element-plus";
 
 
 export const useExportStore = defineStore('exportStore',() => {
-    const movieStore = useExportStore();
-    const route = useRoute();
+    //const movieStore = useExportStore();
+    //const route = useRoute();
 
+    const spinBtnExportMovie = ref(false);
+    const spinBtnExportTaxonomy = ref(false);
+    const spinBtnExportTag = ref(false);
+    const messageExportTaxonomy = ref('');
+    const messageExportTag = ref('');
+    const countsExportMovie = ref(0);
+    const countsExportTaxonomy = ref([]);
+    const countsExportTag = ref([]);
+    const disableBtnMovieExport = ref(true);
+    const disableBtnTaxonomyExport = ref(false);
+    const disableBtnTagExport = ref(false);
+    const messageExportMovie = reactive( {
+        type:"",
+        text:"",
+    });
 
+    const exportMovies = async () => {
+        spinBtnExportMovie.value = true;
+        axios.post('/movies/send',{}).then((response) => {
+            if (response.status === 200) {
+                ElMessage({
+                    type: response.data.data.type,
+                    message: response.data.data.message,
+                })
+                if (response.data.data.body){
+                    countsExportMovie.value = response.data.data.body.exported_count;
+                    disableBtnMovieExport.value = true;
+                }
+                messageExportMovie.type = response.data.data.type;
+                messageExportMovie.text = response.data.data.message;
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Export is not finished',
+                });
+            }
+            spinBtnExportMovie.value = false
+        });
+    }
+    const exportTags = async () => {
+        spinBtnExportTag.value = true;
+        axios.post('/tags/send',{}).then((response) => {
+            if (response.status === 200) {
+                ElMessage({
+                    type: 'success',
+                    message: response.data.data.message,
+                })
+                messageExportTag.value = response.data.data.message;
+                countsExportTag.value = response.data.data.body.exported_count;
+                disableBtnTagExport.value = true;
+                disableBtnMovieExport.value = false;
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Export is not finished',
+                });
+            }
+        });
+        spinBtnExportTag.value = false;
+    }
+    const exportTaxonomy = async () => {
+        spinBtnExportTaxonomy.value = true;
+        axios.post('/taxonomies/send',{}).then((response) => {
+            if (response.status === 200) {
+                ElMessage({
+                    type: 'success',
+                    message: response.data.data.message,
+                })
+                messageExportTaxonomy.value = response.data.data.message;
+                countsExportTaxonomy.value = response.data.data.body.exported_count;
+                disableBtnTaxonomyExport.value = true;
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Export is not finished',
+                });
+            }
+        });
+        spinBtnExportTaxonomy.value = false;
+    }
     return {
-
+        exportMovies,
+        exportTaxonomy,
+        exportTags,
+        messageExportMovie,
+        messageExportTaxonomy,
+        messageExportTag,
+        countsExportMovie,
+        countsExportTaxonomy,
+        countsExportTag,
+        spinBtnExportMovie,
+        spinBtnExportTaxonomy,
+        spinBtnExportTag,
+        disableBtnMovieExport,
+        disableBtnTaxonomyExport,
+        disableBtnTagExport,
     }
 });
