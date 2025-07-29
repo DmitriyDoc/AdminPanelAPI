@@ -31,6 +31,7 @@ class ParserUpdateMovieController extends ParserController
         if (!empty($dataId)) {
             $this->idMovies = $dataId;
             $this->parserStart([
+                'withStory' => true,
                 'typeImages'=>$params['typeImages'],
                 'typePosters'=>$params['typePosters'],
             ]);
@@ -59,6 +60,7 @@ class ParserUpdateMovieController extends ParserController
             }
             if (!empty($this->idMovies)) {
                 $this->parserStart([
+                    'withStory' => false,
                     'typeImages'=>'still_frame',
                     'typePosters'=>$data['data']['posterType'],
                     ]);
@@ -80,10 +82,11 @@ class ParserUpdateMovieController extends ParserController
     public function parserStart($params) : void
     {
         event(new CurrentPercentageEvent(['percent'=>10,'action'=>__('parser.general_data_parser'),'color'=>'']));
+        $this->withStory = $params['withStory'];
         foreach ($this->idMovies as $id) {
             array_push($this->linksInfo, $this->domen . $this->imgUrlFragment . $id);
-            array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes=still_frame');
-            array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes=poster');
+            array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes='.$params['typeImages']);
+            array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes='.$params['typePosters']);
         }
         $this->linksGetter($this->linksInfo, 'getMoviesInfo');
 

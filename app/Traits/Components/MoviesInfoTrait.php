@@ -3,7 +3,10 @@
 namespace App\Traits\Components;
 
 use App\Http\Controllers\TranslatorController;
+use App\Models\AssignPoster;
 use App\Models\Tag;
+use App\Services\ApiRequestImages;
+use App\Services\IdHasher;
 use DiDom\Document;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -147,17 +150,16 @@ trait MoviesInfoTrait
                                     unset($writersArray);
                                 }
                             }
-
                         }
-
                     }
                     //STORY LINE
                     if ($document->has("span[data-testid=plot-l]")){
-                        $storyContainer = $document->first('span[data-testid=plot-l]')->text();
-                        if (!empty($storyContainer)){
-                            $insertData[$this->update_en_info_table]['story_line'] = rtrim($storyContainer,'Read all')??null;
+                        if ($this->withStory){
+                            $storyContainer = $document->first('span[data-testid=plot-l]')->text();
+                            if (!empty($storyContainer)){
+                                $insertData[$this->update_en_info_table]['story_line'] = rtrim($storyContainer,'Read all')??null;
+                            }
                         }
-
                     }
                     //RELEASE DATE
                     if ($document->has("li[data-testid=title-details-releasedate]")) {
@@ -184,9 +186,18 @@ trait MoviesInfoTrait
                         $insertData[$this->update_info_table]['budget'] = get_id_from_url($document->first("li[data-testid=title-boxoffice-budget]")->lastChild()->text(),self::BUDGET_PATTERN)??null;
                     }
                     //TYPE FILM
-                    $insertData[$this->update_info_table]['type_film'] = getTableSegmentOrTypeId($this->typeFilm)??null;
+                    $typeMovie = getTableSegmentOrTypeId($this->typeFilm)??null;
+                    $insertData[$this->update_info_table]['type_film'] = $typeMovie;
+                    //UNASSIGN POSTERS
+                    AssignPoster::query()->where('id_movie',$idFromUrl)->delete();
+                    //DELETE FROM MEDIA API
+                    $hasher = new IdHasher($idFromUrl);
+                    $hashDecodeId = $hasher->getResult();
+                    $apiService = new ApiRequestImages();
+                    $apiService->clearImages($typeMovie,$hashDecodeId);
+                    //UNPUBLISHED
+                    $insertData[$this->update_info_table]['published'] = 0;
                     //Log::info('DATA--->>',[$insertData]);
-
                     transaction( function () use ($insertData,$signByField){
                         if (!empty($insertData)){
                             foreach ($insertData as $table => $data){

@@ -37,21 +37,21 @@ class ParserInfoController extends ParserController
     public function __invoke()
     {
         return;
-        $this->signByField = 'id_movie';
-        $this->dateFrom = '2023-05-27';
-        $this->select_id_table = 'movies_id_type_feature_film';
-        $this->update_info_table = 'movies_info_feature_film';
-
-        DB::table($this->select_id_table)->where('created_at','>=', $this->dateFrom)->orderBy('id')->chunk(30, function ($ids) {
-            foreach ($ids as $id) {
-                array_push($this->links,$this->domen.'/title/'.$id->id_movie);
-            }
-            $pages = (new CurlConnectorController())->getCurlMulty($this->links);
-            $this->links = [];
-            if (is_array($pages)){
-                $this->getMoviesInfo($pages);
-                //usleep(30000);
-            }
-        });
+//        $this->signByField = 'id_movie';
+//        $this->dateFrom = '2023-05-27';
+//        $this->select_id_table = 'movies_id_type_feature_film';
+//        $this->update_info_table = 'movies_info_feature_film';
+//
+//        DB::table($this->select_id_table)->where('created_at','>=', $this->dateFrom)->orderBy('id')->chunk(30, function ($ids) {
+//            foreach ($ids as $id) {
+//                array_push($this->links,$this->domen.'/title/'.$id->id_movie);
+//            }
+//            $pages = (new CurlConnectorController())->getCurlMulty($this->links);
+//            $this->links = [];
+//            if (is_array($pages)){
+//                $this->getMoviesInfo($pages);
+//                //usleep(30000);
+//            }
+//        });
     }
 }

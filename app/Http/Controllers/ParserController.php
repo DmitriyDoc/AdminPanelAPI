@@ -107,7 +107,7 @@ class ParserController extends Controller
             'type' => 'video',
         ],
     ];
-
+    protected $withStory = true;
     protected $domen = 'https://imdb.com';
     protected $signByField;
     protected $typeFilm;
