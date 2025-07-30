@@ -249,4 +249,23 @@ if (!function_exists('cascaderStructure')) {
             return $urls;
         }
     }
+    if (!function_exists('statusSelection')) {
+        function statusSelection($status)
+        {
+            return match($status) {
+                1 => [
+                    'status_text' => __('table_fields.status_text_wait'),
+                    'status_type' => 'warning',
+                ],
+                2 => [
+                    'status_text' => __('table_fields.status_text_published'),
+                    'status_type' => 'success',
+                ],
+                0 =>  [
+                    'status_text' => __('table_fields.status_text_not_modified'),
+                    'status_type' => 'info',
+                ]
+            };
+        }
+    }
 }

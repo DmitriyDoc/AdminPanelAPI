@@ -34,5 +34,9 @@
     "dashboard":"Dashboard",
     "parser":"Parser",
     "movies":"Movies",
-    "persons":"Persons"
+    "persons":"Persons",
+    "export":"Export",
+    "export_movies":"Export movies",
+    "export_taxonomies":"Export taxonomies",
+    "export_tags":"Export tags"
 }

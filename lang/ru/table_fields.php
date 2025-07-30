@@ -29,4 +29,8 @@ return [
     "created_at"=>"Дата создания",
     "updated_at"=>"Дата обновлениия",
     "actions"=>"Действия",
+    'status_text_wait' =>"В ожидании",
+    'status_text_published' =>"Опубликован",
+    'status_text_not_modified' =>"Не подготовлен",
+    'status' =>"Статус"
 ];

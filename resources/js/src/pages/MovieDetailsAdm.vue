@@ -33,6 +33,9 @@
             </ul>
         </el-col>
         <el-col :span="18" >
+            <el-col class="ml-3 mr-3">
+                <el-alert :title="singleData.published_status.status_text" :type="singleData.published_status.status_type" :closable="false" center show-icon />
+            </el-col>
             <el-tabs v-model="activeTabName" class="demo-tabs m-3">
                 <el-tab-pane :label="singleData.locale.genres" name="first">
                     <li class="list-group-item">

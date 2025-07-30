@@ -1,16 +1,15 @@
 <template>
-
     <el-row v-if="singleData.locale">
         <el-col :span="24" class="mt-3">
             <h1>{{ singleData.title }}</h1>
         </el-col>
         <el-col :span="4">
-            <el-button  type="info" class="mt-2 mb-2" style="width: 100%;">
+            <el-button  type="info" class="mt-2 mb-2" style="width: 100%;" >
                 <RouterLink :to="{ name: 'showMovie', params: { id: route.params.id }}">
                     {{ singleData.locale.back_to_show }}
                 </RouterLink>
             </el-button >
-            <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" width="250"/>
+            <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" class="w-full"/>
             <div class="mt-1 mb-2">
                 <h5>{{singleData.locale.poster_type}}</h5>
                 <el-radio-group v-model="posterType" size="small">
@@ -28,6 +27,9 @@
             <div ><el-text tag="mark" class="el-color-predefine__colors el-text--danger p-2 mt-2"> {{singleData.locale.sync_notice}}</el-text></div>
             <el-button type="warning" class="mt-2" style="width: 100%;" @click="submitResize()" :loading='!!disabledBtnResize'>
                 {{singleData.locale.submit_resize}}
+            </el-button>
+            <el-button type="success" class="m-0 mt-2" style="width: 100%;" @click="submitPublished()" :disabled="propPublishBtn.disabled" :plain="propPublishBtn.plain">
+                Add to Export
             </el-button>
             <template v-if="singleData.collection">
                 <div class="mt-3">
@@ -54,6 +56,13 @@
             </template>
         </el-col>
         <el-col :span="20">
+            <el-steps style="max-width: 100%" :active="propsSteps.active" :finish-status="propsSteps.finishStatus" align-center>
+                <el-step title="Step 1" description="Assign categories" />
+                <el-step title="Step 2" description="Assign poster" />
+                <el-step title="Step 3" description="Resize all images" />
+                <el-step title="Step 4" description="The movie add to export" />
+                <el-step title="Published!"   description="The movie move to site" />
+            </el-steps>
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
                 <el-tab-pane :label="singleData.locale.genres" name="first">
                     <li class="list-group-item">
@@ -298,7 +307,6 @@
         </el-col>
     </el-row>
 </template>
-
 <script lang="ts" setup>
     import { storeToRefs } from 'pinia';
     import { useMoviesStore } from "../store/moviesStore";
@@ -309,7 +317,7 @@
     import {ElButton, TabsPaneContext} from 'element-plus';
     import { ElMessage, ElMessageBox, ElTable } from 'element-plus'
     import { ArrowRight } from '@element-plus/icons-vue'
-    import { ref, watch, onMounted } from "vue";
+    import { ref, reactive, watch, computed, onMounted } from "vue";
     import { useRoute } from "vue-router";
 
     const route = useRoute();
@@ -337,12 +345,46 @@
     const formSize = ref('default');
     const ruleFormRef = ref();
     const ruleForm = ref(singleData);
+    const posterType = ref('poster');
     const propsCascader = {
         multiple: true,
         checkStrictly: true,
     }
-    const posterType = ref('poster');
+    const propsSteps = reactive( {
+        active:0,
+        finishStatus:"wait",
+    });
+    const propPublishBtn = reactive( {
+        disabled:1,
+        plain:1,
+    });
 
+
+    const stepsState = computed(() => {
+        const hasCategories = singleData.value.collection && Array.isArray(singleData.value.collection.id) && singleData.value.collection.id.length > 0;
+        const hasAssignedPoster = singleData.value.assign_posters;
+        const hasLocalPoster = typeof singleData.value.poster === 'string' && singleData.value.poster.includes('media-api.local');
+        const rawPublished = singleData.value.published ? 1 : 0;
+        const exported = singleData.value.published == 2 ? 1 : 0;
+        const activeStep = hasCategories ? (hasAssignedPoster ? (hasLocalPoster ? (rawPublished ? (exported ? 5 : 4) : 3) : 2) : 1) : 0;
+        const isPublished = activeStep === 3 ? 0 : 1;
+
+        return {
+            active: activeStep,
+            finishStatus: hasCategories ? 'success' : 'wait',
+            publishBtn: {
+                plain: isPublished,
+                disabled: isPublished,
+            },
+        };
+    });
+
+    watch(stepsState, (newState) => {
+        propsSteps.active = newState.active;
+        propsSteps.finishStatus = newState.finishStatus;
+        propPublishBtn.plain = newState.publishBtn.plain;
+        propPublishBtn.disabled = newState.publishBtn.disabled;
+    }, { immediate: true });
 
     watch(() => watcherLang.value, (newLang) => {
         moviesStore.showItem();
@@ -355,42 +397,44 @@
         categoryStore.getCategories();
     })
 
-    const handleCategoryChange = (value) => {
-        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
-            confirmButtonText: 'OK',
-            cancelButtonText: 'Cancel',
-            type: 'warning',
-        }).then(() => {
+    const handleCategoryChange = async (value) => {
+        try {
+            await ElMessageBox.confirm('Are you sure?', 'WARNING', {
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel',
+                type: 'warning',
+            });
+
             if (value.length <= 4) {
-                categoryStore.setCategories({
+                await categoryStore.setCategories({
                     id_movie: singleData.value.id_movie,
                     type_film: route.params.slug,
-                    categories: value??[],
-                    tags: singleData.value.genres??[],
+                    categories: value ?? [],
+                    tags: singleData.value.genres ?? [],
                     viewed: singleData.value.collection.viewed ?? false,
                     short: singleData.value.collection.short ?? false,
                     adult: singleData.value.collection.adult ?? false,
-                })
-                if (value.length === 0){
+                });
+
+                if (value.length === 0) {
                     ElMessage({
                         type: 'success',
                         message: 'Collection deleted',
-                    })
+                    });
                 }
             } else {
                 ElMessage({
                     type: 'info',
                     message: 'No more than 4 collections for one movie!',
-                })
+                });
             }
-        }).catch(() => {
+        } catch (error) {
             ElMessage({
                 type: 'info',
                 message: 'Select collection canceled',
-            })
-        })
-
-    }
+            });
+        }
+    };
 
     const handleChangeImages = (val: string[],) => {
         mediaStore.flushState();
@@ -518,7 +562,6 @@
     }
     const toggleAssignPoster = (category) => {
         if (multipleSelectPoster.value.length){
-            //getUnique(multipleSelectPoster.value);
             ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectPoster.value.length} posters will be assign. Continue?`, 'WARNING', {
                 confirmButtonText: 'OK',
                 cancelButtonText: 'Cancel',
@@ -603,10 +646,26 @@
             type: 'warning',
         }).then(() => {
             mediaStore.resizeAllImages(route.params.id);
+            propPublishBtn.plain = 0;
+            propPublishBtn.disabled = 0;
         }).catch(() => {
             ElMessage({
                 type: 'info',
                 message: 'Resize canceled',
+            })
+        })
+    }
+    const submitPublished = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            moviesStore.publicationItem(route.params.id);
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Publication canceled',
             })
         })
     }

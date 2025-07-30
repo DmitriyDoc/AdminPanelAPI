@@ -34,5 +34,10 @@
     "dashboard":"Панель статистики",
     "parser":"Парсер",
     "movies":"Фильмы",
-    "persons":"Персоны"
+    "persons":"Персоны",
+    "export":"Экспорт",
+    "export_movies":"Экспорт фильмов",
+    "export_taxonomies":"Экспорт таксономий",
+    "export_tags":"Экспорт тегов"
 }
+

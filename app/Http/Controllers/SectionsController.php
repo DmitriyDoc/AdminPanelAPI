@@ -58,7 +58,7 @@ class SectionsController extends Controller
                     $model = $model->whereIn('id_movie',$typeFilmArray)->where($allowedFilterFields[1],'like','%'.$searchQuery.'%')->orWhere($allowedFilterFields[3],'like','%'.$searchQuery.'%');
                 }
 
-                $collection->add($model->select('type_film','id_movie',$titleFieldName,'year_release','created_at','updated_at')->whereIn('id_movie',$typeFilmArray)->with(['assignPoster','categories'])->get()->all());
+                $collection->add($model->select('type_film','id_movie',$titleFieldName,'published','year_release','created_at','updated_at')->whereIn('id_movie',$typeFilmArray)->with(['assignPoster','categories'])->get()->all());
                 $collapsed = $collection->collapse();
                 $sorted = $collapsed->sort();
                 if ($sorted->isNotEmpty()){
@@ -143,6 +143,7 @@ class SectionsController extends Controller
                             }
                         }
                         $collectionResponse['data'][$k]['title'] = $item['title']??$item['original_title'];
+                        $collectionResponse['data'][$k]['published'] = statusSelection($item['published']) ?? [];
                         $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                         $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                         $collectionResponse['data'][$k]['year'] = $item['year_release'] ?? null;

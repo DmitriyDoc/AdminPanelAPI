@@ -51,7 +51,7 @@ class MoviesController extends Controller
         $allowedSortFields = ['desc','asc'];
         $allowedFilterFields = $model->getFillable();
         $titleFieldName = transformTitleByLocale();
-        $model = $model->select('id_movie', $titleFieldName,'year_release','created_at','updated_at')->where('type_film',$typeId);
+        $model = $model->select('id_movie', $titleFieldName,'published','year_release','created_at','updated_at')->where('type_film',$typeId);
 
         $limit = $request->query('limit',50);
         $sortDir = strtolower($request->query('spin','desc'));
@@ -73,6 +73,7 @@ class MoviesController extends Controller
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
                 $modelArr['data'][$k]['title'] = $item['title']??$item['original_title'];
+                $modelArr['data'][$k]['published'] = statusSelection($item['published']) ?? [];;
                 $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                 $img = explode(',',$item[$relationName][0]['srcset'] ?? '');
@@ -113,6 +114,7 @@ class MoviesController extends Controller
                 $infoMovieData['slug'] = $typeMovieSlug;
                 $infoMovieData['title'] = $modelArr[$titleFieldName];
                 $infoMovieData['published'] = $modelArr['published'];
+                $infoMovieData['published_status'] = statusSelection($modelArr['published']) ?? [];
                 $infoMovieData['original_title'] = $modelArr['original_title'];
                 $infoMovieData['year_release'] = $modelArr['year_release'];
                 $infoMovieData['restrictions'] = $modelArr['restrictions'];

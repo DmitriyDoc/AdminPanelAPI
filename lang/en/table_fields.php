@@ -29,4 +29,8 @@ return [
     "created_at"=>"Created date",
     "updated_at"=>"Updated date",
     "actions"=>"Actions",
+    'status_text_wait' =>"Wait",
+    'status_text_published' =>"Published",
+    'status_text_not_modified' =>"Not modified",
+    'status' =>"Status"
 ];

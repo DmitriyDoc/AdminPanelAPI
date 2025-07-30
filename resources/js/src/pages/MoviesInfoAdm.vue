@@ -73,6 +73,13 @@
                 <el-image :src="scope.row.poster" />
             </template>
         </el-table-column>
+        <el-table-column prop="published" :label="locale.status" width="170" >
+            <template v-slot:default="scope">
+                <el-text :type="scope.row.published.status_type">
+                    <strong>{{scope.row.published.status_text}}</strong>
+                </el-text>
+            </template>
+        </el-table-column>
         <el-table-column prop="id_movie" :label="locale.id_movie" width="120" />
         <el-table-column prop="year_release" :label="locale.year" width="100" />
         <el-table-column prop="title" :label="locale.title" width="600" />

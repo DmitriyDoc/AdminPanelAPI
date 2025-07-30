@@ -213,6 +213,7 @@ class LanguageController
             'collection'=> __('table_fields.collection'),
             'title'=> __('table_fields.title'),
             'actions'=> __('table_fields.actions'),
+            'status'=> __('table_fields.status'),
         ];
     }
     public static function localizingCollectionsList() : array
@@ -234,6 +235,7 @@ class LanguageController
             'franchise'=> __('table_fields.franchise'),
             'title'=> __('table_fields.title'),
             'actions'=> __('table_fields.actions'),
+            'status'=> __('table_fields.status'),
         ];
     }
     public static function localizingFranchisesList() : array
@@ -256,6 +258,7 @@ class LanguageController
             'year' => __('table_fields.year'),
             'title' => __('table_fields.title'),
             'actions' => __('table_fields.actions'),
+            'status'=> __('table_fields.status'),
         ];
     }
     public static function localizingMoviesList() : array
@@ -278,6 +281,7 @@ class LanguageController
             'year' => __('table_fields.year'),
             'title' => __('table_fields.title'),
             'actions' => __('table_fields.actions'),
+            'status'=> __('table_fields.status'),
         ];
     }
     public static function localizingMovieShow() : array
