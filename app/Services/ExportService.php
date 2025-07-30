@@ -16,17 +16,16 @@ use Illuminate\Support\Facades\Log;
 
 class ExportService
 {
-    public function exportMovies(int $limit): array
+    public function exportMovies(bool $switchAll): array
     {
-        return DB::transaction(function () use ($limit) {
+        return DB::transaction(function () use ($switchAll) {
             try {
-                $movies = MovieInfo::query()
+                $statusMovie = $switchAll ? 2 : 1;
+                $query = MovieInfo::query()
                     ->with(['localazingRu', 'localazingEn'])
-                    ->where('published', 1)
-                    ->take($limit)
-                    ->get();
+                    ->where('published', $statusMovie);
 
-                if ($movies->isEmpty()) {
+                if (!$query->exists()) {
                     return [
                         'response' => null,
                         'message' => 'No movies found to export',
@@ -36,38 +35,59 @@ class ExportService
                     ];
                 }
 
-                $moviesData = $movies->map(function ($movie) {
-                    return $this->mapMovieToKinospectrFormat($movie);
-                })->toArray();
+                $results = [];
+                $success = true;
+                $lastResponse = null;
+                $processedMovieIds = [];
 
-                $response = Http::withToken(config('services.kinospectr.api_token'))
-                    ->post(config('services.kinospectr.api_url') . '/api/movies/import', [
-                        'movies' => $moviesData,
-                    ]);
+                // Обработка чанками по 1000
+                $query->chunk(10, function ($movies) use (&$results, &$success, &$lastResponse, &$processedMovieIds,$switchAll) {
+                    $moviesData = $movies->map(function ($movie) {
+                        return $this->mapMovieToKinospectrFormat($movie);
+                    })->toArray();
 
-                if ($response->successful()) {
-                    $movieIds = $movies->pluck('id')->toArray();
-                    MovieInfo::whereIn('id', $movieIds)->update(['published' => 2]);
+                    $response = Http::withToken(config('services.kinospectr.api_token'))
+                        ->post(config('services.kinospectr.api_url') . '/api/movies/import', [
+                            'movies' => $moviesData,
+                            'switchAll' => $switchAll,
+                        ]);
+
+                    if ($response->successful()) {
+                        $movieIds = $movies->pluck('id')->toArray();
+                        $processedMovieIds = array_merge($processedMovieIds, $movieIds);
+                        $results[] = $response->json();
+                        $lastResponse = $response->json();
+                    } else {
+                        Log::error('Failed to export movies chunk to Kinospectr', [
+                            'status' => $response->status(),
+                            'response' => $response->body(),
+                            'movie_count' => count($moviesData),
+                        ]);
+                        $success = false;
+                        $lastResponse = [
+                            'success' => false,
+                            'type' => 'error',
+                            'message' => 'Failed to export movies chunk: ' . $response->body(),
+                            'status' => $response->status(),
+                        ];
+                    }
+                });
+
+                if (!empty($processedMovieIds)) {
+                    MovieInfo::whereIn('id', $processedMovieIds)->update(['published' => 2]);
+                }
+
+                if ($success) {
                     return [
                         'success' => true,
-                        'body' => $response->json(),
+                        'body' => $lastResponse,
                         'message' => 'Movies sent successfully and marked as exported',
                         'type' => 'success',
-                        'status' => $response->status(),
+                        'status' => 200,
                     ];
                 }
 
-                Log::error('Failed to export movies to Kinospectr', [
-                    'status' => $response->status(),
-                    'response' => $response->body(),
-                ]);
-
-                return [
-                    'success' => false,
-                    'type' => 'error',
-                    'message' => 'Failed to export movies: ' . $response->body(),
-                    'status' => $response->status(),
-                ];
+                return $lastResponse;
             } catch (\Exception $e) {
                 Log::error('Exception during movie export to Kinospectr', [
                     'error' => $e->getMessage(),
@@ -76,13 +96,15 @@ class ExportService
                 return [
                     'success' => false,
                     'message' => 'An error occurred: ' . $e->getMessage(),
+                    'type' => 'error',
                     'status' => 500,
                 ];
             }
         });
     }
-    public function exportTaxonomies()
+    public function exportTaxonomies(bool $switchAll)
     {
+        $statusMovie = $switchAll ? 2 : 1;
         $categories = Category::all()->map(function ($category) {
             return [
                 'id' => $category->id,
@@ -115,10 +137,10 @@ class ExportService
             ];
         })->toArray();
 
-        $collectionsCategoriesPivots = CollectionsCategoriesPivot::whereIn('id_movie', function ($query) {
+        $collectionsCategoriesPivots = CollectionsCategoriesPivot::whereIn('id_movie', function ($query) use ($statusMovie) {
             $query->select('id_movie')
                 ->from('movies_info')
-                ->where('published', 1);
+                ->where('published', $statusMovie);
         })->get()->map(function ($pivot) {
             return [
                 'id_movie' => $pivot->id_movie,
@@ -147,6 +169,7 @@ class ExportService
         $response = Http::withToken(config('services.kinospectr.api_token'))
             ->post(config('services.kinospectr.api_url') . '/api/taxonomies/import', [
                 'taxonomies' => $taxonomiesData,
+                'switchAll' => $switchAll,
             ]);
 
         if ($response->successful()) {
@@ -165,8 +188,9 @@ class ExportService
         throw new \Exception('Failed to export taxonomies to Kinospectr');
     }
 
-    public function exportTags()
+    public function exportTags($switchAll)
     {
+        $statusMovie = $switchAll ? 2 : 1;
         $tags = Tag::all()->map(function ($category) {
             return [
                 'id' => $category->id,
@@ -178,10 +202,10 @@ class ExportService
             ];
         })->toArray();
 
-        $tagsMoviesPivots = TagsMoviesPivot::whereIn('id_movie', function ($query) {
+        $tagsMoviesPivots = TagsMoviesPivot::whereIn('id_movie', function ($query) use ($statusMovie){
             $query->select('id_movie')
                 ->from('movies_info')
-                ->where('published', 1);
+                ->where('published', $statusMovie);
         })->get()->map(function ($pivot) {
             return [
                 'id_movie' => $pivot->id_movie,
@@ -197,6 +221,7 @@ class ExportService
         $response = Http::withToken(config('services.kinospectr.api_token'))
             ->post(config('services.kinospectr.api_url') . '/api/tags/import', [
                 'tags' => $tagsData,
+                'switchAll' => $switchAll,
             ]);
 
         if ($response->successful()) {

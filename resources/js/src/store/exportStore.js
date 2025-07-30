@@ -25,9 +25,11 @@ export const useExportStore = defineStore('exportStore',() => {
         text:"",
     });
 
-    const exportMovies = async () => {
+    const exportMovies = async (switchAll) => {
         spinBtnExportMovie.value = true;
-        axios.post('/movies/send',{}).then((response) => {
+        axios.post('/movies/send',{
+            'switch_all': switchAll,
+        }).then((response) => {
             if (response.status === 200) {
                 ElMessage({
                     type: response.data.data.type,
@@ -48,9 +50,11 @@ export const useExportStore = defineStore('exportStore',() => {
             spinBtnExportMovie.value = false
         });
     }
-    const exportTags = async () => {
+    const exportTags = async (switchAll) => {
         spinBtnExportTag.value = true;
-        axios.post('/tags/send',{}).then((response) => {
+        axios.post('/tags/send',{
+            'switch_all': switchAll,
+        }).then((response) => {
             if (response.status === 200) {
                 ElMessage({
                     type: 'success',
@@ -69,9 +73,11 @@ export const useExportStore = defineStore('exportStore',() => {
         });
         spinBtnExportTag.value = false;
     }
-    const exportTaxonomy = async () => {
+    const exportTaxonomy = async (switchAll) => {
         spinBtnExportTaxonomy.value = true;
-        axios.post('/taxonomies/send',{}).then((response) => {
+        axios.post('/taxonomies/send',{
+            'switch_all': switchAll,
+        }).then((response) => {
             if (response.status === 200) {
                 ElMessage({
                     type: 'success',

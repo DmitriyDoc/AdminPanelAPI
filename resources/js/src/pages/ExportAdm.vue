@@ -1,5 +1,10 @@
 <template>
     <h3 class="text-center mt-3 mb-3">Data export for site  Kinospectr</h3>
+    <el-row :gutter="20" >
+        <el-col class="d-flex flex-row-reverse">
+            <el-switch v-model="modelSwitchAllExport"/><el-text>Export all tables</el-text>
+        </el-col>
+    </el-row>
     <el-row :gutter="20">
         <el-col :span="6"><div class="grid-content ep-bg-purple" />
             <el-button type="danger" @click="submitExportTaxonomy()" :loading="spinBtnExportTaxonomy" :disabled="disableBtnTaxonomyExport" class="w-100 mb-3">{{$t('export_taxonomies')}}</el-button>
@@ -61,9 +66,9 @@
         spinBtnExportTag,
         disableBtnMovieExport,
         disableBtnTaxonomyExport,
-        disableBtnTagExport} = storeToRefs( exportStore );
+        disableBtnTagExport } = storeToRefs( exportStore );
 
-
+    const modelSwitchAllExport = ref(false);
     watch(() => watcherLang.value, (newLang) => {
 
     });
@@ -76,7 +81,7 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            exportStore.exportTaxonomy();
+            exportStore.exportTaxonomy(modelSwitchAllExport.value);
         }).catch(() => {
             ElMessage({
                 type: 'info',
@@ -90,7 +95,7 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            exportStore.exportTags();
+            exportStore.exportTags(modelSwitchAllExport.value);
         }).catch(() => {
             ElMessage({
                 type: 'info',
@@ -104,7 +109,8 @@
             cancelButtonText: 'Cancel',
             type: 'warning',
         }).then(() => {
-            exportStore.exportMovies();
+            exportStore.exportMovies(modelSwitchAllExport.value);
+            modelSwitchAllExport.value = false;
         }).catch(() => {
             ElMessage({
                 type: 'info',

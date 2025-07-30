@@ -15,13 +15,12 @@ class AdminMovieController extends Controller
     }
     public function send(Request $request)
     {
-        $request->validate([
-            'limit' => 'integer|min:1|max:1000',
-        ]);
-
-        $limit = $request->input('limit', 500);
-        $result = $this->exportService->exportMovies($limit);
         try {
+            $request->validate([
+                'switch_all' => 'boolean',
+            ]);
+            $switchAll = $request->input('switch_all', false);
+            $result = $this->exportService->exportMovies($switchAll);
             return response()->json(['data' => $result], $result['status']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

@@ -16,7 +16,11 @@ class AdminTaxonomyController extends Controller
     public function send(Request $request)
     {
         try {
-            $result = $this->exportService->exportTaxonomies();
+            $request->validate([
+                'switch_all' => 'boolean',
+            ]);
+            $switchAll = $request->input('switch_all', false);
+            $result = $this->exportService->exportTaxonomies($switchAll);
             return response()->json(['data' => $result], $result['status']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
