@@ -30,5 +30,9 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'kinospectr' => [
+        'api_url' => env('KINOSPECTR_API_URL', 'http://kinospectr_webserver:80'),
+        'api_token' => env('KINOSPECTR_API_TOKEN'),
+    ],
 
 ];

@@ -215,4 +215,7 @@ return [
         'Redis' => Illuminate\Support\Facades\Redis::class,
     ])->toArray(),
 
+    'http' => [
+        'base_uri' => env('API_HOST_URL'),
+    ],
 ];

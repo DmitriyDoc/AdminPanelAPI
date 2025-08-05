@@ -30,11 +30,11 @@ return [
 
     'disks' => [
 
-        'images' => [
-            'driver' => 'local',
-            'root' => storage_path('uploads/images'),
-            'visibility' => 'public',
-        ],
+//        'images' => [
+//            'driver' => 'local',
+//            'root' => storage_path('uploads/images'),
+//            'visibility' => 'public',
+//        ],
 
         'local' => [
             'driver' => 'local',
@@ -48,6 +48,17 @@ return [
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,
+        ],
+
+        'temp' => [
+            'driver' => 'local',
+            'root' => storage_path('app/uploads/temp'),
+            'visibility' => 'public',
+        ],
+
+        'resized' => [
+            'driver' => 'local',
+            'root' => storage_path('app/uploads/images/resized'),
         ],
 
         's3' => [
