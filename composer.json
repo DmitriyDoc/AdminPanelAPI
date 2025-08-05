@@ -12,6 +12,7 @@
         "clue/buzz-react": "^0.4.2",
         "dejurin/php-google-translate-for-free": "^1.0",
         "guzzlehttp/guzzle": "^7.2",
+        "hashids/hashids": "^5.0",
         "imangazaliev/didom": "^2.0",
         "intervention/image-laravel": "^1.5",
         "laravel/framework": "^10.0",

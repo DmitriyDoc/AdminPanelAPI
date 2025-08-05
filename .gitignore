@@ -17,3 +17,7 @@ yarn-error.log
 /.idea
 /.vscode
 /redisdata
+/mysql
+/nginx
+/php
+

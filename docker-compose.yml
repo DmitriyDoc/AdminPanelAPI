@@ -1,8 +1,8 @@
 version: '3'
 services:
-    #PHP Service
-    php:
-        container_name: php
+    # PHP Service (админка Spectrum)
+    spectrum_php:
+        container_name: spectrum_php
         build:
             context: .
             dockerfile: Dockerfile
@@ -18,12 +18,14 @@ services:
             - ./.env:/var/www/.env
             - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
         networks:
-            - app-network
+            - shared-media-network
         extra_hosts:
+            #get update ip: nslookup www.imdb.com or dig www.imdb.com
             - "m.media-amazon.com:212.188.39.27"
-    #Nginx Service
-    webserver:
-        container_name: webserver
+            - "www.imdb.com:3.174.109.174"
+    # Nginx Service (для админки)
+    spectrum_webserver:
+        container_name: spectrum_webserver
         image: nginx:alpine
         restart: unless-stopped
         tty: true
@@ -33,10 +35,10 @@ services:
             - ./:/var/www
             - ./nginx/conf.d/:/etc/nginx/conf.d/
         networks:
-            - app-network
-    #MySQL Service
-    db:
-        container_name: db
+            - shared-media-network
+    # MySQL Service
+    spectrum_db:
+        container_name: spectrum_db
         image: mysql:5.7.22
         restart: unless-stopped
         tty: true
@@ -53,21 +55,21 @@ services:
             - dbdata:/var/lib/mysql/
             - ./mysql/my.cnf:/etc/mysql/my.cnf
         networks:
-            - app-network
-    #Redis Service
-    redis:
-        container_name: redis
+            - shared-media-network
+    # Redis Service
+    spectrum_redis:
+        container_name: spectrum_redis
         image: redis:latest
         ports:
             - "6379:6379"
         volumes:
             - ./redisdata:/data
-        command: ["redis-server", "--bind", "redis", "--port", "6379"]
+        command: ["redis-server", "--bind", "spectrum_redis", "--port", "6379"]
         networks:
-            - app-network
-    #Adminer client
-    adminer:
-        container_name: adminer
+            - shared-media-network
+    # Adminer client
+    spectrum_adminer:
+        container_name: spectrum_adminer
         restart: unless-stopped
         image: adminer:4
         environment:
@@ -75,26 +77,26 @@ services:
             ADMINER_DEFAULT_DB_HOST: db:3306
             ADMINER_DEFAULT_DB_NAME: database_spectrum
         depends_on:
-            - db
+            - spectrum_db
         ports:
-            - ${ADMINER_PORT:-8080}:8080
+            - "${ADMINER_PORT:-8080}:8080"
         networks:
-            - app-network
-    #Composer
-    composer:
-        container_name: composer
+            - shared-media-network
+    # Composer
+    spectrum_composer:
+        container_name: spectrum_composer
         image: composer:latest
         tty: true
         volumes:
-            - .:/var/www
+            - ./:/var/www
         working_dir: /var/www
         depends_on:
-            - php
+            - spectrum_php
         networks:
-            - app-network
-    #NPM
-    npm:
-        container_name: npm
+            - shared-media-network
+    # NPM
+    spectrum_npm:
+        container_name: spectrum_npm
         build:
             context: .
             dockerfile: Dockerfile.node
@@ -103,15 +105,13 @@ services:
             - "5173:5173"
             - "3000:3000"
         volumes:
-            - .:/var/www
+            - ./:/var/www
         working_dir: /var/www
         networks:
-            - app-network
-#Docker Networks
+            - shared-media-network
 networks:
-    app-network:
-        driver: bridge
-#Volumes
+    shared-media-network:
+        external: true
 volumes:
     dbdata:
         driver: local
