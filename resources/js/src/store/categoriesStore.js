@@ -46,23 +46,22 @@ export const useCategoriesStore = defineStore('categoriesStore',() => {
     }
     const setCategories = async (data) => {
         try {
-            axios.post('/categories',data).then((response) => {
-                if (response.data.success){
-                    ElMessage({
-                        type: 'success',
-                        message: 'Collection selected',
-                    })
-                } else {
-                    ElMessage({
-                        type: 'warning',
-                        message: 'Warning! This movie must has Russian or USSR collection',
-                    })
-                }
-            });
+            const response = await axios.post('/categories', data);
+            if (response.data.success) {
+                ElMessage({
+                    type: 'success',
+                    message: 'Collection selected',
+                });
+            } else {
+                ElMessage({
+                    type: 'warning',
+                    message: 'Warning! This movie must has Russian or USSR collection',
+                });
+            }
         } catch (e) {
-            console.log('error',e);
+            console.log('error', e);
         }
-    }
+    };
     const setCategoryFranchise = async (data) => {
         try {
             ElMessageBox.confirm(`Are you sure?`, 'WARNING', {

@@ -1,10 +1,12 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { useRoute } from 'vue-router';
-import { onMounted, onUpdated,onBeforeUnmount, ref,reactive} from "vue";
+import { ref,reactive} from "vue";
 import {ElMessage} from "element-plus";
+import { useMoviesStore } from './moviesStore.js';
 
 export const useMediaStore = defineStore('mediaStore',() => {
+    const movieStore = useMoviesStore();
     const route = useRoute();
     const imagesData = ref( [] );
     const postersData = ref( [] );
@@ -153,8 +155,8 @@ export const useMediaStore = defineStore('mediaStore',() => {
                 id_poster: id,
                 poster_cat: cat,
                 }).then((response) => {
-                //flushState();
                 getPosters(slug);
+                movieStore.showItem();
             });
         } catch (e) {
             error.value = e;
@@ -169,6 +171,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
             axios.post('/resizing', { id_movie: id }).then((response) => {
                 if (response.status === 200){
                     disabledBtnResize.value = false;
+                    movieStore.showItem();
                     ElMessage({
                         type: 'success',
                         message: 'Resize images completed',
