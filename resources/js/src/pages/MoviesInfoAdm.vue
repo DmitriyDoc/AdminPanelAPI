@@ -82,7 +82,7 @@
         </el-table-column>
         <el-table-column prop="id_movie" :label="locale.id_movie" width="120" />
         <el-table-column prop="year_release" :label="locale.year" width="100" />
-        <el-table-column prop="title" :label="locale.title" width="600" />
+        <el-table-column prop="title" :label="locale.title" width="500" />
         <el-table-column prop="updated_at" :label="locale.updated_at" width="150" />
         <el-table-column fixed="right" prop="id_movie" :label="locale.actions" width="120">
             <template v-slot:default="scope">
@@ -116,7 +116,7 @@
     import { ElMessage, ElMessageBox } from 'element-plus'
     import type { FormInstance } from 'element-plus'
     import type { Action } from 'element-plus'
-    import { onMounted, ref, watch, reactive} from "vue";
+    import { onMounted, ref, watch, reactive } from "vue";
 
     const moviesStore = useMoviesStore();
     const languageStore = useLanguageStore();

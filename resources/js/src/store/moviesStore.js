@@ -104,8 +104,8 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         disabledBtnSync.value = true;
         axios.post('/updatemovie',{ data: params}).then((response) => {
             if (response.status === 200) {
-                showItem();
                 disabledBtnSync.value = false;
+                showItem();
                 ElMessage({
                     type: 'success',
                     message: 'Sync with IMDB completed',
@@ -114,6 +114,22 @@ export const useMoviesStore = defineStore('moviesStore',() => {
                 ElMessage({
                     type: 'error',
                     message: 'Sync with IMDB  is not finished',
+                });
+            }
+        });
+    }
+    const publicationItem = async (id) => {
+        axios.post('/publication',{ data: {'movie_id':id} }).then((response) => {
+            if (response.status === 200) {
+                showItem();
+                ElMessage({
+                    type: 'success',
+                    message: response.data.message,
+                })
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Publication is not finished',
                 });
             }
         });
@@ -158,5 +174,6 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         updateSpin,
         updateSearchQuery,
         getMovies,
+        publicationItem,
     }
 });

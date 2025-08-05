@@ -16,16 +16,55 @@ use App\Models\TagsMoviesPivot;
 use App\Services\ApiRequestImages;
 use App\Services\IdHasher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 
 class MoviesController extends Controller
 {
-     /**
-     * Display a listing of the resource.
-     */
+    public function showExportMovies(Request $request)
+    {
+        $model = modelByName('MovieInfo');
+        $titleFieldName = transformTitleByLocale();
+        $model = $model->select('id_movie', $titleFieldName,'type_film','published','year_release','created_at','updated_at')->where('published',1);
+        $modelArr = $model->orderBy('created_at','desc')->paginate(50)->toArray();
+        if (!empty($modelArr['data'])){
+            foreach ($modelArr['data'] as $id){
+                $hasher = new IdHasher($id['id_movie']);
+                $hashedIds[$hasher->getResult()??''][] = ['old_id'=>$id['id_movie']];
+                $hashedIds['api'][] = $hasher->getResult();
+            }
+            if (!empty($hashedIds)){
+                $data = ['movieIds' => $hashedIds['api']];
+                $apiService = new ApiRequestImages();
+                $previewImagesApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/batch/types/original_poster/small", 'POST', $data, true);
+                if ($previewImagesApi['status'] === 200 && $previewImagesApi['data']['success']){
+                    unset($hashedIds['api']);
+                    foreach ($previewImagesApi['data']['images'] as $k =>$image){
+                        if (!empty($image)){
+                            $apiPreviewLinks[$k] = $image;
+                        }
+                    }
+                }
+            }
+            foreach ($modelArr['data'] as $k => $item) {
+                $modelArr['data'][$k]['title'] = $item[$titleFieldName];
+                $modelArr['data'][$k]['id_movie'] = $item['id_movie'];
+                $modelArr['data'][$k]['year_release'] = $item['year_release'];
+                $modelArr['data'][$k]['published'] = statusSelection($item['published']);
+                $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at']));
+                $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at']));
+                foreach ($hashedIds as $hashKey => $ids) {
+                    if ($item['id_movie']== $ids[0]['old_id']){
+                        $modelArr['data'][$k]['poster'] = (!empty($previewImagesApi['data']['images'][$hashKey])) ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : 'Poster error';
+                    }
+                }
+            }
+
+
+        }
+        $modelArr['locale'] = LanguageController::localizingMoviesExportList();
+        return $modelArr;
+    }
     public function index(Request $request): array
     {
         $tableName = request()->segment(3) ?? '';
@@ -86,9 +125,6 @@ class MoviesController extends Controller
         return $modelArr;
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         $infoMovieData = [];
@@ -175,9 +211,6 @@ class MoviesController extends Controller
         return $infoMovieData;
     }
 
-    /**
-     * Publication
-     */
     public function publication(Request $request):array
     {
         try {
@@ -221,9 +254,6 @@ class MoviesController extends Controller
         return ['success' => false];
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request)
     {
         $dataRequest = $request->all();
@@ -255,9 +285,6 @@ class MoviesController extends Controller
         return ['success'=>false];
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Request $request)
     {
         $dataRequest = $request->all();

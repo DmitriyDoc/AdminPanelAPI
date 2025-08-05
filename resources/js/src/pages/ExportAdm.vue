@@ -1,8 +1,8 @@
 <template>
-    <h3 class="text-center mt-3 mb-3">Data export for site  Kinospectr</h3>
+    <h3 class="text-center mt-3 mb-3"> {{locale.data_for_export}} </h3>
     <el-row :gutter="20" >
         <el-col class="d-flex flex-row-reverse">
-            <el-switch v-model="modelSwitchAllExport"/><el-text>Export all tables</el-text>
+            <el-switch v-model="modelSwitchAllExport"/><el-text>{{ locale.export_all_tables }}</el-text>
         </el-col>
     </el-row>
     <el-row :gutter="20">
@@ -42,6 +42,61 @@
             </el-row>
         </el-col>
     </el-row>
+    <el-row :gutter="20" >
+        <el-col >
+            <el-table v-if="tableData['id_movie']" :data="tableData" :v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
+                <el-table-column type="index" label="№"/>
+                <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
+                <el-table-column prop="poster" :label="locale.poster" width="100" >
+                    <template v-slot:default="scope">
+                        <el-image :src="scope.row.poster" />
+                    </template>
+                </el-table-column>
+                <el-table-column prop="published" :label="locale.status" width="130" >
+                    <template v-slot:default="scope">
+                        <el-text :type="scope.row.published.status_type">
+                            <strong>{{scope.row.published.status_text}}</strong>
+                        </el-text>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="id_movie" :label="locale.id_movie" width="120" />
+                <el-table-column prop="year_release" :label="locale.year" width="100" />
+                <el-table-column prop="title" :label="locale.title" width="600" />
+                <el-table-column prop="updated_at" :label="locale.updated_at" width="150" />
+                <el-table-column fixed="right" prop="id_movie" :label="locale.actions" width="120">
+                    <template v-slot:default="scope">
+                        <el-button type="success" link >
+                            <RouterLink :to="{ name: 'showMovie', params: { id: scope.row.id_movie }}">
+                                <el-button link type="primary" :icon="View" :title="$t('details')"/>
+                            </RouterLink>
+                        </el-button>
+                        <el-button link type="primary" >
+                            <RouterLink :to="{ name: 'editMovie', params: { id: scope.row.id_movie }}">
+                                <el-button link type="primary" :icon="EditPen" :title="$t('edit')"/>
+                            </RouterLink>
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div  v-else slot="empty">
+                <el-empty :description="locale.no_movies_for_export" :image-size="150" />
+            </div>
+
+            <div class="demo-pagination-block"  v-if="totalCount >= 100">
+                <div class="demonstration">{{locale.jump_to}}</div>
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :small="false"
+                    :disabled="false"
+                    :background="false"
+                    layout="prev, pager, next"
+                    :total="totalCount"
+                    @current-change="handleCurrentChange"
+                />
+            </div>
+        </el-col>
+    </el-row>
 </template>
 
 <script setup>
@@ -50,11 +105,19 @@
     import { ElMessage, ElMessageBox } from "element-plus";
     import { useLanguageStore } from "../store/languageStore";
     import { useExportStore } from "../store/exportStore";
+    import {Delete, EditPen, View} from "@element-plus/icons-vue";
+    import {RouterLink} from "vue-router";
 
     const languageStore = useLanguageStore();
     const exportStore = useExportStore();
     const { watcherLang } = storeToRefs( languageStore );
     const {
+        tableData,
+        locale,
+        loader,
+        totalCount,
+        pageSize,
+        currentPage,
         messageExportMovie,
         messageExportTaxonomy,
         messageExportTag,
@@ -70,10 +133,10 @@
 
     const modelSwitchAllExport = ref(false);
     watch(() => watcherLang.value, (newLang) => {
-
+        exportStore.getExportMovies();
     });
     onMounted(() => {
-
+        exportStore.getExportMovies();
     })
     const submitExportTaxonomy = () => {
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
@@ -118,7 +181,10 @@
             })
         })
     }
-
+    const handleCurrentChange = (val) => {
+        exportStore.updateCurrentPage(val);
+        exportStore.getExportMovies();
+    }
 
 </script>
 

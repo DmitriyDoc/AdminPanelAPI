@@ -50,4 +50,7 @@ return [
         'TvSpecial'=>'Tv Special',
         'Video'=>'Video',
     ],
+    'data_for_export'=>'Data for export to the Kinospectr website',
+    'export_all_tables'=>'Export all tables',
+    'no_movies_for_export'=>'No movies for export',
 ];

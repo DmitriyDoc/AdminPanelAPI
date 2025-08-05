@@ -1,14 +1,22 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
-import { useRoute } from 'vue-router';
 import { ref,reactive} from "vue";
 import { ElMessage } from "element-plus";
 
 
 export const useExportStore = defineStore('exportStore',() => {
-    //const movieStore = useExportStore();
-    //const route = useRoute();
 
+    const statePagination = ref({
+        page: 1,
+        limit: 50,
+        total: 0,
+    });
+    const tableData = ref([]);
+    const locale = ref([]);
+    const pageSize = ref(statePagination.value.limit);
+    const currentPage = ref(statePagination.value.page);
+    const totalCount = ref(statePagination.value.total);
+    const loader = ref(false);
     const spinBtnExportMovie = ref(false);
     const spinBtnExportTaxonomy = ref(false);
     const spinBtnExportTag = ref(false);
@@ -24,9 +32,24 @@ export const useExportStore = defineStore('exportStore',() => {
         type:"",
         text:"",
     });
-
+    const getExportMovies = () =>{
+        try {
+            loader.value = true;
+            axios.get('/movies/export/show' + '?page=' + statePagination.value.page).then((response) => {
+                locale.value = response.data.locale;
+                tableData.value = response.data.data;
+                totalCount.value = response.data.total;
+                pageSize.value = response.data.per_page;
+                currentPage.value = response.data.current_page;
+                loader.value = false;
+            });
+        } catch (e) {
+            console.log('error',e);
+        }
+    }
     const exportMovies = async (switchAll) => {
         spinBtnExportMovie.value = true;
+        loader.value = true;
         axios.post('/movies/send',{
             'switch_all': switchAll,
         }).then((response) => {
@@ -41,6 +64,8 @@ export const useExportStore = defineStore('exportStore',() => {
                 }
                 messageExportMovie.type = response.data.data.type;
                 messageExportMovie.text = response.data.data.message;
+                getExportMovies();
+                loader.value = false;
             } else {
                 ElMessage({
                     type: 'error',
@@ -95,10 +120,21 @@ export const useExportStore = defineStore('exportStore',() => {
         });
         spinBtnExportTaxonomy.value = false;
     }
+    const updateCurrentPage = (param) => {
+        statePagination.value.page = param;
+    }
     return {
         exportMovies,
         exportTaxonomy,
         exportTags,
+        getExportMovies,
+        updateCurrentPage,
+        locale,
+        loader,
+        tableData,
+        totalCount,
+        currentPage,
+        pageSize,
         messageExportMovie,
         messageExportTaxonomy,
         messageExportTag,

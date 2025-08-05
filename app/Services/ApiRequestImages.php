@@ -105,7 +105,7 @@ class ApiRequestImages
      * @param string $dirPosterName The directory name for posters or images
      * @return array The response from the API
      */
-    public function clearImages(string $typeId, string $movieId, string $dirPosterName): array
+    public function clearImages(string $typeId, string $movieId, string $dirPosterName = null): array
     {
         $url = env('API_HOST_URL') . '/api/images/clear';
         $data = [

@@ -29,7 +29,7 @@
                 {{singleData.locale.submit_resize}}
             </el-button>
             <el-button type="success" class="m-0 mt-2" style="width: 100%;" @click="submitPublished()" :disabled="propPublishBtn.disabled" :plain="propPublishBtn.plain">
-                Add to Export
+                {{ singleData.locale.add_to_export}}
             </el-button>
             <template v-if="singleData.collection">
                 <div class="mt-3">

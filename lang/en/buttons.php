@@ -19,4 +19,5 @@ return [
     'add_person' => 'Add person',
     'start' => 'Start',
     'report' => 'Report',
+    'add_to_export' => 'Add to export',
 ];

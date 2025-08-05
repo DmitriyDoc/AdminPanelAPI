@@ -284,6 +284,23 @@ class LanguageController
             'status'=> __('table_fields.status'),
         ];
     }
+    public static function localizingMoviesExportList() : array
+    {
+        return [
+            'jump_to' => __('navigation.jump_to'),
+            'created_at' => __('table_fields.created_at'),
+            'updated_at' => __('table_fields.updated_at'),
+            'id_movie' => __('table_fields.id_movie'),
+            'poster'=> __('table_fields.poster'),
+            'year' => __('table_fields.year'),
+            'title' => __('table_fields.title'),
+            'actions' => __('table_fields.actions'),
+            'status'=> __('table_fields.status'),
+            'no_movies_for_export'=> __('movies.no_movies_for_export'),
+            'export_all_tables'=> __('movies.export_all_tables'),
+            'data_for_export'=> __('movies.data_for_export'),
+        ];
+    }
     public static function localizingMovieShow() : array
     {
         return [
@@ -292,6 +309,7 @@ class LanguageController
             'back_to_show' => __('buttons.back_to_show'),
             'sync_imdb' => __('buttons.sync_imdb'),
             'submit_resize' => __('buttons.submit_resize'),
+            'add_to_export' => __('buttons.add_to_export'),
             'clear_selection' => __('buttons.clear_selection'),
             'delete_selection' => __('buttons.delete_selection'),
             'move_selection' => __('buttons.move_selection'),

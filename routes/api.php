@@ -72,6 +72,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             });
             // Resources QUERY
             Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
+                Route::get('/movies/export/show', [\App\Http\Controllers\MoviesController::class, 'showExportMovies']);
                 Route::get('/movies/{slug}', 'index');
                 Route::get('/movies/show/{id}', 'show');
                 Route::put('/movies/update', 'update');
