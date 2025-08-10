@@ -67,12 +67,12 @@ class ParserUpdateMovieController extends ParserController
             }
         }
     }
-    public function localizing($movieId)
+    public function localizing($movieId )
     {
         $updateModel = DB::table($this->update_en_info_table)->where($this->signByField,$movieId)->first(['genres','cast','directors','writers','story_line','countries','release_date','id_movie']);
 
         if (!empty($updateModel)){
-            $this->localizing->translateMovie($updateModel,$movieId,$this->signByField);
+            $this->localizing->translateMovie($updateModel,$movieId,$this->signByField,$this->withStory);
 
             ParserController::$reportProgress['report']['finishInfo'][camelToSnake($this->typeFilm)][] = $movieId;
             event(new ParserReportEvent(ParserController::$reportProgress));

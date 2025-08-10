@@ -4,11 +4,11 @@
             <h1>{{ singleData.title }}</h1>
         </el-col>
         <el-col :span="4">
-            <el-button  type="info" class="mt-2 mb-2" style="width: 100%;" >
-                <RouterLink :to="{ name: 'showMovie', params: { id: route.params.id }}">
+            <RouterLink :to="{ name: 'showMovie', params: { id: route.params.id }}">
+                <el-button  type="info" class="mt-2 mb-2" style="width: 100%;" >
                     {{ singleData.locale.back_to_show }}
-                </RouterLink>
-            </el-button >
+                </el-button >
+            </RouterLink>
             <el-image v-if="singleData.poster" :src="singleData.poster" fit="cover" class="w-full"/>
             <div class="mt-1 mb-2">
                 <h5>{{singleData.locale.poster_type}}</h5>

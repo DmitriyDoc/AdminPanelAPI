@@ -56,7 +56,7 @@ class TranslatorController
     public function translateTag($inputTag){
         return $this->startTranslate($inputTag);
     }
-    public function translateMovie($dataInfo, $movieId, $columnKey) {
+    public function translateMovie($dataInfo, $movieId, $columnKey, $withStory) {
         $this->columnId = $movieId;
         $this->columnKey = $columnKey;
         $this->dataMovie['id_movie'] = $dataInfo->id_movie;
@@ -106,15 +106,20 @@ class TranslatorController
             }
             $this->dataMovie['writers'] = json_validate($resultWriters) ? $resultWriters : null;
         }
-        $this->dataMovie['story_line'] = null;
-        if (!empty($dataInfo->story_line)){
-            $resultStoryLine = $dataInfo->story_line;
-            if (strlen($dataInfo->story_line) >= 4500){
-                $resultStoryLine = mb_strimwidth($resultStoryLine,0,2500,"...");
+        if ($withStory){
+            $this->dataMovie['story_line'] = null;
+            if (!empty($dataInfo->story_line)){
+                $resultStoryLine = $dataInfo->story_line;
+                if (strlen($dataInfo->story_line) >= 4500){
+                    $resultStoryLine = mb_strimwidth($resultStoryLine,0,2500,"...");
+                }
+                $resultStoryLine = $this->startTranslate($resultStoryLine);
+                $this->dataMovie['story_line'] = str_replace("\u{200B}" ,'',$resultStoryLine);
             }
-            $resultStoryLine = $this->startTranslate($resultStoryLine);
-            $this->dataMovie['story_line'] = str_replace("\u{200B}" ,'',$resultStoryLine);
+        } else {
+            unset($this->dataMovie['story_line']);
         }
+
         $this->dataMovie['countries'] = null;
         if (!empty($dataInfo->countries)){
             $resultCountries= $this->startTranslate($dataInfo->countries);

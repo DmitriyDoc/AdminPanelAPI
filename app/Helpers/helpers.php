@@ -268,4 +268,10 @@ if (!function_exists('cascaderStructure')) {
             };
         }
     }
+    if (!function_exists('trimAfterImageExtension')) {
+        function trimAfterImageExtension($url)
+        {
+            return preg_replace('/\.(jpg|jpeg|png).*/i', '.$1', $url);
+        }
+    }
 }

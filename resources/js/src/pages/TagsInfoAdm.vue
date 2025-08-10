@@ -57,7 +57,7 @@
             :background="background"
             layout="sizes, prev, pager, next, jumper"
             :total="totalCount"
-            :page-sizes="[20, 50, 100, 300]"
+            :page-sizes="[20, 50]"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
         />

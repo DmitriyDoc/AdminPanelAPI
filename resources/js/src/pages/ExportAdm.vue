@@ -43,8 +43,8 @@
         </el-col>
     </el-row>
     <el-row :gutter="20" >
-        <el-col >
-            <el-table v-if="tableData['id_movie']" :data="tableData" :v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
+        <el-col v-if="tableData.length">
+            <el-table :data="tableData" :v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
                 <el-table-column type="index" label="№"/>
                 <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
                 <el-table-column prop="poster" :label="locale.poster" width="100" >
@@ -78,10 +78,6 @@
                     </template>
                 </el-table-column>
             </el-table>
-            <div  v-else slot="empty">
-                <el-empty :description="locale.no_movies_for_export" :image-size="150" />
-            </div>
-
             <div class="demo-pagination-block"  v-if="totalCount >= 100">
                 <div class="demonstration">{{locale.jump_to}}</div>
                 <el-pagination
@@ -95,6 +91,9 @@
                     @current-change="handleCurrentChange"
                 />
             </div>
+        </el-col>
+        <el-col v-else slot="empty">
+            <el-empty :description="locale.no_movies_for_export" :image-size="150" />
         </el-col>
     </el-row>
 </template>

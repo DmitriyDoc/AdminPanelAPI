@@ -117,11 +117,12 @@ class MoviesController extends Controller
                 $modelArr['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
                 $img = explode(',',$item[$relationName][0]['srcset'] ?? '');
 
-                $modelArr['data'][$k]['poster'] = $img[0] ?? '';
+                $modelArr['data'][$k]['poster'] = trimAfterImageExtension($img[0]) ?? '';
                 unset($modelArr['data'][$k][$relationName]);
             }
         }
         $modelArr['locale'] = LanguageController::localizingMoviesList();
+
         return $modelArr;
     }
 

@@ -5,11 +5,11 @@
             <span>{{ singleData.original_title }}</span>
         </el-col>
         <el-col :span="6" >
-            <el-button type="danger" class="mt-2 mb-2" style="width: 100%;">
-                <RouterLink :to="{ name: 'editMovie', params: { id: routeParams.id }}">
+            <RouterLink :to="{ name: 'editMovie', params: { id: routeParams.id }}">
+                <el-button type="danger" class="mt-2 mb-2" style="width: 100%;">
                     {{ singleData.locale.edit }}
-                </RouterLink>
-            </el-button>
+                </el-button>
+            </RouterLink>
             <el-image :src="singleData.poster" fit="cover" class="w-full"/>
             <ul class="list-group">
                 <li class="list-group-item bg-light"><strong>{{ singleData.type_film ?? singleData.locale.empty }}</strong></li>

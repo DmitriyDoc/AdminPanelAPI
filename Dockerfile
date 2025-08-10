@@ -1,4 +1,4 @@
-FROM php:8.1.0-fpm
+FROM php:8.2-fpm
 
 # Copy composer.lock and composer.json
 COPY composer.lock composer.json /var/www/
@@ -30,15 +30,16 @@ RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/i
 RUN docker-php-ext-install gd
 
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && chmod +x /usr/local/bin/composer \
+    && chown root:root /usr/local/bin/composer \
+    && chmod 755 /usr/local/bin/composer
 
 # Add user for laravel application
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
 
-COPY . /var/www
-
-# Copy existing application directory permissions
+# Copy existing application directory contents
 COPY --chown=www:www . /var/www
 
 # Change current user to www

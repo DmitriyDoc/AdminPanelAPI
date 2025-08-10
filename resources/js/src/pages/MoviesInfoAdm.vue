@@ -100,9 +100,6 @@
              </template>
         </el-table-column>
     </el-table>
-<!--    <div slot="empty">-->
-<!--        <el-empty description=" " :image-size="150" />-->
-<!--    </div>-->
     <el-backtop :right="100" :bottom="100" />
     <p v-if="error">{{ error }}</p>
 </template>
