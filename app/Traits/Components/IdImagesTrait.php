@@ -14,6 +14,7 @@ trait IdImagesTrait
     {
         if (!empty($pages)) {
             foreach ($pages as $url => $page) {
+                usleep(rand(1000000, 2000000));
                 if (!empty($page)){
                     $document = new Document(trim($page));
                     $this->logErrors($document,"div[class=error_code_404]"," 404-->>",$url);
