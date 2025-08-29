@@ -16,6 +16,7 @@ import CollectionListAdm from "@/pages/CollectionListAdm.vue";
 import CollectionAddAdm from "@/pages/CollectionAddAdm.vue";
 import TagListAdm from "@/pages/TagListAdm.vue";
 import TagsInfoAdm from "@/pages/TagsInfoAdm.vue";
+import SectionsListAdm from "@/pages/SectionsListAdm.vue";
 import LoginAdm from "@/pages/LoginAdm.vue";
 
 const routes = [
@@ -160,6 +161,15 @@ const routes = [
         path: '/persons/edit/:id',
         name: 'editPerson',
         component: UpdatePersonAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/categories/sections/',
+        name: 'listSections',
+        component: SectionsListAdm,
         meta: {
             layout: 'full',
             permissions: [],

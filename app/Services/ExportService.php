@@ -13,9 +13,75 @@ use App\Models\TagsMoviesPivot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ExportService
 {
+    public function exportIndex()
+    {
+        $sectionsDir = 'sections';
+        $sectionDirs = Storage::disk('public')->directories($sectionsDir);
+        $formData = [];
+
+        if (empty($sectionDirs)) {
+            Log::error('No section directories found in storage/public/sections');
+            return response()->json(['success' => false, 'message' => 'No section directories found'], 422);
+        }
+
+        foreach ($sectionDirs as $sectionDir) {
+            $sectionId = basename($sectionDir);
+            $subDirs = [
+                'section_logo' => "sections/{$sectionId}/section_logo",
+                'backdrop' => "sections/{$sectionId}/backdrop",
+                'film_logo_ru' => "sections/{$sectionId}/film_logos/ru",
+                'film_logo_en' => "sections/{$sectionId}/film_logos/en",
+                'posters' => "sections/{$sectionId}/posters",
+            ];
+
+            foreach ($subDirs as $field => $path) {
+                $files = Storage::disk('public')->files($path);
+                if (empty($files)) {
+                    Log::warning("No files found in {$path} for section {$sectionId}");
+                    continue;
+                }
+                foreach ($files as $file) {
+                    $filePath = Storage::disk('public')->path($file);
+                    if (!is_readable($filePath)) {
+                        Log::error("File is not readable: {$filePath}");
+                        continue;
+                    }
+                    $filename = basename($file);
+                    $formData[] = [
+                        'name' => "sections[{$sectionId}][{$field}][]",
+                        'contents' => file_get_contents($filePath),
+                        'filename' => $filename,
+                    ];
+                }
+            }
+        }
+
+        if (empty($formData)) {
+            Log::error('No files to export');
+            return response()->json(['success' => false, 'message' => 'No files to export'], 422);
+        }
+
+        //Log::info('Sections data prepared for export:', ['sections' => array_map('basename', $sectionDirs), 'files_count' => count($formData)]);
+
+        try {
+            $response = Http::withToken(config('services.kinospectr.api_token'))
+                ->asMultipart()
+                ->post(config('services.kinospectr.api_url') . '/api/sections/import', $formData);
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'type' => 'success', 'message' => $response->json()['message'] ]);
+            } else {
+                Log::error('Failed to export sections', ['response' => $response->json()]);
+                return response()->json(['success' => false,  'type' => 'error','message' => 'Failed to export sections: ' . ($response->json()['message'] ?? 'Unknown error')], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error exporting sections: ' . $e->getMessage());
+            return response()->json(['success' => false, 'type' => 'error', 'message' => 'Error exporting sections: ' . $e->getMessage()], 500);
+        }
+    }
     public function exportMovies(bool $switchAll): array
     {
         return DB::transaction(function () use ($switchAll) {
@@ -108,7 +174,7 @@ class ExportService
         $categories = Category::all()->map(function ($category) {
             return [
                 'id' => $category->id,
-                'label' => $category->label,
+                'index_id' => $category->index_id,
                 'value' => $category->value,
                 'title_en' => $category->title_en,
                 'title_ru' => $category->title_ru,

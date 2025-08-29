@@ -38,6 +38,7 @@
     "export":"Экспорт",
     "export_movies":"Экспорт фильмов",
     "export_taxonomies":"Экспорт таксономий",
-    "export_tags":"Экспорт тегов"
+    "export_tags":"Экспорт тегов",
+    "export_index_images":"Экспорт изображений индекса"
 }
 

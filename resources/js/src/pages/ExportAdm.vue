@@ -42,6 +42,11 @@
             </el-row>
         </el-col>
     </el-row>
+    <el-row :gutter="20">
+        <el-col :span="6"><div class="grid-content ep-bg-purple" />
+            <el-button type="danger" @click="submitExportIndex()"  :loading="spinBtnExportIndexImg"  class="w-100 mb-3">{{$t('export_index_images')}}</el-button>
+        </el-col>
+    </el-row>
     <el-row :gutter="20" >
         <el-col v-if="tableData.length">
             <el-table :data="tableData" :v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
@@ -104,8 +109,8 @@
     import { ElMessage, ElMessageBox } from "element-plus";
     import { useLanguageStore } from "../store/languageStore";
     import { useExportStore } from "../store/exportStore";
-    import {Delete, EditPen, View} from "@element-plus/icons-vue";
-    import {RouterLink} from "vue-router";
+    import { EditPen, View } from "@element-plus/icons-vue";
+    import { RouterLink } from "vue-router";
 
     const languageStore = useLanguageStore();
     const exportStore = useExportStore();
@@ -124,6 +129,7 @@
         countsExportTaxonomy,
         countsExportTag,
         spinBtnExportMovie,
+        spinBtnExportIndexImg,
         spinBtnExportTaxonomy,
         spinBtnExportTag,
         disableBtnMovieExport,
@@ -131,6 +137,7 @@
         disableBtnTagExport } = storeToRefs( exportStore );
 
     const modelSwitchAllExport = ref(false);
+
     watch(() => watcherLang.value, (newLang) => {
         exportStore.getExportMovies();
     });
@@ -162,6 +169,20 @@
             ElMessage({
                 type: 'info',
                 message: 'Export canceled',
+            })
+        })
+    }
+    const submitExportIndex = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            exportStore.exportIndex();
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Export Index canceled',
             })
         })
     }

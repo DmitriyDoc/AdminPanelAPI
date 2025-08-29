@@ -34,9 +34,7 @@ class CategoriesController extends Controller
     }
     public function getSections() : array
     {
-        $titleFieldName = 'title_'.Lang::locale();;
-        $sections = Category::get(['id','label','value',$titleFieldName])->toArray();
-
+        $sections = Category::get(['id','index_id','value','title_ru','title_en'])->toArray();
         return $sections?? [] ;
     }
 

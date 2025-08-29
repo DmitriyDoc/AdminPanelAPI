@@ -38,5 +38,6 @@
     "export":"Export",
     "export_movies":"Export movies",
     "export_taxonomies":"Export taxonomies",
-    "export_tags":"Export tags"
+    "export_tags":"Export tags",
+    "export_index_images":"Export index images"
 }

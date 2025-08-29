@@ -11,7 +11,7 @@
                             <template v-for="(item, index) in sections">
                                 <RouterLink :to="'/section/'+item.value">
                                     <el-menu-item :index="'2-'+index" class="section-color-line" :style="{borderLeftColor: item.value}">
-                                        {{item.title_ru??item.title_en}}
+                                        {{watcherLang === 'en' ? item.title_en : item.title_ru}}
                                     </el-menu-item>
                                 </RouterLink>
                             </template>
@@ -21,6 +21,10 @@
                         <template #title>
                             <el-icon><setting /></el-icon><h3>{{$t('categories')}}</h3>
                         </template>
+                        <el-menu-item-group>
+                            <template #title><h4>Sections</h4></template>
+                            <RouterLink to="/categories/sections/"><el-menu-item index="3-1">List sections</el-menu-item></RouterLink>
+                        </el-menu-item-group>
                         <el-menu-item-group>
                             <template #title><h4>{{$t('franchise')}}</h4></template>
                             <RouterLink to="/categories/franchise/"><el-menu-item index="3-1">{{$t('add_franchise')}}</el-menu-item></RouterLink>

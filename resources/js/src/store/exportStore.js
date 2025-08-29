@@ -20,6 +20,7 @@ export const useExportStore = defineStore('exportStore',() => {
     const spinBtnExportMovie = ref(false);
     const spinBtnExportTaxonomy = ref(false);
     const spinBtnExportTag = ref(false);
+    const spinBtnExportIndexImg = ref(false);
     const messageExportTaxonomy = ref('');
     const messageExportTag = ref('');
     const countsExportMovie = ref(0);
@@ -46,6 +47,24 @@ export const useExportStore = defineStore('exportStore',() => {
         } catch (e) {
             console.log('error',e);
         }
+    }
+    const exportIndex = async () => {
+        spinBtnExportIndexImg.value = true;
+        axios.post('/index/send').then((response) => {
+            if (response.data.data.original.message) {
+                ElMessage({
+                    type: response.data.data.original.type,
+                    message: response.data.data.original.message,
+                })
+                spinBtnExportIndexImg.value = false;
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Export is not finished',
+                });
+            }
+
+        });
     }
     const exportMovies = async (switchAll) => {
         spinBtnExportMovie.value = true;
@@ -129,6 +148,7 @@ export const useExportStore = defineStore('exportStore',() => {
         exportTags,
         getExportMovies,
         updateCurrentPage,
+        exportIndex,
         locale,
         loader,
         tableData,
@@ -144,6 +164,7 @@ export const useExportStore = defineStore('exportStore',() => {
         spinBtnExportMovie,
         spinBtnExportTaxonomy,
         spinBtnExportTag,
+        spinBtnExportIndexImg,
         disableBtnMovieExport,
         disableBtnTaxonomyExport,
         disableBtnTagExport,

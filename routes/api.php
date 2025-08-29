@@ -49,6 +49,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
         Route::post('/movies/send', [\App\Http\Controllers\AdminMovieController::class, 'send']);
         Route::post('/taxonomies/send', [\App\Http\Controllers\AdminTaxonomyController::class, 'send']);
         Route::post('/tags/send', [\App\Http\Controllers\AdminTagsController::class, 'send']);
+        Route::post('/index/send', [\App\Http\Controllers\AdminIndexController::class, 'send']);
         // CHECK  LANGUAGE
         Route::middleware('localization')->group(function () {
             // BALANCER ALLOHA
@@ -72,7 +73,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             });
             // Resources QUERY
             Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
-                Route::get('/movies/export/show', [\App\Http\Controllers\MoviesController::class, 'showExportMovies']);
+                Route::get('/movies/export/show', 'showExportMovies');
                 Route::get('/movies/{slug}', 'index');
                 Route::get('/movies/show/{id}', 'show');
                 Route::put('/movies/update', 'update');
@@ -97,6 +98,10 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             });
             Route::controller(\App\Http\Controllers\SectionsController::class)->group(function () {
                 Route::get('/sections/{slug}', 'index');
+                Route::get('/section/images', 'sectionImages');
+                Route::post('/section/update-images', 'updateImages');
+                Route::post('/section/update', 'updateSection');
+                Route::delete('/section/images', 'deleteImage');
                 Route::delete('/sections', 'destroy');
             });
             Route::controller(\App\Http\Controllers\CollectionsController::class)->group(function () {
