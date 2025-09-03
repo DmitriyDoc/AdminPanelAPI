@@ -12,6 +12,8 @@ use App\Services\ApiRequestImages;
 use App\Services\IdHasher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -147,8 +149,9 @@ class CollectionsController extends Controller
                                         if ($item['id_movie'] == $posterItem['id_movie']){
                                             $img = explode(',',$posterItem['srcset'] ?? '');
                                             if ($posterItem['id_movie'] == $ids[0]['old_id']){
-                                                $collectionResponse['data'][$k]['poster'] = (!empty($previewImagesApi['data']['images'][$hashKey])) ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : $img[0] ?? '';
+                                                $collectionResponse['data'][$k]['poster'] = $previewImagesApi['data']['images'][$hashKey] ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : ($img[0] ?? '');
                                             }
+
                                         }
                                     }
                                 }
@@ -183,7 +186,106 @@ class CollectionsController extends Controller
         }
         return [];
     }
+    public function updateCollection (Request $request) : array
+    {
+        $data = Validator::make($request->all(),[
+            'id' => 'required|int',
+            'category_id' => 'required|int',
+            'value' => '|string|max:30',
+            'label_en' => 'required|string|max:40',
+            'label_ru' => 'required|string|max:40',
+        ])->safe()->all();
+        if (!empty($data['id'])){
+            try {
+                Collection::where('id',$data['id'])->update([
+                    'category_id' => $data['category_id'],
+                    'value' => $data['value'],
+                    'label_en' => $data['label_en'],
+                    'label_ru' => $data['label_ru']
+                ]);
+                return [
+                    'success' => true,
+                ];
+            } catch (\Exception $e) {
+                Log::error("Error saving poster for collection Error: {$e->getMessage()}");
+            }
 
+        }
+        return [
+            'success' => false,
+        ];
+    }
+    public function updateCollectionImages(Request $request)
+    {
+        $request->validate([
+            'collections.*.cover' => 'required|image|mimes:jpeg,png,gif|max:10240',
+        ]);
+
+        $collectionsFiles = $request->file('collections') ?? [];
+
+        if (empty($collectionsFiles)) {
+            Log::error('No collections files received');
+            return response()->json(['success' => false, 'message' => 'Нет данных для обработки (файлы отсутствуют).'], 422);
+        }
+
+        foreach ($collectionsFiles as $collectionId => $data) {
+            if (!isset($data['cover'])) {
+                Log::error("Missing required cover file for collection {$collectionId}");
+                return response()->json(['success' => false, 'message' => "Отсутствует обязательный файл cover для коллекции {$collectionId}"], 422);
+            }
+
+            $coverPath = "collections/{$collectionId}/cover";
+            if (Storage::disk('public')->exists($coverPath)) {
+                Storage::disk('public')->deleteDirectory($coverPath);
+            }
+            $coverFile = $data['cover'];
+            $coverFilename = $coverFile->getClientOriginalName();
+            $coverFile->storeAs($coverPath, $coverFilename, 'public');
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function collectionImages()
+    {
+        $collectionsDir = 'collections';
+        $result = [];
+        $collectionDirs = Storage::disk('public')->directories($collectionsDir);
+
+        foreach ($collectionDirs as $collectionDir) {
+            $collectionId = basename($collectionDir);
+            $result[$collectionId] = [
+                'cover' => '',
+            ];
+
+            $coverPath = "collections/{$collectionId}/cover";
+            $files = Storage::disk('public')->files($coverPath);
+
+            if (!empty($files)) {
+                $url = Storage::disk('public')->url($files[0]);
+                $result[$collectionId]['cover'] = $url;
+            }
+        }
+
+        return response()->json($result);
+    }
+
+    public function deleteCollectionImage(Request $request)
+    {
+        $data = $request->validate([
+            'collectionId' => 'required|integer',
+            'file' => 'required|string',
+        ]);
+
+        $path = "collections/{$data['collectionId']}/cover/{$data['file']}";
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+            Log::info("Deleted cover image: {$path}");
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false, 'message' => 'Файл не найден'], 404);
+    }
     public function list(Request $request): array
     {
         $model = convertVariableToModelName('Collection','', ['App', 'Models']);
@@ -201,13 +303,15 @@ class CollectionsController extends Controller
             $limit = $request->query('limit',20);
             $page = $request->query('page',1);
             $sortDir = strtolower($request->query('spin','asc'));
-            $sortBy = $request->query('orderBy','created_at');
+
+            $sortBy = $request->query('orderBy','id');
             if (!in_array($sortBy,$allowedFilterFields)){
                 $sortBy = $allowedSortFields[0];
             }
             if (in_array($sortDir,$allowedSortFields)){
                 $sortDir == 'desc' ? $CollectionCol = $CollectionCol->sortByDesc($sortBy) : $CollectionCol->sortBy($sortBy);
             }
+
             $collectionSort = $CollectionCol->forPage($page,$limit);
             $collectionSortArr = $collectionSort->values()->toArray();
             return [

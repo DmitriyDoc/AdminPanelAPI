@@ -50,6 +50,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
         Route::post('/taxonomies/send', [\App\Http\Controllers\AdminTaxonomyController::class, 'send']);
         Route::post('/tags/send', [\App\Http\Controllers\AdminTagsController::class, 'send']);
         Route::post('/index/send', [\App\Http\Controllers\AdminIndexController::class, 'send']);
+        Route::post('/collections/send', [\App\Http\Controllers\AdminCollectionsController::class, 'send']);
         // CHECK  LANGUAGE
         Route::middleware('localization')->group(function () {
             // BALANCER ALLOHA
@@ -107,6 +108,10 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             Route::controller(\App\Http\Controllers\CollectionsController::class)->group(function () {
                 Route::get('/collections/{slugSect}/{slugColl}', 'index');
                 Route::get('/collections', 'list');
+                Route::post('/collections/update', 'updateCollection');
+                Route::post('/collections/update-images', 'updateCollectionImages');
+                Route::get('/collections/images', 'collectionImages');
+                Route::delete('/collections/images', 'deleteCollectionImage');
                 Route::delete('/collections/del', 'destroy');
             });
             Route::controller(\App\Http\Controllers\FranchiseController::class)->group(function () {

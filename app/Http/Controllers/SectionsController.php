@@ -137,7 +137,7 @@ class SectionsController extends Controller
                                     if ($item['id_movie'] == $posterItem['id_movie']){
                                         $img = explode(',',$posterItem['srcset'] ?? '');
                                         if ($posterItem['id_movie'] == $ids[0]['old_id']){
-                                            $collectionResponse['data'][$k]['poster'] = (!empty($previewImagesApi['data']['images'][$hashKey])) ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : $img[0] ?? '';
+                                            $collectionResponse['data'][$k]['poster'] = $previewImagesApi['data']['images'][$hashKey] ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : ($img[0]??'');
                                         }
                                     }
                                 }
@@ -250,9 +250,6 @@ class SectionsController extends Controller
 
     public function updateImages(Request $request)
     {
-        Log::info('Request input:', ['input' => $request->all()]);
-        Log::info('Request files:', ['files' => $request->file()]);
-
         $request->validate([
             'sections.*.section_logo' => 'required|image|mimes:jpeg,png,gif|max:10240',
             'sections.*.backdrop' => 'required|image|mimes:jpeg,png,gif|max:10240',
@@ -283,20 +280,19 @@ class SectionsController extends Controller
             }
             $sectionLogoFile = $data['section_logo'];
             $sectionLogoFilename = $sectionLogoFile->getClientOriginalName();
-            $savedPath = $sectionLogoFile->storeAs($sectionLogoPath, $sectionLogoFilename, 'public');
-            Log::info("Saved section_logo for section {$sectionId}: {$savedPath}");
+            $sectionLogoFile->storeAs($sectionLogoPath, $sectionLogoFilename, 'public');
 
-            // Сохранение backdrop
+
+
             $backdropPath = "sections/{$sectionId}/backdrop";
             if (Storage::disk('public')->exists($backdropPath)) {
                 Storage::disk('public')->deleteDirectory($backdropPath);
             }
             $backdropFile = $data['backdrop'];
             $backdropFilename = $backdropFile->getClientOriginalName();
-            $savedPath = $backdropFile->storeAs($backdropPath, $backdropFilename, 'public');
-            Log::info("Saved backdrop for section {$sectionId}: {$savedPath}");
+            $backdropFile->storeAs($backdropPath, $backdropFilename, 'public');
 
-            // Сохранение film_logo_ru
+
             if (isset($data['film_logo_ru'])) {
                 $filmLogoRuPath = "sections/{$sectionId}/film_logos/ru";
                 if (Storage::disk('public')->exists($filmLogoRuPath)) {
@@ -304,11 +300,9 @@ class SectionsController extends Controller
                 }
                 $filmLogoRuFile = $data['film_logo_ru'];
                 $filmLogoRuFilename = $filmLogoRuFile->getClientOriginalName();
-                $savedPath = $filmLogoRuFile->storeAs($filmLogoRuPath, $filmLogoRuFilename, 'public');
-                Log::info("Saved film_logo_ru for section {$sectionId}: {$savedPath}");
+                $filmLogoRuFile->storeAs($filmLogoRuPath, $filmLogoRuFilename, 'public');
             }
 
-            // Сохранение film_logo_en
             if (isset($data['film_logo_en'])) {
                 $filmLogoEnPath = "sections/{$sectionId}/film_logos/en";
                 if (Storage::disk('public')->exists($filmLogoEnPath)) {
@@ -316,11 +310,9 @@ class SectionsController extends Controller
                 }
                 $filmLogoEnFile = $data['film_logo_en'];
                 $filmLogoEnFilename = $filmLogoEnFile->getClientOriginalName();
-                $savedPath = $filmLogoEnFile->storeAs($filmLogoEnPath, $filmLogoEnFilename, 'public');
-                Log::info("Saved film_logo_en for section {$sectionId}: {$savedPath}");
+                $filmLogoEnFile->storeAs($filmLogoEnPath, $filmLogoEnFilename, 'public');
             }
 
-            // Обработка poster_ids
             $posterIds = $sectionsInput[$sectionId]['poster_ids'] ?? [];
             if (!empty($posterIds)) {
                 $validIds = [];
@@ -393,7 +385,6 @@ class SectionsController extends Controller
                                 $filename = "poster_{$hashedId}.{$extension}";
                                 $path = "sections/{$sectionId}/posters/{$filename}";
                                 Storage::disk('public')->put($path, $file['content']);
-                                Log::info("Saved poster for section {$sectionId}: {$path}");
                             } catch (\Exception $e) {
                                 Log::error("Error saving poster for section {$sectionId}: {$imageUrl}, Error: {$e->getMessage()}");
                             }
@@ -458,14 +449,12 @@ class SectionsController extends Controller
 
             foreach ($subDirs as $key => $path) {
                 $files = Storage::disk('public')->files($path);
-                Log::info("Files in {$path}:", ['files' => $files]);
                 foreach ($files as $file) {
                     $url = Storage::disk('public')->url($file);
                     $result[$sectionId][$key][] = $url;
                 }
             }
         }
-        Log::info("Section images response:", ['result' => $result]);
         return response()->json($result);
     }
 

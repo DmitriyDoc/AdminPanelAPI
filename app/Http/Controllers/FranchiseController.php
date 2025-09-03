@@ -120,7 +120,7 @@ class FranchiseController extends Controller
                                     if ($item['id_movie'] == $posterItem['id_movie']){
                                         $img = explode(',',$posterItem['srcset'] ?? '');
                                         if ($posterItem['id_movie'] == $ids[0]['old_id']){
-                                            $collectionResponse['data'][$k]['poster'] = (!empty($previewImagesApi['data']['images'][$hashKey])) ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : $img[0] ?? '';
+                                            $collectionResponse['data'][$k]['poster'] = $previewImagesApi['data']['images'][$hashKey] ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : ($img[0]??'');
                                         }
                                     }
                                 }

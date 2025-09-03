@@ -154,7 +154,7 @@
                             class="upload-demo"
                             action="#"
                             :limit="10"
-                            accept="image/jpeg,image/png,image/gif"
+                            accept="image/jpeg,image/png"
                             :auto-upload="false"
                             :on-preview="handlePreview"
                             :on-remove="(file, fileList) => handleRemove(file, fileList, item.id, 'posters')"
