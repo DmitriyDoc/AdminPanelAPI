@@ -21,6 +21,7 @@ export const useExportStore = defineStore('exportStore',() => {
     const spinBtnExportTaxonomy = ref(false);
     const spinBtnExportTag = ref(false);
     const spinBtnExportIndexImg = ref(false);
+    const spinBtnExportCollections = ref(false);
     const messageExportTaxonomy = ref('');
     const messageExportTag = ref('');
     const countsExportMovie = ref(0);
@@ -64,6 +65,23 @@ export const useExportStore = defineStore('exportStore',() => {
                 });
             }
 
+        });
+    }
+    const exportCollections = async () => {
+        spinBtnExportCollections.value = true;
+        axios.post('/collections/send').then((response) => {
+            if (response.data.data.original.message) {
+                ElMessage({
+                    type: response.data.data.original.type,
+                    message: response.data.data.original.message,
+                })
+                spinBtnExportCollections.value = false;
+            } else {
+                ElMessage({
+                    type: 'error',
+                    message: 'Export is not finished',
+                });
+            }
         });
     }
     const exportMovies = async (switchAll) => {
@@ -149,6 +167,7 @@ export const useExportStore = defineStore('exportStore',() => {
         getExportMovies,
         updateCurrentPage,
         exportIndex,
+        exportCollections,
         locale,
         loader,
         tableData,
@@ -165,6 +184,7 @@ export const useExportStore = defineStore('exportStore',() => {
         spinBtnExportTaxonomy,
         spinBtnExportTag,
         spinBtnExportIndexImg,
+        spinBtnExportCollections,
         disableBtnMovieExport,
         disableBtnTaxonomyExport,
         disableBtnTagExport,

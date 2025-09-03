@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
+use App\Models\MovieCategory;
 use App\Models\TagsMoviesPivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -155,12 +156,24 @@ class CategoriesController extends Controller
         transaction( function () use ($data,$locale){
             CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
             TagsMoviesPivot::where('id_movie',$data['id_movie'])->delete();
+            MovieCategory::where('id_movie',$data['id_movie'])->delete();
+            $categoriesToInsert = [];
             if (!empty($data['categories'])){
                 foreach ( $data['categories'] as $cat){
                     $franchiseId = null;
+                    $categoryId = $cat[0];
+                    $key = $data['id_movie'] . '_' . $categoryId;
+                    $categoriesToInsert[$key] = [
+                        'id_movie' => $data['id_movie'],
+                        'id_category' => $categoryId,
+                    ];
                     if (!empty($cat[2])){
                         $franchiseId = str_replace("fr_".$cat[1], '', $cat[2]);
                     }
+                    MovieCategory::upsert(
+                        array_values($categoriesToInsert),
+                        ['id_movie', 'id_category']
+                    );
                     CollectionsCategoriesPivot::create([
                         'id_movie' =>$data['id_movie'],
                         'type_film' => $data['type_film'],

@@ -6,7 +6,7 @@
         </el-col>
     </el-row>
     <el-row :gutter="20">
-        <el-col :span="6"><div class="grid-content ep-bg-purple" />
+        <el-col :span="6">
             <el-button type="danger" @click="submitExportTaxonomy()" :loading="spinBtnExportTaxonomy" :disabled="disableBtnTaxonomyExport" class="w-100 mb-3">{{$t('export_taxonomies')}}</el-button>
         </el-col>
         <el-col :span="14"><div class="grid-content ep-bg-purple" />
@@ -19,10 +19,10 @@
         </el-col>
     </el-row>
     <el-row :gutter="20">
-        <el-col :span="6"><div class="grid-content ep-bg-purple" />
+        <el-col :span="6">
             <el-button type="danger" @click="submitExportTags()" :loading="spinBtnExportTag" :disabled="disableBtnTagExport" class="w-100 mb-3">{{$t('export_tags')}}</el-button>
         </el-col>
-        <el-col :span="14"><div class="grid-content ep-bg-purple" />
+        <el-col :span="14">
             <el-text type="success" tag="b"> {{messageExportTag}} </el-text>
             <el-row class="mb-2" v-if="countsExportTag">
                 <el-col v-for="(count,key) in countsExportTag">
@@ -32,10 +32,10 @@
         </el-col>
     </el-row>
     <el-row :gutter="20">
-        <el-col :span="6"><div class="grid-content ep-bg-purple" />
+        <el-col :span="6">
             <el-button type="danger" @click="submitExportMovies()" :loading="spinBtnExportMovie" :disabled="disableBtnMovieExport" class="w-100 mb-3">{{$t('export_movies')}}</el-button>
         </el-col>
-        <el-col :span="14"><div class="grid-content ep-bg-purple" />
+        <el-col :span="14">
             <el-text :type="messageExportMovie.type" tag="b"> {{messageExportMovie.text}} </el-text>
             <el-row class="mb-2" v-if="countsExportMovie">
                 <el-col><el-text>Number of exported movies: <strong>{{countsExportMovie}}</strong></el-text></el-col>
@@ -43,8 +43,13 @@
         </el-col>
     </el-row>
     <el-row :gutter="20">
-        <el-col :span="6"><div class="grid-content ep-bg-purple" />
+        <el-col :span="6">
             <el-button type="danger" @click="submitExportIndex()"  :loading="spinBtnExportIndexImg"  class="w-100 mb-3">{{$t('export_index_images')}}</el-button>
+        </el-col>
+    </el-row>
+    <el-row :gutter="20">
+        <el-col :span="6">
+            <el-button type="danger" @click="submitExportPostersCol()"  :loading="spinBtnExportCollections"  class="w-100 mb-3">Export posters collections</el-button>
         </el-col>
     </el-row>
     <el-row :gutter="20" >
@@ -183,6 +188,20 @@
             ElMessage({
                 type: 'info',
                 message: 'Export Index canceled',
+            })
+        })
+    }
+    const submitExportPostersCol = () => {
+        ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            exportStore.exportCollections();
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Export Collection posters canceled',
             })
         })
     }

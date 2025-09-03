@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
+use App\Models\MovieCategory;
 use App\Models\MovieInfo;
 use App\Models\Tag;
 use App\Models\TagsMoviesPivot;
@@ -17,6 +18,87 @@ use Illuminate\Support\Facades\Storage;
 
 class ExportService
 {
+
+    public function exportCollections()
+    {
+        $collectionsDir = 'collections';
+        $collectionsDirs = Storage::disk('public')->directories($collectionsDir);
+        $formData = [];
+
+        if (empty($collectionsDirs)) {
+            Log::error('No collection directories found in storage/public/collections');
+            return response()->json(['success' => false, 'message' => 'No collections directories found'], 422);
+        }
+
+        foreach ($collectionsDirs as $colDir) {
+            $collectionId = basename($colDir);
+
+            $subDirs = [
+                'coverCol' => "collections/{$collectionId}/cover",
+            ];
+
+            foreach ($subDirs as $field => $path) {
+                $files = Storage::disk('public')->files($path);
+                if (empty($files)) {
+                    Log::warning("No files found in {$path} for collection {$collectionId}");
+                    continue;
+                }
+
+                foreach ($files as $file) {
+                    $filePath = Storage::disk('public')->path($file);
+                    if (!is_readable($filePath)) {
+                        Log::error("File is not readable: {$filePath}");
+                        continue;
+                    }
+
+                    $filename = basename($file);
+                    $formData[] = [
+                        'name' => "collections[{$collectionId}][{$field}][]",
+                        'contents' => file_get_contents($filePath),
+                        'filename' => $filename,
+                    ];
+                }
+            }
+        }
+
+        if (empty($formData)) {
+            Log::error('No files to export');
+            return response()->json(['success' => false, 'message' => 'No files to export'], 422);
+        }
+
+//        Log::info('Collections data prepared for export:', [
+//            'collections' => array_map('basename', $collectionsDirs),
+//            'files_count' => count($formData)
+//        ]);
+
+        try {
+            $response = Http::withToken(config('services.kinospectr.api_token'))
+                ->asMultipart()
+                ->post(config('services.kinospectr.api_url') . '/api/collections/import', $formData);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'type' => 'success',
+                    'message' => $response->json('message', 'Collections imported successfully.')
+                ]);
+            } else {
+                Log::error('Failed to export collections', ['response' => $response->json()]);
+                return response()->json([
+                    'success' => false,
+                    'type' => 'error',
+                    'message' => 'Failed to export collections: ' . ($response->json('message', 'Unknown error'))
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error exporting collections: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'type' => 'error',
+                'message' => 'Error exporting collections: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function exportIndex()
     {
         $sectionsDir = 'sections';
@@ -180,7 +262,12 @@ class ExportService
                 'title_ru' => $category->title_ru,
             ];
         })->toArray();
-
+        $movieCategories = MovieCategory::all()->map(function ($catMovie) {
+            return [
+                'id_movie' => $catMovie->id_movie,
+                'id_category' => $catMovie->id_category,
+            ];
+        })->toArray();
         $collections = Collection::all()->map(function ($collection) {
             return [
                 'id' => $collection->id,
@@ -227,6 +314,7 @@ class ExportService
         })->toArray();
         $taxonomiesData = [
             'categories' => $categories,
+            'movie_categories' => $movieCategories,
             'collections' => $collections,
             'franchises' => $franchises,
             'collections_categories_pivots' => $collectionsCategoriesPivots,
