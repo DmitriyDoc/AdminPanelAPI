@@ -70,6 +70,7 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
                 Route::get('/media/{type}/{slug}/{id}', 'index');
                 Route::post('/media/poster_assign', 'store');
                 Route::patch('/media/move', 'moveImagesToPosters');
+                Route::post('/media/images/reorder','reorderImages');
                 Route::delete('/media', 'destroy');
             });
             // Resources QUERY

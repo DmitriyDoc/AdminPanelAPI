@@ -264,7 +264,8 @@ class ExportService
         })->toArray();
         $movieCategories = MovieCategory::all()->map(function ($catMovie) {
             return [
-                'id_movie' => $catMovie->id_movie,
+                'imdb_id' => $catMovie->id_movie,
+                'id_movie' => null,
                 'id_category' => $catMovie->id_category,
             ];
         })->toArray();

@@ -219,7 +219,7 @@ if (!function_exists('cascaderStructure')) {
 
             rsort($widths);
 
-            $preferredWidth = 1024;
+            $preferredWidth = 1280;
 
             foreach ($widths as $width) {
                 if ($width <= $preferredWidth) {

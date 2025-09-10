@@ -393,7 +393,75 @@ class MediaController extends Controller
         }
         return [];
     }
+    public function reorderImages(Request $request)
+    {
+        $validated = $request->validate([
+            'movie_id' => 'required|string',
+            'type_film' => 'required|string',
+            'ordered_ids' => 'required|array',
+            'ordered_ids.*' => 'integer',
+        ]);
 
+        $movieId = $validated['movie_id'];
+        $orderedIds = $validated['ordered_ids'];
+
+        $ImagesModel = convertVariableToModelName('Images', $validated['type_film'], ['App', 'Models']);
+
+        return transaction(function () use ($ImagesModel, $movieId, $orderedIds) {
+
+            $images = $ImagesModel::whereIn('id', $orderedIds)
+                ->where('id_movie', $movieId)
+                ->get(['id', 'id_movie', 'src', 'srcset', 'namesCelebsImg', 'created_at'])
+                ->keyBy('id')
+                ->toArray();
+
+            if (empty($images)) {
+                return response()->json([
+                    'message' => 'No images found to reorder',
+                    'success' => false,
+                    'images' => [],
+                ], 404);
+            }
+
+            $ImagesModel::whereIn('id', $orderedIds)->where('id_movie', $movieId)->delete();
+
+
+            $insertedRecords = [];
+            $now = now();
+
+            foreach ($orderedIds as $id) {
+                if (!isset($images[$id])) {
+                    continue;
+                }
+
+                $record = $images[$id];
+
+                $newImage = new $ImagesModel();
+                $newImage->id_movie = $record['id_movie'];
+                $newImage->src = $record['src'] ?? null;
+                $newImage->srcset = $record['srcset'] ?? null;
+                $newImage->namesCelebsImg = $record['namesCelebsImg'] ?? null;
+                $newImage->created_at = $record['created_at'] ?? $now;
+                $newImage->updated_at = $now;
+
+                $newImage->save();
+
+                $insertedRecords[] = [
+                    'id' => $newImage->id,
+                    'id_movie' => $newImage->id_movie,
+                    'srcset' => $newImage->srcset ?? '',
+                    'src' => $newImage->src ?? '',
+                ];
+            }
+
+            return response()->json([
+                'message' => 'Order saved successfully by re-inserting records',
+                'success' => true,
+                'images' => $insertedRecords,
+            ]);
+
+        });
+    }
     private function checkAssignPoster($id, $assignArray = null){
         if (!empty($assignArray)){
             foreach ($assignArray as $key => $item){

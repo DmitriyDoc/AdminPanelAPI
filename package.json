@@ -26,6 +26,7 @@
         "pinia": "^2.1.7",
         "socket.io": "^4.8.1",
         "socket.io-client": "^4.8.1",
+        "sortablejs": "^1.15.6",
         "tiny-emitter": "^2.1.0",
         "uuid": "^9.0.1",
         "vue": "^3.2.36",

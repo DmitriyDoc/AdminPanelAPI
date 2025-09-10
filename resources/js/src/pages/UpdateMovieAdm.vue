@@ -142,35 +142,72 @@
             <el-collapse v-model="activeCollapseTab" class="m-3" @change="handleChangeImages">
                 <el-collapse-item :title="singleData.locale.images" name="image">
                     <template v-if="imagesData.length">
-                        <el-table
-                            ref="multipleTableImage"
-                            :data="imagesData"
-                            style="width: 100%"
-                            @selection-change="handleSelectImageChange"
-                        >
-                            <el-table-column type="selection" width="55"/>
-                            <el-table-column property="id" label="ID" width="100">
-                                <template v-slot:default="scope">
-                                    {{scope.row.id}}
-                                </template>
-                            </el-table-column>
-                            <el-table-column property="src" :label="singleData.locale.photo" width="150">
-                                <template v-slot:default="scope">
-                                    <el-image :src="scope.row.srcset"/>
-                                </template>
-                            </el-table-column>
-                            <el-table-column property="src" :label="singleData.locale.link" show-overflow-tooltip>
-                                <template v-slot:default="scope">
-                                    <a :href="scope.row.src" target="_blank">{{scope.row.src}}</a>
-                                </template>
-                            </el-table-column>
-                        </el-table>
+                        <div class="custom-table" ref="customTableRef">
+                            <div class="table-header">
+                                <div class="table-cell" style="width: 80px;">ID</div>
+                                <div class="table-cell" style="width: 40px; text-align: center;">↕️</div>
+                                <div class="table-cell" style="width: 55px; text-align: center;">
+                                    <el-checkbox
+                                        :indeterminate="selectionIndeterminate"
+                                        v-model="selectAll"
+                                        @change="toggleSelectAllImages"
+                                    />
+                                </div>
+                                <div class="table-cell" style="width: 70px;">Image ID</div>
+                                <div class="table-cell" style="width: 200px;">{{ singleData.locale.photo }}</div>
+                                <div class="table-cell" style="width: 400px;">{{ singleData.locale.link }}</div>
+                            </div>
 
-                        <div style="margin-top: 20px">
-                            <el-button @click="toggleSelectImage()" type="info">{{singleData.locale.clear_selection}}</el-button>
-                            <el-button @click="toggleRemoveImage()" type="danger">{{singleData.locale.delete_selection}}</el-button>
-                            <el-button @click="moveImageToPosters()" type="primary">{{singleData.locale.move_selection}}</el-button>
+                            <div class="table-body" ref="tableBodyRef">
+                                <div
+                                    v-for="(item, index) in imagesData"
+                                    :key="item.id"
+                                    class="table-row"
+                                    :class="{ selected: multipleSelectImage.includes(item.id) }"
+                                    @click="handleRowClick($event, item)"
+                                    :data-id="item.id"
+                                >
+                                    <div class="table-cell" style="width: 100px;">{{ index + 1 }}</div>
+                                    <!-- Drag Handle -->
+                                    <div class="table-cell drag-handle" style="width: 40px; text-align: center; cursor: move;">
+                                        <el-icon style="color: #999; font-size: 18px;">
+                                            <Operation />
+                                        </el-icon>
+                                    </div>
 
+                                    <!-- Selection Checkbox -->
+                                    <div class="table-cell" style="width: 55px; text-align: center;">
+                                        <el-checkbox
+                                            :model-value="multipleSelectImage.includes(item.id)"
+                                            @click="handleCheckboxClick($event, item)"
+                                        />
+                                    </div>
+
+                                    <!-- ID -->
+                                    <div class="table-cell" style="width: 100px;">{{ item.id }}</div>
+
+                                    <!-- Photo -->
+                                    <div class="table-cell" style="width: 300px;">
+                                        <el-image
+                                            :src="item.srcset"
+                                            fit="contain"
+                                            style="width: 300px; height: 150px; object-fit: cover;"
+                                        />
+                                    </div>
+
+                                    <!-- Link -->
+                                    <div class="table-cell">
+                                        <a :href="item.src" target="_blank" @click.stop>{{ item.src }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                            <div style="margin-top: 20px">
+                            <el-button @click="handleSelectImage()" type="info">{{singleData.locale.clear_selection}}</el-button>
+                            <el-button @click="handleRemoveImage()" type="danger">{{singleData.locale.delete_selection}}</el-button>
+                            <el-button @click="handleMoveToPosters()" type="primary">{{singleData.locale.move_selection}}</el-button>
+                            <el-button @click="handleSaveOrder()" type="success" >{{'Save Order Images'}}</el-button>
                             <template v-if="countImg > 50" >
                                 <el-button type="info" @click="handleImageLoadMore" >{{singleData.locale.next_page}}
                                     <el-icon class="el-icon--right">
@@ -192,8 +229,8 @@
                             </el-badge>
                         </template>
                         <div class="mt-3">
-                            <el-button @click="toggleSelectPoster()" type="info">{{singleData.locale.clear_selection}}</el-button>
-                            <el-button @click="toggleRemovePoster()" type="danger">{{singleData.locale.delete_selection}}</el-button>
+                            <el-button @click="handleSelectPoster()" type="info">{{singleData.locale.clear_selection}}</el-button>
+                            <el-button @click="handleRemovePoster()" type="danger">{{singleData.locale.delete_selection}}</el-button>
                         </div>
                     </div>
                     <template v-if="postersData.length">
@@ -314,10 +351,11 @@
     import { useCategoriesStore } from "../store/categoriesStore";
     import { useProgressBarStore } from "../store/progressBarStore";
     import { useLanguageStore } from "../store/languageStore";
-    import {ElButton, TabsPaneContext} from 'element-plus';
-    import { ElMessage, ElMessageBox, ElTable } from 'element-plus'
+    import Sortable from 'sortablejs';
+    import { Operation } from '@element-plus/icons-vue';
+    import { ElMessage, ElMessageBox, ElTable, ElButton, TabsPaneContext } from 'element-plus'
     import { ArrowRight } from '@element-plus/icons-vue'
-    import { ref, reactive, watch, computed, onMounted } from "vue";
+    import { ref, reactive, watch, computed, onMounted, nextTick, onUnmounted } from "vue";
     import { useRoute } from "vue-router";
 
     const route = useRoute();
@@ -359,6 +397,11 @@
         plain:1,
     });
 
+    const customTableRef = ref(null);
+    const tableBodyRef = ref(null);
+    const selectAll = ref(false);
+    const selectionIndeterminate = ref(false);
+    let sortableInstance = null;
 
     const stepsState = computed(() => {
         const hasCategories = singleData.value.collection && Array.isArray(singleData.value.collection.id) && singleData.value.collection.id.length > 0;
@@ -395,8 +438,37 @@
         percentageSync.value = {};
         moviesStore.showItem();
         categoryStore.getCategories();
-    })
 
+        // Ждём загрузки данных
+        const timer = setInterval(() => {
+            if (imagesData.value.length > 0) {
+                clearInterval(timer);
+                nextTick().then(() => {
+                    setTimeout(initSortable, 100); // +100ms задержка
+                });
+            }
+        }, 100);
+    });
+
+    onUnmounted(() => {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+    });
+    const handleCheckboxClick = (event, item) => {
+        event.stopPropagation(); // Останавливаем всплытие
+        event.preventDefault();  // Предотвращаем дефолтное поведение
+
+        // Переключаем выделение
+        const index = multipleSelectImage.value.indexOf(item.id);
+        if (index > -1) {
+            multipleSelectImage.value.splice(index, 1);
+        } else {
+            multipleSelectImage.value.push(item.id);
+        }
+
+        updateSelectAllState();
+    };
     const handleCategoryChange = async (value) => {
         try {
             await ElMessageBox.confirm('Are you sure?', 'WARNING', {
@@ -454,17 +526,17 @@
         //console.log(tab, event)
     }
 
-    const toggleSelectImage = (rows?: []) => {
-        if (rows) {
-            rows.forEach((row) => {
-                multipleTableImage.value!.toggleRowSelection(row, undefined);
-            })
-        } else {
-            multipleTableImage.value!.clearSelection();
-        }
-
-    }
-    const toggleSelectPoster = (rows?: []) => {
+    // const toggleSelectImage = (rows?: []) => {
+    //     if (rows) {
+    //         rows.forEach((row) => {
+    //             multipleTableImage.value!.toggleRowSelection(row, undefined);
+    //         })
+    //     } else {
+    //         multipleTableImage.value!.clearSelection();
+    //     }
+    //
+    // }
+    const handleSelectPoster = (rows?: []) => {
         if (rows) {
             rows.forEach((row) => {
                 multipleTablePoster.value!.toggleRowSelection(row, undefined);
@@ -474,19 +546,75 @@
         }
 
     }
-    const handleSelectImageChange = (val?: []) => {
-        multipleSelectImage.value = [];
-        val.filter(function(arr, i){
-           multipleSelectImage.value.push(arr.id)
-         });
+    // const handleSelectImageChange = (val?: []) => {
+    //     multipleSelectImage.value = [];
+    //     val.filter(function(arr, i){
+    //        multipleSelectImage.value.push(arr.id)
+    //      });
+    // }
+
+
+    const handleRowClick = (event, item) => {
+        // Если клик по чекбоксу — не обрабатываем
+        if ((event.target as HTMLElement).closest('.el-checkbox')) {
+            return;
+        }
+
+        // Переключаем выделение строки
+        const index = multipleSelectImage.value.indexOf(item.id);
+        if (index > -1) {
+            multipleSelectImage.value.splice(index, 1);
+        } else {
+            multipleSelectImage.value.push(item.id);
+        }
+
+        updateSelectAllState();
     }
+
+    const toggleSelectAllImages = () => {
+        if (selectAll.value) {
+            multipleSelectImage.value = imagesData.value.map(item => item.id);
+        } else {
+            multipleSelectImage.value = [];
+        }
+        updateSelectAllState();
+    };
+
+    const updateSelectAllState = () => {
+        if (multipleSelectImage.value.length === 0) {
+            selectAll.value = false;
+            selectionIndeterminate.value = false;
+        } else if (multipleSelectImage.value.length === imagesData.value.length) {
+            selectAll.value = true;
+            selectionIndeterminate.value = false;
+        } else {
+            selectionIndeterminate.value = true;
+        }
+    };
+
+    // Сбросить выделение
+    const handleSelectImage = () => {
+        multipleSelectImage.value = [];
+        selectAll.value = false;
+        selectionIndeterminate.value = false;
+    };
+
+    // Следим за изменениями данных — обновляем выделение и сортировку
+    watch(imagesData, () => {
+        nextTick().then(() => {
+            setTimeout(initSortable, 100); // Задержка после обновления данных
+            const ids = new Set(multipleSelectImage.value);
+            multipleSelectImage.value = imagesData.value.filter(item => ids.has(item.id)).map(item => item.id);
+            updateSelectAllState();
+        });
+    });
     const handleSelectPosterChange = (val?: []) => {
         multipleSelectPoster.value = [];
         val.filter(function(arr, i){
             multipleSelectPoster.value.push(arr.id)
         });
     }
-    const toggleRemoveImage = () => {
+    const handleRemoveImage = () => {
         if (multipleSelectImage.value.length){
             getUnique(multipleSelectImage.value);
             ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectImage.value.length} pictures will be deleted. Continue?`, 'WARNING', {
@@ -495,7 +623,7 @@
                 type: 'warning',
             }).then(() => {
                 mediaStore.removeMultipleImages(multipleSelectImage.value,'images',singleData.value.slug);
-                multipleTableImage.value!.clearSelection();
+                toggleSelectImage();
                 ElMessage({
                     type: 'success',
                     message: 'Delete completed',
@@ -511,7 +639,7 @@
         }
     }
 
-    const moveImageToPosters = () => {
+    const handleMoveToPosters = () => {
         if (multipleSelectImage.value.length){
             getUnique(multipleSelectImage.value);
             ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectImage.value.length} pictures will be moved to posters. Continue?`, 'WARNING', {
@@ -520,7 +648,7 @@
                 type: 'warning',
             }).then(() => {
                 mediaStore.moveMultipleImages(multipleSelectImage.value,singleData.value.slug);
-                multipleTableImage.value!.clearSelection();
+                toggleSelectImage();
                 ElMessage({
                     type: 'success',
                     message: 'Move to posters completed',
@@ -536,7 +664,7 @@
         }
     }
 
-    const toggleRemovePoster = () => {
+    const handleRemovePoster = () => {
         if (multipleSelectPoster.value.length){
             getUnique(multipleSelectPoster.value);
             ElMessageBox.confirm(`Are you sure? Selected ${multipleSelectPoster.value.length} posters will be deleted. Continue?`, 'WARNING', {
@@ -613,7 +741,6 @@
                         message: 'Update canceled',
                     })
                 })
-2
             } else {
                 console.log('error submit!', fields);
             }
@@ -669,6 +796,51 @@
             })
         })
     }
+    const handleSaveOrder = async () => {
+        try {
+            const orderedIds = imagesData.value.map(item => item.id);
+            await mediaStore.saveImageOrder({
+                movieId: route.params.id,
+                slug: singleData.value.slug,
+                orderedIds: orderedIds,
+            });
+        } catch (error) {
+            ElMessage.error('Failed to save order images');
+            console.error(error);
+        }
+    };
+    const initSortable = async () => {
+        await nextTick();
+
+        const el = tableBodyRef.value;
+        if (!el) {
+            console.warn('tableBodyRef is null');
+            return;
+        }
+
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+
+        sortableInstance = new Sortable(el, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: (evt) => {
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+                if (oldIndex === newIndex) return;
+
+                const movedItem = imagesData.value.splice(oldIndex, 1)[0];
+                imagesData.value.splice(newIndex, 0, movedItem);
+
+                const selectedIds = [...multipleSelectImage.value];
+                multipleSelectImage.value = selectedIds;
+            },
+        });
+    };
 </script>
 
 <style lang="scss" scoped>
@@ -711,6 +883,26 @@
         flex-grow: 1;
         border-bottom: 1px dashed black;
         margin: 0 10px 7px;
+    }
+    .custom-table { width: 100%; border: 1px solid #ebeef5; border-radius: 4px; overflow: hidden; }
+    .table-header, .table-row { display: flex;position: relative;z-index: 1; align-items: center; min-height: 48px; border-bottom: 1px solid #ebeef5; background: #f5f7fa; }
+    .table-header { font-weight: bold; color: #606266; background: #f5f7fa; }
+    .table-row { background: #fff; transition: background 0.2s; }
+    .table-row:hover { background: #f5f7fa; }
+    .table-row.selected { background: #c1e2fe !important; }
+    .table-cell { display: flex; justify-content: center; align-items: center; padding: 0 12px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .table-body { max-height: 600px; overflow-y: auto; } /* Sortable стили */
+    .sortable-ghost { opacity: 0.5; background: #e3f2fd !important; }
+    .sortable-chosen { background: #bbdefb !important; }
+    .sortable-drag { background: #90caf9 !important; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .drag-handle { transition: color 0.2s; }
+    .drag-handle:hover { color: #409eff; }
+    .sortable-drag {
+        background: #90caf9 !important;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        border-radius: 4px;
+        opacity: 0.95;
     }
 </style>
 

@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Http;
 
 class ResizeImagesController extends Controller
 {
-    private const imageLimit = 20;
+    private const imageLimit = 10;
     private const batchSize = 5;
     private $file;
     private $movieId;
@@ -39,6 +39,7 @@ class ResizeImagesController extends Controller
         $requestMovieId = get_id_from_url($request->get('id_movie') ?? null, '/tt\d{1,10}/') ?? null;
         if (!empty($requestMovieId)) {
             try {
+                $http = Http::withToken(env('API_TOKEN'));
                 $hasher = new IdHasher($requestMovieId);
                 $this->originalMovieId = $hasher->isResultHash() ? $hasher->getResult() : $requestMovieId;
                 $this->movieId = $hasher->isResultHash() ? $requestMovieId : $hasher->getResult();
@@ -53,6 +54,12 @@ class ResizeImagesController extends Controller
             $assignPosters = AssignPoster::where('id_movie', $this->originalMovieId )->get()->toArray();
             if (!empty($assignPosters)) {
                 $this->movieType = $assignPosters[0]['type_film'];
+                $url = env('API_HOST_URL') . "/api/images/clear";
+                $http->delete($url, [
+                    'type_id' => $this->movieType,
+                    'movie_id' => $this->movieId,
+                ]);
+
                 $this->posterOriginalId = $assignPosters[0]['id_poster_original'] ?? null;
                 $this->posterRussianId = $assignPosters[0]['id_poster_ru'] ?? null;
                 $this->posterCharactersId = json_decode($assignPosters[0]['id_posters_characters'], true) ?? [];
@@ -71,7 +78,7 @@ class ResizeImagesController extends Controller
     private function resizeImages()
     {
         $this->modelImages = convertVariableToModelName('Images', getTableSegmentOrTypeId($this->movieType), ['App', 'Models']);
-        $moviesImages = $this->modelImages::where('id_movie', $this->originalMovieId )->inRandomOrder()->limit(self::imageLimit)->get(['srcset', 'id'])->toArray();
+        $moviesImages = $this->modelImages::where('id_movie', $this->originalMovieId )->limit(self::imageLimit)->get(['srcset', 'id'])->toArray();
 
         $this->dirPosterName = 'images';
         //Log::debug("RESIZE-IMAGES-START--ID--{$this->movieId} ---> IMAGES-COUNT: " . count($moviesImages));

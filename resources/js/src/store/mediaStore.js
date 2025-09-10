@@ -190,7 +190,43 @@ export const useMediaStore = defineStore('mediaStore',() => {
             //loader.value = false;
         }
     }
-    const updateImagePageSize = (slug) => {
+    const saveImageOrder = async (payload) => {
+        const {movieId, slug, orderedIds} = payload;
+
+        try {
+            const response = await axios.post('/media/images/reorder', {
+                movie_id: movieId,
+                type_film: slug,
+                ordered_ids: orderedIds,
+            });
+
+            if (response.data.success && Array.isArray(response.data.images)) {
+                imagesData.value = [];
+                srcListImages.value = [];
+
+                response.data.images.forEach(item => {
+                    imagesData.value.push(item);
+                    srcListImages.value.push(item.src);
+                });
+
+                ElMessage({
+                    type: 'success',
+                    message: 'Order images saved successfully',
+                });
+            }
+            return response;
+        } catch (e) {
+            error.value = e;
+            console.error('Error saving image order:', e);
+
+            ElMessage({
+                type: 'error',
+                message: 'Failed to save order',
+            });
+            throw e;
+        }
+    }
+        const updateImagePageSize = (slug) => {
         pageImg.value =  pageImg.value + 1;
         getImages(slug);
     }
@@ -237,5 +273,6 @@ export const useMediaStore = defineStore('mediaStore',() => {
         getPosters,
         getAssignedImages,
         getAssignedPosters,
+        saveImageOrder,
     }
 });
