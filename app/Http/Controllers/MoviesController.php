@@ -103,7 +103,8 @@ class MoviesController extends Controller
         }
         if ($query = $request->query('search')){
             $safeQuery = trim(strtolower(strip_tags($query)));
-            $model = $model->where($allowedFilterFields[3],'like','%'.$safeQuery.'%')
+            $model = $model->where($allowedFilterFields[4],'like','%'.$safeQuery.'%')
+                ->orWhere($allowedFilterFields[5],'like','%'.$safeQuery.'%')
                 ->orWhere($allowedFilterFields[1],'like','%'.$safeQuery.'%');
         }
 
