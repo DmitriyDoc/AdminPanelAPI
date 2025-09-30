@@ -539,10 +539,10 @@
     const handleSelectPoster = (rows?: []) => {
         if (rows) {
             rows.forEach((row) => {
-                multipleTablePoster.value!.toggleRowSelection(row, undefined);
+                multipleTablePoster.value?.toggleRowSelection(row, undefined);
             })
         } else {
-            multipleTablePoster.value!.clearSelection();
+            multipleTablePoster.value?.clearSelection();
         }
 
     }
@@ -553,7 +553,9 @@
     //      });
     // }
 
-
+    const clearPosterSelection = () => {
+        multipleTablePoster.value?.clearSelection();
+    };
     const handleRowClick = (event, item) => {
         // Если клик по чекбоксу — не обрабатываем
         if ((event.target as HTMLElement).closest('.el-checkbox')) {
@@ -673,7 +675,7 @@
                 type: 'warning',
             }).then(() => {
                 mediaStore.removeMultipleImages(multipleSelectPoster.value,'posters',singleData.value.slug);
-                multipleTablePoster.value!.clearSelection();
+                clearPosterSelection();
                 ElMessage({
                     type: 'success',
                     message: 'Delete completed',
@@ -696,7 +698,7 @@
                 type: 'warning',
             }).then(() => {
                 mediaStore.assignPoster(multipleSelectPoster.value,category,singleData.value.slug);
-                toggleSelectPoster();
+                clearPosterSelection();
                 ElMessage({
                     type: 'success',
                     message: 'Assign completed',
