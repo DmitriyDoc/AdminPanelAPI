@@ -15,20 +15,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Arr;
+use Illuminate\Http\Client\Response;
 class ExportService
 {
-
     public function exportCollections()
     {
         $collectionsDir = 'collections';
         $collectionsDirs = Storage::disk('public')->directories($collectionsDir);
-        $formData = [];
+        $chunkSize = 25;
 
         if (empty($collectionsDirs)) {
             Log::error('No collection directories found in storage/public/collections');
             return response()->json(['success' => false, 'message' => 'No collections directories found'], 422);
         }
+
+        $allFiles = [];
 
         foreach ($collectionsDirs as $colDir) {
             $collectionId = basename($colDir);
@@ -52,50 +54,93 @@ class ExportService
                     }
 
                     $filename = basename($file);
-                    $formData[] = [
+                    $allFiles[] = [
+                        'path' => $filePath,
                         'name' => "collections[{$collectionId}][{$field}][]",
-                        'contents' => file_get_contents($filePath),
                         'filename' => $filename,
                     ];
                 }
             }
         }
 
-        if (empty($formData)) {
+        if (empty($allFiles)) {
             Log::error('No files to export');
             return response()->json(['success' => false, 'message' => 'No files to export'], 422);
         }
 
-//        Log::info('Collections data prepared for export:', [
-//            'collections' => array_map('basename', $collectionsDirs),
-//            'files_count' => count($formData)
-//        ]);
+        Log::info('Total files to export:', ['count' => count($allFiles)]);
 
-        try {
-            $response = Http::withToken(config('services.kinospectr.api_token'))
-                ->asMultipart()
-                ->post(config('services.kinospectr.api_url') . '/api/collections/import', $formData);
+        // Разбиваем на чанки
+        $chunks = array_chunk($allFiles, $chunkSize);
 
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'type' => 'success',
-                    'message' => $response->json('message', 'Collections imported successfully.')
-                ]);
-            } else {
-                Log::error('Failed to export collections', ['response' => $response->json()]);
-                return response()->json([
-                    'success' => false,
-                    'type' => 'error',
-                    'message' => 'Failed to export collections: ' . ($response->json('message', 'Unknown error'))
-                ], 500);
+        $successfulChunks = 0;
+        $totalChunks = count($chunks);
+
+        foreach ($chunks as $index => $chunk) {
+            $formData = [];
+            foreach ($chunk as $item) {
+                $contents = file_get_contents($item['path']);
+                if ($contents === false) {
+                    Log::error("Failed to read file: {$item['path']}");
+                    continue;
+                }
+
+                $formData[] = [
+                    'name' => $item['name'],
+                    'contents' => $contents,
+                    'filename' => $item['filename'],
+                ];
             }
-        } catch (\Exception $e) {
-            Log::error('Error exporting collections: ' . $e->getMessage(), ['exception' => $e]);
+
+            if (empty($formData)) {
+                Log::warning("Chunk" . $index + 1 ."has no valid files, skipping.");
+                continue;
+            }
+
+            try {
+                $response = Http::withToken(config('services.kinospectr.api_token'))
+                    ->asMultipart()
+                    ->timeout(300)
+                    ->post(config('services.kinospectr.api_url') . '/api/collections/import', $formData);
+
+                if ($response->successful()) {
+                    Log::info("Chunk" . $index + 1 ."imported successfully");
+                    $successfulChunks++;
+                } else {
+                    Log::error("Chunk" . $index + 1 ." failed", [
+                        'status' => $response->status(),
+                        'response' => $response->json(),
+                        'chunk_size' => count($formData),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error("Chunk " . $index + 1 ." threw exception", [
+                    'exception' => $e->getMessage(),
+                    'chunk_size' => count($formData),
+                ]);
+            }
+
+            unset($formData, $response);
+            gc_collect_cycles();
+        }
+
+        if ($successfulChunks === $totalChunks && $totalChunks > 0) {
+            return response()->json([
+                'success' => true,
+                'type' => 'success',
+                'message' => "All {$totalChunks} chunks imported successfully."
+            ]);
+        } elseif ($successfulChunks > 0) {
+            return response()->json([
+                'success' => false,
+                'type' => 'partial',
+                'message' => "Partially imported: {$successfulChunks}/{$totalChunks} chunks succeeded."
+            ], 207);
+        } else {
             return response()->json([
                 'success' => false,
                 'type' => 'error',
-                'message' => 'Error exporting collections: ' . $e->getMessage()
+                'message' => 'All chunks failed to import.'
             ], 500);
         }
     }
@@ -166,33 +211,35 @@ class ExportService
     }
     public function exportMovies(bool $switchAll): array
     {
-        return DB::transaction(function () use ($switchAll) {
-            try {
-                $statusMovie = $switchAll ? 2 : 1;
-                $query = MovieInfo::query()
-                    ->with(['localazingRu', 'localazingEn'])
-                    ->where('published', $statusMovie);
+        // Настройки
+        $maxTotalMovies = 30;
+        $chunkSize = 10;
 
-                if (!$query->exists()) {
+        return DB::transaction(function () use ($switchAll, $maxTotalMovies, $chunkSize) {
+            try {
+                //$statusMovie = $switchAll ? 2 : 1;
+                $statusMovie = 1;
+                $movies = MovieInfo::with(['localazingRu', 'localazingEn'])
+                    ->where('published', $statusMovie)
+                    ->limit($maxTotalMovies)
+                    ->get();
+
+                if ($movies->isEmpty()) {
                     return [
-                        'response' => null,
+                        'success' => false,
                         'message' => 'No movies found to export',
                         'type' => 'warning',
                         'status' => 200,
-                        'success' => false,
                     ];
                 }
 
-                $results = [];
-                $success = true;
-                $lastResponse = null;
+                $allChunks = $movies->chunk($chunkSize);
                 $processedMovieIds = [];
+                $lastResponse = null;
+                $success = true;
 
-                // Обработка чанками по 1000
-                $query->chunk(10, function ($movies) use (&$results, &$success, &$lastResponse, &$processedMovieIds,$switchAll) {
-                    $moviesData = $movies->map(function ($movie) {
-                        return $this->mapMovieToKinospectrFormat($movie);
-                    })->toArray();
+                foreach ($allChunks as $chunk) {
+                    $moviesData = $chunk->map(fn($movie) => $this->mapMovieToKinospectrFormat($movie))->toArray();
 
                     $response = Http::withToken(config('services.kinospectr.api_token'))
                         ->post(config('services.kinospectr.api_url') . '/api/movies/import', [
@@ -201,9 +248,8 @@ class ExportService
                         ]);
 
                     if ($response->successful()) {
-                        $movieIds = $movies->pluck('id')->toArray();
+                        $movieIds = $chunk->pluck('id')->toArray();
                         $processedMovieIds = array_merge($processedMovieIds, $movieIds);
-                        $results[] = $response->json();
                         $lastResponse = $response->json();
                     } else {
                         Log::error('Failed to export movies chunk to Kinospectr', [
@@ -211,6 +257,7 @@ class ExportService
                             'response' => $response->body(),
                             'movie_count' => count($moviesData),
                         ]);
+
                         $success = false;
                         $lastResponse = [
                             'success' => false,
@@ -218,8 +265,9 @@ class ExportService
                             'message' => 'Failed to export movies chunk: ' . $response->body(),
                             'status' => $response->status(),
                         ];
+                        break; // остановить экспорт при ошибке
                     }
-                });
+                }
 
                 if (!empty($processedMovieIds)) {
                     MovieInfo::whereIn('id', $processedMovieIds)->update(['published' => 2]);
@@ -229,13 +277,14 @@ class ExportService
                     return [
                         'success' => true,
                         'body' => $lastResponse,
-                        'message' => 'Movies sent successfully and marked as exported',
+                        'message' => count($processedMovieIds) . ' movies sent successfully and marked as exported',
                         'type' => 'success',
                         'status' => 200,
                     ];
                 }
 
                 return $lastResponse;
+
             } catch (\Exception $e) {
                 Log::error('Exception during movie export to Kinospectr', [
                     'error' => $e->getMessage(),
@@ -300,26 +349,16 @@ class ExportService
                 'id_movie' => $pivot->id_movie,
                 'collection_id' => $pivot->collection_id,
                 'franchise_id' => $pivot->franchise_id,
-                'type_film' => $pivot->type_film,
-                'viewed' => $pivot->viewed,
-                'short' => $pivot->short,
-                'adult' => $pivot->adult,
             ];
         })->toArray();
 
-        $collectionsFranchisesPivots = CollectionsFranchisesPivot::all()->map(function ($pivot) {
-            return [
-                'franchise_id' => $pivot->id,
-                'collection_id' => $pivot->collection_id,
-            ];
-        })->toArray();
+
         $taxonomiesData = [
             'categories' => $categories,
             'movie_categories' => $movieCategories,
             'collections' => $collections,
             'franchises' => $franchises,
             'collections_categories_pivots' => $collectionsCategoriesPivots,
-            'collections_franchises_pivots' => $collectionsFranchisesPivots,
         ];
         $response = Http::withToken(config('services.kinospectr.api_token'))
             ->post(config('services.kinospectr.api_url') . '/api/taxonomies/import', [
@@ -441,6 +480,7 @@ class ExportService
             'release_date_en' => $movie->localazingEn ? $movie->localazingEn->release_date : null,
             'release_date_ru' => $movie->localazingRu ? $movie->localazingRu->release_date : null,
             'poster' => $movie->poster ?? null,
+            'poster_ru' => $movie->poster_ru ?? null,
         ];
     }
 }
