@@ -3,7 +3,7 @@ import axios from 'axios'
 import { ref }  from "vue";
 import { io } from "socket.io-client";
 export const useProgressBarStore = defineStore('progressBarStore',() => {
-    const socketURI = "http://spectrum.local:3000";
+    const socketURI = "http://spectrum.local";
     const percentage = ref(0);
     const percentageSync = ref({});
     const parserReport = ref({});
