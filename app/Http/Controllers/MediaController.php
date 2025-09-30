@@ -242,12 +242,13 @@ class MediaController extends Controller
                     $apiService = new ApiRequestImages();
                     $imagesApi = $apiService->sendApiRequest(env('API_HOST_URL')."/api/images/{$typeMovieId}/{$hashDecodeId}/images");
                     if ($imagesApi['status'] === 200 && $imagesApi['data']['success']){
-                        foreach ($imagesApi['data']['images']['small'] as $i => $image){
-                            $resLinks[$i]['srcset'] = $image['url'];
-                        }
                         foreach ($imagesApi['data']['images']['full_size'] as $i => $image){
+                            $resLinks[$i]['srcset'] = $image['url'];
                             $resLinks[$i]['src'] = $image['url'];
                         }
+//                        foreach ($imagesApi['data']['images']['full_size'] as $i => $image){
+//                            $resLinks[$i]['src'] = $image['url'];
+//                        }
                         return $resLinks;
                     }
                     foreach ($resMediaDB as $i => $item){
