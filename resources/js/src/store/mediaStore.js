@@ -80,7 +80,7 @@ export const useMediaStore = defineStore('mediaStore',() => {
             ).then((response) => {
                 response.data.data.forEach((item) => {
                     imagesData.value.push(item);
-                    srcListImages.value.push(item.src);
+                    srcListImages.value.push(item);
                 });
                 countImg.value = response.data.to;
             });
