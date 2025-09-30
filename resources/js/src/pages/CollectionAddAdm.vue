@@ -6,7 +6,7 @@
                 <h5>{{collectionLocale.select_section}}</h5>
                 <el-cascader  v-model="categoryId" :placeholder="collectionLocale.select" :props="propsCascader" :options="optionsCats" @change="handleCategoryChange"  style="min-width: 100%;">
                     <template #default="{ data }">
-                        <span>{{ data.label }}</span>
+                        <span>{{ data.title_en }}</span>
                     </template>
                 </el-cascader>
             </div>
