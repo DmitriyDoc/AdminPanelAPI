@@ -87,11 +87,14 @@ class TranslatorController
 
         $this->dataMovie['directors'] = null;
         if (!empty($dataInfo->directors)){
+
             $resultDirectors = $this->startTranslate($dataInfo->directors);
             $resultDirectors = str_replace(['«','»'] ,'"',$resultDirectors);
             $resultDirectors = str_replace(':""' ,"\":\"\"",$resultDirectors);
             $resultDirectors = str_replace("\u{200B}" ,'',$resultDirectors);
-            $this->dataMovie['directors'] = json_validate($resultDirectors) ? $resultDirectors : null;
+
+            $this->dataMovie['directors'] = json_validate($resultDirectors) ? $resultDirectors : $dataInfo->directors;
+
         }
         $this->dataMovie['writers'] = null;
         if (!empty($dataInfo->writers)){
@@ -104,7 +107,7 @@ class TranslatorController
                 $resultWriters = str_replace(',' ,'","',$resultWriters);
                 $resultWriters = trim($resultWriters);
             }
-            $this->dataMovie['writers'] = json_validate($resultWriters) ? $resultWriters : null;
+            $this->dataMovie['writers'] = json_validate($resultWriters) ? $resultWriters : $dataInfo->writers;
         }
         if ($withStory){
             $this->dataMovie['story_line'] = null;
