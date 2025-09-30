@@ -213,39 +213,66 @@ class MoviesController extends Controller
         return $infoMovieData;
     }
 
-    public function publication(Request $request):array
+    public function publication(Request $request): array
     {
         try {
             $dataRequest = $request->all();
-            if (!empty($dataRequest)){
-                $movieId = $dataRequest['data']['movie_id']??null;
-                $colExists = CollectionsCategoriesPivot::query()->where('id_movie',$movieId)->exists();
-                if ($colExists) {
-                    $posterExists = AssignPoster::query()->where('id_movie',$movieId)->whereNotNull('id_poster_original')->exists();
-                    if ($posterExists) {
-                        $movieInfo = MovieInfo::query()->where('id_movie',$movieId)->update(['published' => 1]);
-                        if ($movieInfo){
-                            return [
-                                'success' => true,
-                                'status' => 200,
-                                'message' => 'The movie is awaiting for export',
-                            ];
-                        }
-                    } else {
-                        return [
-                            'success' => false,
-                            'status' => 200,
-                            'message' => 'The movie is not assign for posters table',
-                        ];
-                    }
-                } else {
-                    return [
-                        'success' => false,
-                        'status' => 200,
-                        'message' => 'The movie is not add for any collection',
-                    ];
-                }
+            if (empty($dataRequest)) {
+                return ['success' => false];
             }
+
+            $movieId = $dataRequest['data']['movie_id'] ?? null;
+
+            if (!$movieId) {
+                return [
+                    'success' => false,
+                    'status' => 200,
+                    'message' => 'Movie ID is required',
+                ];
+            }
+
+            $colExists = CollectionsCategoriesPivot::query()->where('id_movie', $movieId)->exists();
+            if (!$colExists) {
+                return [
+                    'success' => false,
+                    'status' => 200,
+                    'message' => 'The movie is not added to any collection',
+                ];
+            }
+
+            $posterExists = AssignPoster::query()
+                ->where('id_movie', $movieId)
+                ->whereNotNull('id_poster_original')
+                ->exists();
+
+            if (!$posterExists) {
+                return [
+                    'success' => false,
+                    'status' => 200,
+                    'message' => 'The movie is not assigned to posters table',
+                ];
+            }
+
+            $this->normalizeLocalizationData($movieId);
+
+            $updated = MovieInfo::query()
+                ->where('id_movie', $movieId)
+                ->update(['published' => 1]);
+
+            if ($updated) {
+                return [
+                    'success' => true,
+                    'status' => 200,
+                    'message' => 'The movie is awaiting for export',
+                ];
+            }
+
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => 'Failed to update movie publication status',
+            ];
+
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -253,7 +280,6 @@ class MoviesController extends Controller
                 'message' => $e->getMessage(),
             ];
         }
-        return ['success' => false];
     }
 
     public function update(Request $request)
@@ -315,4 +341,59 @@ class MoviesController extends Controller
             });
         }
     }
-}
+
+    private function normalizePersonData($data): array
+    {
+        if (!is_array($data)) {
+            return [];
+        }
+        $normalized = [];
+        foreach ($data as $key => $value) {
+            if (is_array($value) && count($value) === 1) {
+                $name = array_key_first($value);
+                $normalized[$key] = $name;
+            } else {
+                $normalized[$key] = $value;
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function normalizeLocalizationData(string $movieId): void
+    {
+        $models = [
+            MoviesInfoRu::class,
+            MoviesInfoEn::class,
+        ];
+
+        foreach ($models as $modelClass) {
+
+            $record = $modelClass::where('id_movie', $movieId)->first();
+
+            if (!$record) {
+                continue;
+            }
+
+            $changed = false;
+
+            $directors = json_decode($record->directors, true) ?: [];
+            $normalizedDirectors = $this->normalizePersonData($directors);
+            if (json_encode($directors) !== json_encode($normalizedDirectors)) {
+                $record->directors = json_encode($normalizedDirectors, JSON_UNESCAPED_UNICODE);
+                $changed = true;
+            }
+
+            $writers = json_decode($record->writers, true) ?: [];
+            $normalizedWriters = $this->normalizePersonData($writers);
+            if (json_encode($writers) !== json_encode($normalizedWriters)) {
+                $record->writers = json_encode($normalizedWriters, JSON_UNESCAPED_UNICODE);
+                $changed = true;
+            }
+
+            if ($changed) {
+                $record->save();
+            }
+        }
+    }
+    }
