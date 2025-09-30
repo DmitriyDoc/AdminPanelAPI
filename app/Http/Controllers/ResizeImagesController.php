@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Http;
 class ResizeImagesController extends Controller
 {
     private const imageLimit = 10;
-    private const batchSize = 5;
+    private const batchSize = 1;
     private $file;
     private $movieId;
     private $originalMovieId;
@@ -55,6 +55,9 @@ class ResizeImagesController extends Controller
             if (!empty($assignPosters)) {
                 $this->movieType = $assignPosters[0]['type_film'];
                 $url = env('API_HOST_URL') . "/api/images/clear";
+                //$url = env('API_HOST_URL') . "/api/images/storage-size";
+                //dd($http->get($url)->json()); //1141Gb
+
                 $http->delete($url, [
                     'type_id' => $this->movieType,
                     'movie_id' => $this->movieId,
@@ -88,7 +91,7 @@ class ResizeImagesController extends Controller
         }
         $urls = array_map(function ($image) {
           if (!empty($image['srcset'])){
-              return getImageUrlByWidth($image['srcset']);
+              return getLargestImageUrl($image['srcset']);
           }
         }, $moviesImages);
         $ids = array_column($moviesImages, 'id');
@@ -145,6 +148,7 @@ class ResizeImagesController extends Controller
         if (!empty($originalId)) {
             $url = getImageUrlByWidth($originalId[0]['srcset']);
             $this->file = $this->getFileFromSrc($url);
+
             if (!empty($this->file['content'])) {
                 //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$this->posterOriginalId}, URL: {$url}");
                 if ($this->putFileToTempDirectory($this->posterOriginalId)) {
@@ -155,9 +159,11 @@ class ResizeImagesController extends Controller
                             'paths' => $this->saveThumbnails($item, $this->posterOriginalId),
                         ];
                     }
+                    $actualFileName = $this->posterOriginalId;
+                    $fullSizePaths = $this->saveFullSize($this->posterOriginalId, $actualFileName);
                     $batchFiles[] = [
-                        'fileName' => $this->posterOriginalId,
-                        'paths' => $this->saveFullSize($this->posterOriginalId),
+                        'fileName' => $actualFileName,
+                        'paths' => $fullSizePaths,
                     ];
                     $this->sendBatchFiles($batchFiles);
                 }
@@ -183,9 +189,11 @@ class ResizeImagesController extends Controller
                             'paths' => $this->saveThumbnails($item, $this->posterRussianId),
                         ];
                     }
+                    $actualFileName = $this->posterOriginalId;
+                    $fullSizePaths = $this->saveFullSize($this->posterOriginalId, $actualFileName);
                     $batchFiles[] = [
-                        'fileName' => $this->posterRussianId,
-                        'paths' => $this->saveFullSize($this->posterRussianId),
+                        'fileName' => $actualFileName,
+                        'paths' => $fullSizePaths,
                     ];
                     $this->sendBatchFiles($batchFiles);
                 }
@@ -197,7 +205,7 @@ class ResizeImagesController extends Controller
     {
         if ($posterIdArr = $this->posterCharactersId) {
             $this->dirPosterName = 'characters_posters';
-            $dirResizeThumbsArr = ['dir' => 'small', 'width' => 300, 'maxHeight' => 800];
+            $dirResizeThumbsArr = ['dir' => 'small', 'width' => 200, 'maxHeight' => 400];
             $charactersIdArr = $this->modelPoster::where('id_movie', $this->originalMovieId)->whereIn('id', $posterIdArr)->get(['srcset', 'id'])->toArray();
             if (!empty($charactersIdArr)) {
                 $urls = array_map(function ($item) {
@@ -232,7 +240,7 @@ class ResizeImagesController extends Controller
     {
         if ($posterIdArr = $this->posterAlternativeId) {
             $this->dirPosterName = 'alt_posters';
-            $dirResizeThumbsArr = ['dir' => 'small', 'width' => 300, 'maxHeight' => 800];
+            $dirResizeThumbsArr = ['dir' => 'small', 'width' => 200, 'maxHeight' => 400];
             $altIdArr = $this->modelPoster::where('id_movie', $this->originalMovieId)->whereIn('id', $posterIdArr)->get(['srcset', 'id'])->toArray();
             if (!empty($altIdArr)) {
                 $urls = array_map(function ($item) {
@@ -285,11 +293,12 @@ class ResizeImagesController extends Controller
         }
     }
 
-    private function saveFullSize($fileName)
+    private function saveFullSize($fileName,&$actualFileName = null)
     {
+        $actualFileName = $fileName;
         $relativePath = "/{$this->movieId}/{$this->dirPosterName}/{$fileName}.jpg";
         $tempPath = Storage::disk('temp')->path($relativePath);
-        $resizedPath = "/{$this->movieType}/{$this->movieId}/{$this->dirPosterName}/full_size/{$fileName}.jpg";
+        $savePath = "/{$this->movieType}/{$this->movieId}/{$this->dirPosterName}/full_size/{$fileName}.jpg";
         if (!$this->putFileToTempDirectory($fileName)) {
             Log::info("SKIP-SAVE-FULLSIZE--ID--{$this->movieId} ---> FILE: {$fileName}");
             return [];
@@ -299,12 +308,12 @@ class ResizeImagesController extends Controller
             $fullSize = Image::read($tempPath);
             $originalWidth = $fullSize->width();
             $originalHeight = $fullSize->height();
-            $fileSize = $fullSize->exif('FILE.FileSize') ?? filesize($tempPath);
+            //$fileSize = $fullSize->exif('FILE.FileSize') ?? filesize($tempPath);
             $quality = 90;
             //Log::debug("ORIGINAL-DIMENSIONS--ID--{$this->movieId} ---> FILE: {$fileName}, WIDTH: {$originalWidth}, HEIGHT: {$originalHeight}");
 
             if ($originalWidth > 2000 || $originalHeight > 3000) {
-                $ratio = $originalWidth / $originalHeight;
+                //$ratio = $originalWidth / $originalHeight;
                 if ($originalWidth > 2000) {
                     $fullSize->resize(2000, null, function ($constraint) {
                         $constraint->aspectRatio();
@@ -326,12 +335,24 @@ class ResizeImagesController extends Controller
                     $quality = 80;
                 }
             }
+            if ($this->dirPosterName == 'wallpaper'){
+                if ($originalWidth > 720) {
+                    $fullSize->resize(720, 405, function ($constraint) {
+                        $constraint->aspectRatio();
+                    });
+                }
+            }
 
-            $savePath = $resizedPath;
+            if (in_array($this->dirPosterName, ['original_poster', 'russian_poster'])) {
+                $rgbAverage = calculateAverageRGB($fullSize, $originalWidth, $originalHeight);
+                $actualFileName = $fileName . $rgbAverage;
+                $savePath = "/{$this->movieType}/{$this->movieId}/{$this->dirPosterName}/full_size/{$actualFileName}.jpg";
+            }
+            //Log::info("FILENAME------------>",[$savePath]);
+
+
             Storage::disk('resized')->put($savePath, $fullSize->encode(new JpegEncoder(quality: $quality)));
-            $savedSize = Storage::disk('resized')->size($savePath) / 1024;
             //Log::debug("FULLSIZE-SAVED-TEMP--ID--{$this->movieId} ---> FILE: {$fileName}, ORIGINAL-SIZE: {$fileSize}KB, SAVED-SIZE: {$savedSize}KB, QUALITY: {$quality}, RESIZED-WIDTH: {$fullSize->width()}, RESIZED-HEIGHT: {$fullSize->height()}");
-
             unset($fullSize);
             return ['full_size' => $savePath];
         } catch (\Exception $e) {
@@ -377,7 +398,6 @@ class ResizeImagesController extends Controller
 
             $savePath = $resizedPath;
             Storage::disk('resized')->put($savePath, $image->encode(new JpegEncoder(quality: 70)));
-            $savedSize = Storage::disk('resized')->size($savePath) / 1024;
             //Log::debug("THUMBNAIL-SAVED-TEMP--ID--{$this->movieId} ---> FILE: {$fileName}, DIR: {$params['dir']}, SIZE: {$savedSize}KB, RESIZED-WIDTH: {$image->width()}, RESIZED-HEIGHT: {$image->height()}");
 
             unset($image);
@@ -393,61 +413,52 @@ class ResizeImagesController extends Controller
         $relativePath = "/{$this->movieId}/{$this->dirPosterName}/{$fileName}.jpg";
         $tempPath = Storage::disk('temp')->path($relativePath);
         if (!$this->putFileToTempDirectory($fileName)) {
-            Log::info("SKIP-SAVE-IMAGES--ID--{$this->movieId} ---> FILE: {$fileName}");
+            Log::info("SKIP-SAVE-IMAGES--ID--{$this->movieId} ---> FILE: {$fileName}, REASON: Failed to save to temp directory");
             return [];
         }
 
         $paths = [];
         try {
-            $small = Image::read($tempPath);
-            $originalWidth = $small->width();
-            $originalHeight = $small->height();
-            $fileSize = $small->exif('FILE.FileSize') ?? filesize($tempPath);
-            $quality = 70;
-            //Log::debug("ORIGINAL-DIMENSIONS--ID--{$this->movieId} ---> FILE: {$fileName}, WIDTH: {$originalWidth}, HEIGHT: {$originalHeight}");
-
-            $small->cover(300, 200, 'center');
-            $savePathSmall = "/{$this->movieType}/{$this->movieId}/{$this->dirPosterName}/small/{$fileName}.jpg";
-            Storage::disk('resized')->put($savePathSmall, $small->encode(new JpegEncoder(quality: $quality)));
-            $savedSizeSmall = Storage::disk('resized')->size($savePathSmall) / 1024;
-            //Log::debug("SMALL-SAVED-TEMP--ID--{$this->movieId} ---> FILE: {$fileName}, ORIGINAL-SIZE: {$fileSize}KB, SAVED-SIZE: {$savedSizeSmall}KB");
-            $paths['small'] = $savePathSmall;
-
             $fullSize = Image::read($tempPath);
-            if ($originalWidth > 3000 || $originalHeight > 4000) {
-                $ratio = $originalWidth / $originalHeight;
-                if ($originalWidth > 3000) {
-                    $fullSize->resize(3000, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                    if ($fullSize->height() > 4000) {
-                        $fullSize->resize(null, 4000, function ($constraint) {
-                            $constraint->aspectRatio();
-                            $constraint->upsize();
-                        });
-                    }
-                } elseif ($originalHeight > 4000) {
-                    $fullSize->resize(null, 4000, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                }
-                if ($originalWidth > 5000 || $originalHeight > 6000) {
-                    $quality = 80;
-                }
-            }
-            $savePathFull = "/{$this->movieType}/{$this->movieId}/{$this->dirPosterName}/full_size/{$fileName}.jpg";
-            Storage::disk('resized')->put($savePathFull, $fullSize->encode(new JpegEncoder(quality: $quality)));
-            $savedSizeFull = Storage::disk('resized')->size($savePathFull) / 1024;
-            //Log::debug("FULLSIZE-SAVED-TEMP--ID--{$this->movieId} ---> FILE: {$fileName}, ORIGINAL-SIZE: {$fileSize}KB, SAVED-SIZE: {$savedSizeFull}KB, QUALITY: {$quality}");
-            $paths['full_size'] = $savePathFull;
+            $originalWidth = $fullSize->width();
+            //$originalHeight = $fullSize->height();
+            $quality = 90;
+            $targetWidth = 1920;
 
-            unset($fullSize);
-            unset($small);
+            if ($originalWidth > $targetWidth) {
+                $fullSize->resize($targetWidth, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+            }
+
+            $currentHeight = $fullSize->height();
+            if ($currentHeight > 3000) {
+                $fullSize->resize(null, 3000, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+                $quality = 85;
+            }
+
+            // Используем JPEG
+            $encoder = new JpegEncoder(quality: $quality);
+            $fileExtension = 'jpg';
+            $savePathFull = "/{$this->movieType}/{$this->movieId}/{$this->dirPosterName}/full_size/{$fileName}.{$fileExtension}";
+
+            // Сохраняем изображение
+            Storage::disk('resized')->put($savePathFull, $fullSize->encode($encoder));
+            //$savedSizeFull = Storage::disk('resized')->size($savePathFull) / 1024;
+
+            // Логирование статистики
+            //Log::info("IMAGE-SIZE-STAT--ID--{$this->movieId} ---> FILE: {$fileName}, ORIGINAL-WIDTH: {$originalWidth}px, FINAL-WIDTH: {$fullSize->width()}px, QUALITY: {$quality}, FORMAT: {$fileExtension}, SIZE-KB: " . round($savedSizeFull, 2));
+
+            $paths['full_size'] = $savePathFull;
+            unset($fullSize); // Освобождаем память
+
             return $paths;
         } catch (\Exception $e) {
-            Log::info("ERROR-SAVE-IMAGES--ID--{$this->movieId} ---> FILE: {$fileName}, ERROR: {$e->getMessage()}");
+            Log::error("ERROR-SAVE-IMAGES--ID--{$this->movieId} ---> FILE: {$fileName}, ERROR: {$e->getMessage()}, TRACE: {$e->getTraceAsString()}");
             return [];
         }
     }
