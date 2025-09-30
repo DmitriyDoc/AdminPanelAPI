@@ -196,6 +196,25 @@ if (!function_exists('cascaderStructure')) {
             return $head;
         }
     }
+    if (!function_exists('getLargestImageUrl')) {
+        function getLargestImageUrl(string $imageString): ?string {
+            $images = [];
+            $pattern = '/(https:\/\/[^\s]+)\s+(\d+)w/';
+            preg_match_all($pattern, $imageString, $matches, PREG_SET_ORDER);
+
+            foreach ($matches as $match) {
+                $width = (int) $match[2];
+                $images[$width] = $match[1];
+            }
+
+            if (empty($images)) {
+                return null;
+            }
+
+            krsort($images);
+            return reset($images);
+        }
+    }
     if (!function_exists('getImageUrlByWidth')) {
         function getImageUrlByWidth(string $imageString, bool $useSmallest = false): ?string {
             $images = [];
@@ -272,6 +291,36 @@ if (!function_exists('cascaderStructure')) {
         function trimAfterImageExtension($url)
         {
             return preg_replace('/\.(jpg|jpeg|png).*/i', '.$1', $url);
+        }
+    }
+    if (!function_exists('calculateAverageRGB')) {
+        function calculateAverageRGB($image, $width, $height)
+        {
+            $totalR = 0;
+            $totalG = 0;
+            $totalB = 0;
+
+            $maxX = min($width, 100);
+            $maxY = min($height, 100);
+            $pixelCount = $maxX * $maxY;
+
+            for ($x = 0; $x < $maxX; $x++) {
+                for ($y = 0; $y < $maxY; $y++) {
+                    try {
+                        $color = $image->pickColor($x, $y, 0);
+                        $rgba = $color->toArray();
+                        $totalR += $rgba[0];
+                        $totalG += $rgba[1];
+                        $totalB += $rgba[2];
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Error at pixel x={$x} y={$y}: " . $e->getMessage());
+                    }
+                }
+            }
+            $avgR = round($totalR / $pixelCount);
+            $avgG = round($totalG / $pixelCount);
+            $avgB = round($totalB / $pixelCount);
+            return "-".$avgR ."-". $avgG ."-". $avgB;
         }
     }
 }
