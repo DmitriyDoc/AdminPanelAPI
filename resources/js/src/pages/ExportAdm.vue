@@ -88,7 +88,7 @@
                     </template>
                 </el-table-column>
             </el-table>
-            <div class="demo-pagination-block"  v-if="totalCount >= 100">
+            <div class="demo-pagination-block"  v-if="totalCount >= 50">
                 <div class="demonstration">{{locale.jump_to}}</div>
                 <el-pagination
                     v-model:current-page="currentPage"
