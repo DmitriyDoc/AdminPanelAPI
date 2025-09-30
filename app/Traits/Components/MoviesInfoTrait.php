@@ -131,31 +131,54 @@ trait MoviesInfoTrait
 
                             $crewContainer = $castContainer->lastChild();
                             unset($castContainer);
-                            if (count($crewContainer->children()) > 2){
-                                foreach ($crewContainer->children() as $item){
-                                    if (($item->child(0)->text() == 'Director')||($item->child(0)->text() == 'Directors')){
-                                        foreach ($item->child(1)->find('ul')[0]->children() as $element){
-                                            if (!empty($element->find('span')[0])){
-                                                $span = $element->find('span')[0]->text()??'';
+                            if (count($crewContainer->children()) > 2) {
+                                foreach ($crewContainer->children() as $item) {
+                                    $label = $item->child(0)->text() ?? '';
+                                    if (in_array($label, ['Director', 'Directors'])) {
+                                        $directorsArray = [];
+
+                                        foreach ($item->child(1)->find('ul')[0]->children() as $element) {
+                                            $actorLink = $element->find('a')[0] ?? null;
+                                            if (!$actorLink) continue;
+
+                                            $actorId = get_id_from_url($actorLink->getAttribute('href'), self::ACTOR_PATTERN) ?? '';
+                                            $actorName = $actorLink->text() ?? '';
+
+                                            if ($actorId && $actorName) {
+                                                $directorsArray[$actorId] = $actorName;
                                             }
-                                            $directorsArray[get_id_from_url($element->find('a')[0]->getAttribute('href'),self::ACTOR_PATTERN)??''] = [$element->find('a')[0]->text() => $span??''];
                                         }
-                                        $insertData[$this->update_en_info_table]['directors'] = json_encode($directorsArray)??null;
-                                        unset($span);
+
+                                        $insertData[$this->update_en_info_table]['directors'] = !empty($directorsArray)
+                                            ? json_encode($directorsArray, JSON_UNESCAPED_UNICODE)
+                                            : null;
+
                                         unset($directorsArray);
                                     }
-                                    if (($item->child(0)->text() == 'Writer')||($item->child(0)->text() == 'Writers')){
-                                        foreach ($item->child(1)->find('ul')[0]->children() as $element){
-                                            if (!empty($element->find('span')[0])){
-                                                $span = $element->find('span')[0]->text()??'';
+
+                                    if (in_array($label, ['Writer', 'Writers'])) {
+                                        $writersArray = [];
+
+                                        foreach ($item->child(1)->find('ul')[0]->children() as $element) {
+                                            $actorLink = $element->find('a')[0] ?? null;
+                                            if (!$actorLink) continue;
+
+                                            $actorId = get_id_from_url($actorLink->getAttribute('href'), self::ACTOR_PATTERN) ?? '';
+                                            $actorName = $actorLink->text() ?? '';
+
+                                            if ($actorId && $actorName) {
+                                                $writersArray[$actorId] = $actorName;
                                             }
-                                            $writersArray[get_id_from_url($element->find('a')[0]->getAttribute('href'),self::ACTOR_PATTERN)??''] = [$element->find('a')[0]->text() => $span??''];
                                         }
-                                        $insertData[$this->update_en_info_table]['writers'] = json_encode($writersArray)??null;
-                                        unset($span);
+
+                                        $insertData[$this->update_en_info_table]['writers'] = !empty($writersArray)
+                                            ? json_encode($writersArray, JSON_UNESCAPED_UNICODE)
+                                            : null;
+
                                         unset($writersArray);
                                     }
                                 }
+
                             }
                         }
                         //STORY LINE
