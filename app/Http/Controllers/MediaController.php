@@ -45,7 +45,7 @@ class MediaController extends Controller
                 $res = $model::select('id','id_celeb','src','srcset')->where('id_celeb',$safeId)->simplePaginate(10)->toArray();
             } elseif (in_array($slug,$allowedTableNames))  {
                 $model = convertVariableToModelName(ucfirst($imgType),$slug, ['App', 'Models']);
-                $model = $model::select('id','id_movie','srcset')->where('id_movie',$safeId);
+                $model = $model::select('id','id_movie','srcset')->orderBy('id', 'desc')->where('id_movie',$safeId);
                 if ($model->get()->isEmpty()){
                     foreach ($allowedTableNames as $type){
                         $model = convertVariableToModelName(ucfirst($imgType),$type, ['App', 'Models']);
@@ -62,8 +62,10 @@ class MediaController extends Controller
             if (!empty($res)){
                 foreach ($res['data'] as &$item){
                     if (!empty($item) && isset($item['srcset'])) {
-                        $item['src'] = getImageUrlByWidth($item['srcset']);
-                        $item['srcset'] = getImageUrlByWidth($item['srcset'],true);
+                        $source = getImageUrlByWidth($item['srcset']);
+                        $item['src'] = $source['src'];
+                        $item['srcset'] = $source['src-smallest'];
+                        $item['width'] = $source['width'];
                         if ($imgType == 'posters'){
                             $item['status_poster'] = $this->checkAssignPoster($item['id'],$item['assign_posters']);
                         }
@@ -85,6 +87,7 @@ class MediaController extends Controller
                 $res['locale']['id_wallpaper'] =  __('buttons.wallpaper');
             }
         }
+
         return $res ?? [];
     }
 

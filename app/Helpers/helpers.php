@@ -216,7 +216,7 @@ if (!function_exists('cascaderStructure')) {
         }
     }
     if (!function_exists('getImageUrlByWidth')) {
-        function getImageUrlByWidth(string $imageString, bool $useSmallest = false): ?string {
+        function getImageUrlByWidth(string $imageString): array {
             $images = [];
             $pattern = '/(https:\/\/[^\s]+)\s+(\d+)w/';
             preg_match_all($pattern, $imageString, $matches, PREG_SET_ORDER);
@@ -224,29 +224,44 @@ if (!function_exists('cascaderStructure')) {
             foreach ($matches as $match) {
                 $images[$match[2] . 'w'] = $match[1];
             }
+
+            if (empty($images)) {
+                return [];
+            }
+
             $widths = array_map(function ($key) {
-                return (int) str_replace('w', '', $key);
+                return (int) rtrim($key, 'w');
             }, array_keys($images));
 
-            if (empty($widths)) {
-                return null;
-            }
+            $minWidth = min($widths);
+            $maxWidth = max($widths);
 
-            if ($useSmallest) {
-                return $images[min($widths) . 'w'];
-            }
-
-            rsort($widths);
-
-            $preferredWidth = 1280;
-
-            foreach ($widths as $width) {
-                if ($width <= $preferredWidth) {
-                    return $images[$width . 'w'];
+            // Определяем источник и ширину
+            if ($widths) {
+                rsort($widths);
+                foreach ($widths as $width) {
+                    if ($width <= 1280) {
+                        $src = $images[$width . 'w'];
+                        break;
+                    }
                 }
+                // Если не нашли подходящую ширину, берем максимальную
+                if (!isset($src)) {
+                    $src = $images[$maxWidth . 'w'];
+                }
+            } else {
+                return [];
             }
 
-            return $images[min($widths) . 'w'];
+            // Извлечение номера из URL
+            preg_match('/_([A-Za-z]*\d{3,4})_\./', $src, $matches);
+            $number = $matches ? preg_replace('/[^0-9]/', '', $matches[1]) : 'no number';
+
+            return [
+                'src' => $src,
+                'src-smallest' => $images[$minWidth . 'w'],
+                'width' => $number,
+            ];
         }
     }
     if (!function_exists('collectPosterUrls')) {

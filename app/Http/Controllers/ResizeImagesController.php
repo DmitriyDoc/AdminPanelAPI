@@ -56,7 +56,7 @@ class ResizeImagesController extends Controller
                 $this->movieType = $assignPosters[0]['type_film'];
                 $url = env('API_HOST_URL') . "/api/images/clear";
                 //$url = env('API_HOST_URL') . "/api/images/storage-size";
-                //dd($http->get($url)->json()); //1141Gb
+                //dd($http->get($url)->json()); //4097Gb
 
                 $http->delete($url, [
                     'type_id' => $this->movieType,
@@ -147,7 +147,7 @@ class ResizeImagesController extends Controller
         $dirResizeThumbsArr = [['dir' => 'small', 'width' => 200, 'maxHeight' => 800], ['dir' => 'medium', 'width' => 400, 'maxHeight' => 1200]];
         if (!empty($originalId)) {
             $url = getImageUrlByWidth($originalId[0]['srcset']);
-            $this->file = $this->getFileFromSrc($url);
+            $this->file = $this->getFileFromSrc($url['src']);
 
             if (!empty($this->file['content'])) {
                 //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$this->posterOriginalId}, URL: {$url}");
@@ -178,7 +178,7 @@ class ResizeImagesController extends Controller
         $dirResizeThumbsArr = [['dir' => 'small', 'width' => 200, 'maxHeight' => 800], ['dir' => 'medium', 'width' => 400, 'maxHeight' => 1200]];
         if (!empty($russianId)) {
             $url = getImageUrlByWidth($russianId[0]['srcset']);
-            $this->file = $this->getFileFromSrc($url);
+            $this->file = $this->getFileFromSrc($url['src']);
             if (!empty($this->file['content'])) {
                 //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$this->posterRussianId}, URL: {$url}");
                 if ($this->putFileToTempDirectory($this->posterRussianId)) {
@@ -209,7 +209,7 @@ class ResizeImagesController extends Controller
             $charactersIdArr = $this->modelPoster::where('id_movie', $this->originalMovieId)->whereIn('id', $posterIdArr)->get(['srcset', 'id'])->toArray();
             if (!empty($charactersIdArr)) {
                 $urls = array_map(function ($item) {
-                    return getImageUrlByWidth($item['srcset']);
+                    return getImageUrlByWidth($item['srcset'])['src'];
                 }, $charactersIdArr);
                 $ids = array_column($charactersIdArr, 'id');
                 $files = $this->getFilesFromSrcBatch($urls, $ids);
@@ -244,9 +244,10 @@ class ResizeImagesController extends Controller
             $altIdArr = $this->modelPoster::where('id_movie', $this->originalMovieId)->whereIn('id', $posterIdArr)->get(['srcset', 'id'])->toArray();
             if (!empty($altIdArr)) {
                 $urls = array_map(function ($item) {
-                    return getImageUrlByWidth($item['srcset']);
+                    return getImageUrlByWidth($item['srcset'])['src'];
                 }, $altIdArr);
                 $ids = array_column($altIdArr, 'id');
+
                 $files = $this->getFilesFromSrcBatch($urls, $ids);
                 $batchFiles = [];
                 foreach ($altIdArr as $index => $item) {
@@ -277,7 +278,7 @@ class ResizeImagesController extends Controller
         $this->dirPosterName = 'wallpaper';
         if (!empty($wallpaperId)) {
             $url = getImageUrlByWidth($wallpaperId[0]['srcset']);
-            $this->file = $this->getFileFromSrc($url);
+            $this->file = $this->getFileFromSrc($url['src']);
             if (!empty($this->file['content'])) {
                 //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$this->posterWallpaperId}, URL: {$url}");
                 if ($this->putFileToTempDirectory($this->posterWallpaperId)) {

@@ -154,6 +154,7 @@
                                     />
                                 </div>
                                 <div class="table-cell" style="width: 70px;">Image ID</div>
+                                <div class="table-cell" style="width: 70px;">Resolution</div>
                                 <div class="table-cell" style="width: 200px;">{{ singleData.locale.photo }}</div>
                                 <div class="table-cell" style="width: 400px;">{{ singleData.locale.link }}</div>
                             </div>
@@ -185,6 +186,9 @@
 
                                     <!-- ID -->
                                     <div class="table-cell" style="width: 100px;">{{ item.id }}</div>
+
+                                    <!-- Resolution -->
+                                    <div class="table-cell" style="width: 100px;">{{ item.width }}</div>
 
                                     <!-- Photo -->
                                     <div class="table-cell" style="width: 300px;">
@@ -246,7 +250,12 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="src" :label="singleData.locale.photo" width="150">
+                            <el-table-column property="width" label="Resolution" width="100">
+                                <template v-slot:default="scope">
+                                    {{scope.row.width}}
+                                </template>
+                            </el-table-column>
+                            <el-table-column property="src" :label="singleData.locale.photo" width="200">
                                 <template v-slot:default="scope">
                                     <el-image :src="scope.row.srcset"/>
                                 </template>
