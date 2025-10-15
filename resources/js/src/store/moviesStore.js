@@ -104,16 +104,16 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         disabledBtnSync.value = true;
         axios.post('/updatemovie',{ data: params}).then((response) => {
             if (response.status === 200) {
-                disabledBtnSync.value = false;
+                //disabledBtnSync.value = false;
                 showItem();
                 ElMessage({
                     type: 'success',
-                    message: 'Sync with IMDB completed',
+                    message: 'Synchronization with IMDB is queued',
                 })
             } else {
                 ElMessage({
                     type: 'error',
-                    message: 'Sync with IMDB  is not finished',
+                    message: 'Synchronization with IMDB is not finished and not queued.',
                 });
             }
         });

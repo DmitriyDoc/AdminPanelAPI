@@ -72,7 +72,7 @@ services:
             - "6379:6379"
         volumes:
             - ./redisdata:/data
-        command: ["redis-server", "--bind", "spectrum_redis", "--port", "6379"]
+        command: ["redis-server", "--bind", "spectrum_redis", "--port", "6379","--stop-writes-on-bgsave-error", "no"]
         networks:
             - shared-media-network
     # Adminer client
@@ -131,6 +131,23 @@ services:
         command: [ "node", "server.js" ]
         networks:
             - shared-media-network
+        depends_on:
+            - spectrum_redis
+            - spectrum_db
+    # QUEUE
+    spectrum_queue_worker:
+        container_name: spectrum_queue_worker
+        build:
+            context: .
+            dockerfile: Dockerfile
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - ./.env:/var/www/.env
+        networks:
+            - shared-media-network
+        command: [ "php", "artisan", "queue:work", "--sleep=3", "--tries=3" ]
+        restart: unless-stopped
         depends_on:
             - spectrum_redis
             - spectrum_db

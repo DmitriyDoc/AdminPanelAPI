@@ -2,6 +2,7 @@
 
 
 namespace App\Http\Controllers\Parser;
+use App\Jobs\ParseMovieUpdateJob;
 use App\Events\ParserReportEvent;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
@@ -52,8 +53,8 @@ class ParserStartController
 
     public function parseMovieUpdate(Request $request)
     {
-        Redis::flushDB();
-        (new ParserUpdateMovieController())->update($request);
+        ParseMovieUpdateJob::dispatch($request->all());
+        return response()->json(['status' => 'queued']);
     }
     public function parseCelebUpdate(Request $request)
     {
