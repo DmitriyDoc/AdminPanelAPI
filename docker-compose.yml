@@ -23,6 +23,14 @@ services:
             #get update ip: nslookup www.imdb.com or dig www.imdb.com
             - "m.media-amazon.com:212.188.39.27"
             - "www.imdb.com:3.174.109.174"
+            - "api.themoviedb.org:13.225.89.239"
+            - "image.tmdb.org:13.225.89.239"
+            - "www.themoviedb.org:13.225.89.239"       # Веб-сайт
+            - "api-v3.themoviedb.org:13.225.89.239"    # API v3
+            - "assets.tmdb.org:13.225.89.239"          # Ассеты
+            - "api.themoviedb.org:13.226.238.73"       # Альтернативный IP 1
+            - "api.themoviedb.org:13.226.238.120"      # Альтернативный IP 2
+            - "api.themoviedb.org:13.226.238.38"       # Альтернативный IP 3
     # Nginx Service (для админки)
     spectrum_webserver:
         container_name: spectrum_webserver

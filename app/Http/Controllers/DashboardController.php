@@ -69,6 +69,36 @@ class DashboardController
 //        $body = $response->getBody();
 //        $data = json_decode($body, true);
 //        dd($data);
+        // Ваш API-ключ TMDb
+//        $apiKey = 'f9ef20ebcf70e4c74d82a63a413ad7a8';
+//        $imdbId= "tt0111161";
+//        // 1. Получаем ID фильма в TMDb по IMDb ID
+//        $tmdbResponse = Http::get("https://api.themoviedb.org/3/find/$imdbId", [
+//            'api_key' => $apiKey,
+//            'external_source' => 'imdb_id',
+//            'append_to_response' => 'credits,videos,release_dates,keywords',
+//        ]);
+//
+//        $tmdbData = $tmdbResponse->json();
+//        dd($tmdbData);
+//        $tmdbId = $tmdbData['movie_results'][0]['id'] ?? null;
+//
+//        if (!$tmdbId) {
+//            return response()->json(['error' => 'Фильм не найден'], 404);
+//        }
+//
+//        // 2. Получаем изображения фильма
+//        $imagesResponse = Http::get("https://api.themoviedb.org/3/movie/$tmdbId/images", [
+//            'api_key' => $apiKey,
+//            'language' => 'en'
+//        ]);
+//
+//        $images = $imagesResponse->json();
+//        dd($images);
+//        return response()->json([
+//            'posters' => $images['posters'] ?? [],
+//            'backdrops' => $images['backdrops'] ?? [],
+//        ]);
         return [];
     }
 
