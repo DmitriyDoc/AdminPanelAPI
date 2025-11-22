@@ -229,23 +229,21 @@ class SectionsController extends Controller
 
         return $results;
     }
-    public function updateSection (Request $request) : bool
+    public function updateSection (Request $request) : string
     {
         $data = Validator::make($request->all(),[
             'id' => 'required|int',
-            'index_id' => '|string|max:10',
+            'index_id' => 'required|string|max:10',
             'title_en' => 'required|string|max:30',
             'title_ru' => 'required|string|max:30',
         ])->safe()->all();
-        if (!empty($data['id'])){
-            Category::where('id',$data['id'])->update([
-                'index_id' => $data['index_id'],
-                'title_en' => $data['title_en'],
-                'title_ru' => $data['title_ru']
-            ]);
-            return true;
-        }
-        return false;
+
+        $category = Category::findOrFail($data['id']);
+        $category->update($data);
+
+        $typeFilm = $category->movieInfo?->type_film;
+
+        return in_array($typeFilm, [2, 5]) ? 'tv' : 'movie';
     }
 
     public function updateImages(Request $request)

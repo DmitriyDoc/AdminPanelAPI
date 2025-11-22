@@ -15,5 +15,8 @@ class Category extends Model
     {
         return $this->hasMany(Collection::class,'category_id','id')->orderBy('id','desc');
     }
-
+    public function movieInfo()
+    {
+        return $this->hasOne(MovieInfo::class, 'id_movie', 'index_id');
+    }
 }
