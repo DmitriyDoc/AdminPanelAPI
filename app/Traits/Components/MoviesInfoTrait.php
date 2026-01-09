@@ -183,11 +183,9 @@ trait MoviesInfoTrait
                         }
                         //STORY LINE
                         if ($document->has("span[data-testid=plot-l]")){
+                            $storyContainer = $document->first("span[data-testid=plot-l]")->text();
                             if ($this->withStory){
-                                $storyContainer = $document->first('span[data-testid=plot-l]')->text();
-                                if (!empty($storyContainer)){
-                                    $insertData[$this->update_en_info_table]['story_line'] = rtrim($storyContainer,'Read all')??null;
-                                }
+                                $insertData[$this->update_en_info_table]['story_line'] = rtrim($storyContainer,'Read all')??null;
                             }
                         }
                         //RELEASE DATE

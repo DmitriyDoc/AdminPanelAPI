@@ -39,7 +39,11 @@ class ResizeImagesController extends Controller
         $requestMovieId = get_id_from_url($request->get('id_movie') ?? null, '/tt\d{1,10}/') ?? null;
         if (!empty($requestMovieId)) {
             try {
-                $http = Http::withToken(env('API_TOKEN'));
+                $http = Http::withToken(env('API_TOKEN'))
+                    ->withHeaders([
+                        'Accept' => 'application/json',
+                        'X-Requested-With' => 'XMLHttpRequest',
+                    ]);
                 $hasher = new IdHasher($requestMovieId);
                 $this->originalMovieId = $hasher->isResultHash() ? $hasher->getResult() : $requestMovieId;
                 $this->movieId = $hasher->isResultHash() ? $requestMovieId : $hasher->getResult();
@@ -55,8 +59,6 @@ class ResizeImagesController extends Controller
             if (!empty($assignPosters)) {
                 $this->movieType = $assignPosters[0]['type_film'];
                 $url = env('API_HOST_URL') . "/api/images/clear";
-                //$url = env('API_HOST_URL') . "/api/images/storage-size";
-                //dd($http->get($url)->json()); //4097Gb
 
                 $http->delete($url, [
                     'type_id' => $this->movieType,
