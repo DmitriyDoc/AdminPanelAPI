@@ -15,6 +15,10 @@ return [
             'label' => 'Году',
         ],
         [
+            'value' => 'published',
+            'label' => 'Статусу',
+        ],
+        [
             'value' => 'title',
             'label' => 'Названию фильма',
         ],
