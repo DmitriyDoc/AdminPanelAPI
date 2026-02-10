@@ -298,7 +298,11 @@ if (!function_exists('cascaderStructure')) {
                 0 =>  [
                     'status_text' => __('table_fields.status_text_not_modified'),
                     'status_type' => 'info',
-                ]
+                ],
+                 default => [
+                    'status_text' => __('table_fields.status_text_unknown'),
+                    'status_type' => 'danger',
+                ],
             };
         }
     }
