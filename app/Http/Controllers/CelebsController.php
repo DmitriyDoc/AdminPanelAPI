@@ -132,15 +132,32 @@ class CelebsController extends Controller
 
                 $modelArr['info']['knowfor'] = $knownFor;
                 $modelArr['filmography'] = json_decode($modelArr['filmography'],true) ?? [];
+
+                $allMovieIds = [];
+                foreach ($modelArr['filmography'] as $occupation) {
+                    foreach ($occupation as $imdbId => $dataArr) {
+                        $allMovieIds[] = $imdbId;
+                    }
+                }
+                $allMovieIds = array_unique($allMovieIds);
+                $movieStatuses = MovieInfo::whereIn('id_movie', $allMovieIds)
+                    ->pluck('published', 'id_movie')
+                    ->toArray();
                 $filmographyArr = [];
-                foreach ($modelArr['filmography'] as $k => &$occupation){
-                    uasort($occupation, function ($a, $b){return ($a['year'] < $b['year']);});
-                    foreach ($occupation as $id =>$dataArr){
+                foreach ($modelArr['filmography'] as $k => &$occupation) {
+                    uasort($occupation, function ($a, $b) {
+                        return ($a['year'] < $b['year']) ? 1 : -1;
+                    });
+
+                    foreach ($occupation as $id => $dataArr) {
+                        $status = $movieStatuses[$id] ?? null;
+
                         $filmographyArr[$k][] = [
                             'id' => $id,
                             'role' => $dataArr['role'],
                             'year' => $dataArr['year'],
                             'title' => $dataArr['title'],
+                            'status' => statusSelection($status) ?? [],
                         ];
                     }
                 }
