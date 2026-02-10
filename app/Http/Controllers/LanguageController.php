@@ -371,6 +371,7 @@ class LanguageController
             'title' => __('table_fields.title'),
             'id_movie' => __('table_fields.id_movie'),
             'year' => __('table_fields.year'),
+            'status'=> __('table_fields.status'),
             'photo' => __('table_fields.photo'),
             'link' => __('table_fields.link'),
             'images' => __('movies.images'),
