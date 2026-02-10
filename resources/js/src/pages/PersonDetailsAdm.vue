@@ -30,6 +30,13 @@
                             >
                                 <el-table-column type="index" label="№"/>
                                 <el-table-column prop="year" :label="singleData.locale.year" width="120" />
+                                <el-table-column prop="status" :label="singleData.locale.status" width="130" >
+                                    <template v-slot:default="scope">
+                                        <el-text :type="scope.row.status.status_type">
+                                            <strong>{{scope.row.status.status_text}}</strong>
+                                        </el-text>
+                                    </template>
+                                </el-table-column>
                                 <el-table-column prop="id" :label="singleData.locale.id_movie" width="120" />
                                 <el-table-column prop="title" property="id" :label="singleData.locale.title" width="400">
                                     <template v-slot:default="scope">
