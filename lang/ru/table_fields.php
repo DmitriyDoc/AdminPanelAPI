@@ -32,5 +32,6 @@ return [
     'status_text_wait' =>"В ожидании",
     'status_text_published' =>"Опубликован",
     'status_text_not_modified' =>"Не подготовлен",
+    'status_text_unknown' =>"Статус неизвестен",
     'status' =>"Статус"
 ];

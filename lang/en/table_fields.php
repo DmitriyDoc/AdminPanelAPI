@@ -32,5 +32,6 @@ return [
     'status_text_wait' =>"Wait",
     'status_text_published' =>"Published",
     'status_text_not_modified' =>"Not modified",
+    'status_text_unknown' =>"Status unknown",
     'status' =>"Status"
 ];
