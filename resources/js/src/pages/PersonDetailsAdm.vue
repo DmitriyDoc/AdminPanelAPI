@@ -80,7 +80,7 @@
                             :zoom-rate="1.2"
                             :max-scale="7"
                             :min-scale="0.2"
-                            :preview-src-list="srcListImages"
+                            :preview-src-list="srcListImages.map(img => img.src)"
                             :initial-index="index"
                             fit="cover"
                         />
@@ -147,7 +147,6 @@
     const handleClick = (tab: TabsPaneContext, event: Event) => {
         //console.log(tab, event)
     }
-
 </script>
 
 <style lang="scss" scoped>
