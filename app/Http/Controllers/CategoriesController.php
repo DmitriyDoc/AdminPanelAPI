@@ -50,41 +50,61 @@ class CategoriesController extends Controller
         $collectionArray = Category::get()->toArray();
         return json_encode($collectionArray);
     }
+
     public function addFranchise(Request $request)
     {
-        request()->merge(['value' => strtolower(str_ireplace(' ', '_',$request->label_en))]);
-        $data = Validator::make($request->all(),[
-            'label_en' => 'required|string|max:50',
-            'label_ru' => 'required|string|max:50',
-            'value' => 'required|string|max:50',
-            "collection" => "required|array",
-            "collection.*" => "required|numeric",
-        ]);
-        if ($data->fails()) {
-            return response()->json([
-                'errors' => $data->errors()
-            ]);
+        $rawLabel = $request->input('label_en', '');
+        $lowered = mb_strtolower($rawLabel, 'UTF-8');
+
+        $withUnderscores = str_replace(' ', '_', $lowered);
+        $slug = preg_replace('/[^a-z0-9_]+/', '', $withUnderscores);
+
+        if (empty($slug)) {
+            $slug = 'franchise_' . time();
         }
-        $localModel = LocalizingFranchise::query();
-        $modelExist = $localModel->where('value',$data->getValue('value'))->first();
-        if (!$modelExist){
-            transaction( function () use ($data,$localModel){
-                $newFrinchiseId = $localModel->insertGetId([
-                    'value' => $data->getValue('value'),
-                    'label_en' => $data->getValue('label_en'),
-                    'label_ru' => $data->getValue('label_ru'),
+
+        $request->merge(['value' => $slug]);
+
+        $validator = Validator::make($request->all(), [
+            'label_en'   => 'required|string|max:50',
+            'label_ru'   => 'required|string|max:50',
+            'value'      => 'required|string|max:50|regex:/^[a-z0-9_]+$/',
+            'collection' => 'required|array',
+            'collection.*' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $localModel = new LocalizingFranchise();
+        $modelExist = $localModel->where('value', $request->input('value'))->first();
+
+        if (!$modelExist) {
+            DB::transaction(function () use ($request, $localModel) {
+                $newFranchiseId = $localModel->insertGetId([
+                    'value'    => $request->input('value'),
+                    'label_en' => $request->input('label_en'),
+                    'label_ru' => $request->input('label_ru'),
                 ]);
 
-                foreach ($data->getValue('collection') as $collectionId){
+                $dataTable = [];
+                foreach ($request->input('collection') as $collectionId) {
                     $dataTable[] = [
-                        'id' => $newFrinchiseId,
+                        'id' => $newFranchiseId,
                         'collection_id' => $collectionId,
                     ];
                 }
-               CollectionsFranchisesPivot::insert($dataTable);
+
+                if (!empty($dataTable)) {
+                    CollectionsFranchisesPivot::insert($dataTable);
+                }
             });
+
+            return response()->json(['message' => 'Success', 'id' => $newFranchiseId ?? null]);
         }
 
+        return response()->json(['message' => 'Already exists'], 409);
     }
     public function addCollection(Request $request)
     {
