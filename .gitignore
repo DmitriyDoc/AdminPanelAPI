@@ -1,23 +1,48 @@
-/.phpunit.cache
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/vendor
+# Laravel
 .env
 .env.backup
+.env.local
 .env.production
+.env.staging
+.phpunit.result.cache
+homestead.yaml
 Homestead.json
-Homestead.yaml
 auth.json
-npm-debug.log
-yarn-error.log
-/.fleet
+
+# Bootstrap cache
+/bootstrap/cache/
+
+# Storage
+/storage/
+!/storage/app/public/.gitkeep
+!/storage/app/.gitkeep
+
+# Vendor
+/vendor/
+
+# Node
+/node_modules/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+.pnpm-debug.log*
+
+# Build
+/public/build/
+/public/hot
+/public/storage
+
+# IDE
 /.idea
 /.vscode
-/redisdata
-/mysql
-/nginx
-/php
+/.fleet
 
+# Docker volumes (data)
+/mysql/
+/redisdata/
+/nginx/
+/php/
+
+# Logs
+*.log
+logs/

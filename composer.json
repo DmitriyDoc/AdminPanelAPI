@@ -22,6 +22,8 @@
         "predis/predis": "^2.3",
         "react/event-loop": "^0.4.1",
         "react/react": "^0.4.1",
+        "spatie/browsershot": "^5.2",
+        "stichoza/google-translate-php": "^5.3",
         "symfony/psr-http-message-bridge": "^2.2"
     },
     "require-dev": {

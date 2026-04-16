@@ -3,20 +3,11 @@
 namespace App\Http\Controllers\Parser;
 
 use Illuminate\Support\Facades\Log;
+use Spatie\Browsershot\Browsershot;
 
+use Exception;
 class CurlConnectorController
 {
-    const HEADERS = [
-        'cache-control: max-age=0',
-        'upgrade-insecure-requests: 1',
-        //'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'accept-encoding: gzip, deflate, br',
-        'accept-language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'sec-fetch-site: none',
-        'sec-fetch-mode: navigate',
-        'sec-fetch-user: ?1',
-    ];
     private $userAgents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -49,59 +40,166 @@ class CurlConnectorController
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
         "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/121.0"
     ];
-    private $referer = "https://www.google.com/";
 
-    public function getCurlMulty($urls)
+    public function getCurlImages(array $urls)
     {
-        $mh = curl_multi_init();
-        $conn = [];
-        $res = [];
+        $results = [];
 
-        foreach ($urls as $i => $url) {
-            $conn[$i] = curl_init($url);
-            curl_setopt($conn[$i], CURLOPT_HTTPHEADER, array_merge(self::HEADERS, [
-                'user-agent: ' . $this->userAgents[array_rand($this->userAgents)]
-            ]));
-            curl_setopt($conn[$i], CURLOPT_URL, $url);
-            curl_setopt($conn[$i], CURLOPT_REFERER, $this->referer);
-            curl_setopt($conn[$i], CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($conn[$i], CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($conn[$i], CURLOPT_BINARYTRANSFER, true);
-            curl_setopt($conn[$i], CURLOPT_CONNECTTIMEOUT, 10);
-            curl_setopt($conn[$i], CURLOPT_TIMEOUT, 30);
-            curl_setopt($conn[$i], CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($conn[$i], CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($conn[$i], CURLOPT_HEADER, false);
-            curl_setopt($conn[$i], CURLOPT_FRESH_CONNECT, true);
-            curl_setopt($conn[$i], CURLOPT_ENCODING, 'gzip, deflate, br');
+        // Очистка и валидация
+        $validUrls = array_filter(array_map('trim', $urls), fn($u) => filter_var($u, FILTER_VALIDATE_URL));
+        if (empty($validUrls)) return $results;
 
-            curl_multi_add_handle($mh, $conn[$i]);
-        }
+        try {
+            $bridgeUrl = 'http://spectrum_chromium_bridge:3002/fetch';
 
-        do {
-            $status = curl_multi_exec($mh, $active);
-            if ($status > 0) {
-                Log::error("cURL multi exec error: " . curl_multi_strerror($status));
-            }
-            curl_multi_select($mh);
-        } while ($active && $status == CURLM_OK);
+            $payload = [
+                'urls' => array_values($validUrls),
+                'options' => [
+                    'timeout' => 45000, // Передаем подсказку мосту (хотя мост теперь сам решает)
+                    'concurrency' => 3, // Снизили параллельность, чтобы не валить браузер
+                    'waitUntil' => 'networkidle2',
+                    'blockResources' => false
+                ]
+            ];
 
-        foreach ($urls as $i => $url) {
-            $response = curl_multi_getcontent($conn[$i]);
-            $httpCode = curl_getinfo($conn[$i], CURLINFO_HTTP_CODE);
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'POST',
+                    'header' => "Content-Type: application/json\r\n",
+                    'content' => json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                    // ВАЖНО: Увеличиваем таймаут PHP, чтобы дождаться ретраев в Node.js
+                    // 3 URL * ~20-30 сек (с ретраем) = нужно около 90 сек запаса
+                    'timeout' => 120,
+                    'ignore_errors' => true
+                ]
+            ]);
 
-            if ($response === false || $httpCode !== 200) {
-                Log::error("Failed to fetch URL: $url, HTTP Code: $httpCode, Error: " . curl_error($conn[$i]));
-                $res[$url] = null;
-            } else {
-                $res[$url] = $response;
+            $response = file_get_contents($bridgeUrl, false, $context);
+
+            if ($response === false) {
+                throw new \Exception("Bridge connection failed (no response within 120s)");
             }
 
-            curl_multi_remove_handle($mh, $conn[$i]);
-            curl_close($conn[$i]);
-        }
+            $data = json_decode($response, true);
 
-        curl_multi_close($mh);
-        return $res;
+            if (json_last_error() !== JSON_ERROR_NONE || !isset($data['results'])) {
+                throw new \Exception("Invalid bridge response: " . json_last_error_msg());
+            }
+
+            foreach ($data['results'] as $item) {
+                $url = $item['url'] ?? 'unknown';
+                $html = $item['html'] ?? null;
+                $status = $item['status'] ?? 'error';
+                $attempts = $item['attempts'] ?? 1;
+
+                if ($status === 'success' && $html && strlen($html) > 2000) {
+                    $len = strlen($html);
+                    if ($len < 5000 || str_contains($html, 'awsWaf') || str_contains($html, 'captcha')) {
+                        Log::warning("⚠️ Blocked content via bridge for $url ({$len} bytes)");
+                        $results[$url] = null;
+                    } else {
+                        $results[$url] = $html;
+                        $logMsg = $attempts > 1 ? "✅ Bridge fetched $url ({$len} bytes) after {$attempts} attempts" : "⚡ Bridge fetched $url ({$len} bytes)";
+                        Log::info($logMsg);
+                    }
+                } else {
+                    Log::warning("⚠️ Bridge failed for $url: " . ($item['error'] ?? 'Unknown') . " (Attempts: {$attempts})");
+                    $results[$url] = null;
+                }
+            }
+
+            return $results;
+
+        } catch (\Exception $e) {
+            Log::error("🔥 Bridge failed: " . $e->getMessage() . ". Falling back to cURL or aborting.");
+            // Возвращаем пустой массив или можно добавить фоллбек на обычный curl, если нужно
+            return $results;
+        }
     }
+
+    public function getCurlParserInfo(array $urls): array
+    {
+        $results = [];
+        $randomUa = $this->userAgents[array_rand($this->userAgents)];
+
+        foreach ($urls as $url) {
+            $url = trim($url);
+
+            // Валидация URL
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                Log::warning("Invalid URL skipped: $url");
+                continue;
+            }
+
+            try {
+                // Формируем параметры для парсера
+                $params = http_build_query([
+                    'url' => $url,
+                    'userAgent' => $randomUa,
+                    'width' => 1920,
+                    'height' => 1080,
+                    'locale' => 'en-US',
+                    'timezone' => 'America/New_York',
+                    'waitSelector' => 'h1[data-testid="hero__pageTitle"]',
+                ]);
+
+                $parserEndpoint = "http://spectrum_playwright_parser:3001/parse?$params";
+
+                // Инициализируем cURL
+                $ch = curl_init();
+
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => $parserEndpoint,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER => [
+                        'Accept: text/html',
+                        'Accept-Language: en-US,en;q=0.9',
+                    ],
+                    CURLOPT_TIMEOUT => 120,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    // Не передаем User-Agent дважды, curl сам подставит, если нужно
+                ]);
+
+                $html = curl_exec($ch);
+                $curlError = curl_error($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+                curl_close($ch);
+
+                // Проверка ошибок cURL
+                if ($curlError || $html === false) {
+                    throw new \Exception("cURL error: $curlError");
+                }
+
+                // Проверка HTTP кода
+                if ($httpCode !== 200) {
+                    throw new \Exception("HTTP $httpCode from parser");
+                }
+
+                // Проверяем, не вернул ли парсер ошибку в JSON
+                $decoded = json_decode($html, true);
+                if (is_array($decoded) && isset($decoded['error'])) {
+                    throw new \Exception("Parser error: " . $decoded['error']);
+                }
+
+                // Проверка на защиту или слишком короткий ответ
+                $len = strlen($html);
+                if ($len < 5000 || str_contains($html, 'awsWaf') || str_contains($html, 'captcha')) {
+                    throw new \Exception("Blocked or short response ({$len} bytes)");
+                }
+
+                // ✅ Успех: сохраняем в формате [url => html]
+                $results[$url] = $html;
+                Log::info("✅ Parsed $url ({$len} bytes)");
+
+            } catch (\Exception $e) {
+                // Логируем ошибку, но НЕ прерываем цикл — обрабатываем остальные URL
+                Log::error("Failed to parse $url: " . $e->getMessage(), ['url' => $url]);
+                continue;
+            }
+        }
+
+        return $results;
+    }
+
 }

@@ -29,9 +29,7 @@ class ParserUpdateCelebController extends ParserController
         $this->update_info_table = 'celebs_info';
         $this->update_images_table = 'celebs_images';
 
-        if (!empty($arrIdCeleb)){
-            $this->idCeleb = $arrIdCeleb;
-        }
+        array_push($this->idCeleb,  $arrIdCeleb);
         if (!empty($this->idCeleb)){
             $this->parserStart($typeImage);
         }
@@ -48,7 +46,7 @@ class ParserUpdateCelebController extends ParserController
             $this->update_images_table = 'celebs_images';
 
             if (empty($this->idCeleb)) {
-                array_push($this->idCeleb,  $data['data']['id']);
+                $this->idCeleb[] = $data['data']['id'];
             }
 
             if (!empty($this->idCeleb)){
@@ -75,16 +73,16 @@ class ParserUpdateCelebController extends ParserController
             array_push($this->linksCredits,$this->domen.$this->imgUrlFragment.$id.'/');
             array_push($this->linksIdsImages,$this->domen.$this->imgUrlFragment.$id.'/mediaindex?contentTypes='. $imageType);
         }
-        $this->linksGetter($this->linksInfo,'getCelebsInfo');
+        $this->linksGetter($this->linksInfo,'getCelebsInfo','info', null);
 
         event(new CurrentPercentageEvent(['percent'=>30,'action'=>__('parser.credits_data_parser'),'color'=>'']));
-        $this->linksGetter($this->linksCredits,'credits');
+        $this->linksGetter($this->linksCredits,'credits','filmography', null);
 
-        event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.images_id_parser'),'color'=>'']));
-        $this->linksGetter($this->linksIdsImages,'getIdImages',self::ACTOR_PATTERN );
-
-        event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
-        $this->createIdArrayAndGetImages($this->update_images_table,$this->linksImages,$this->idCeleb );
+//        event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.images_id_parser'),'color'=>'']));
+//        $this->linksGetter($this->linksIdsImages,'getIdImages','images',self::ACTOR_PATTERN );
+//
+//        event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
+//        $this->createIdArrayAndGetImages($this->update_images_table,$this->linksImages,$this->idCeleb );
 
         event(new CurrentPercentageEvent(['percent'=>90,'action'=>__('parser.localization_parser'),'color'=>'']));
         foreach ($this->idCeleb as $id) {

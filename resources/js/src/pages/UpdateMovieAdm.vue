@@ -57,11 +57,11 @@
         </el-col>
         <el-col :span="20">
             <el-steps style="max-width: 100%" :active="propsSteps.active" :finish-status="propsSteps.finishStatus" align-center>
-                <el-step title="Step 1" description="Assign categories" />
-                <el-step title="Step 2" description="Assign poster" />
-                <el-step title="Step 3" description="Resize all images" />
-                <el-step title="Step 4" description="The movie add to export" />
-                <el-step title="Published!"   description="The movie move to site" />
+                <el-step :title="singleData.locale.step + ' 1'" :description="singleData.locale.assign_are_categories" />
+                <el-step :title="singleData.locale.step + ' 2'" :description="singleData.locale.assign_are_poster" />
+                <el-step :title="singleData.locale.step + ' 3'" :description="singleData.locale.resize_all_images" />
+                <el-step :title="singleData.locale.step + ' 4'" :description="singleData.locale.movie_add_to_export" />
+                <el-step :title="singleData.locale.published"   :description="singleData.locale.movie_move_to_site" />
             </el-steps>
             <el-tabs v-model="activeTabName" class="demo-tabs m-3" @tab-click="handleClick">
                 <el-tab-pane :label="singleData.locale.genres" name="first">
@@ -145,16 +145,16 @@
                         <div class="custom-table" ref="customTableRef">
                             <div class="table-header">
                                 <div class="table-cell" style="width: 80px;">ID</div>
-                                <div class="table-cell" style="width: 40px; text-align: center;">↕️</div>
-                                <div class="table-cell" style="width: 55px; text-align: center;">
+                                <div class="table-cell" style="width: 30px; text-align: center;">↕️</div>
+                                <div class="table-cell" style="width: 45px; text-align: center;">
                                     <el-checkbox
                                         :indeterminate="selectionIndeterminate"
                                         v-model="selectAll"
                                         @change="toggleSelectAllImages"
                                     />
                                 </div>
-                                <div class="table-cell" style="width: 70px;">Image ID</div>
-                                <div class="table-cell" style="width: 70px;">Resolution</div>
+                                <div class="table-cell" style="width: 120px;">{{ singleData.locale.id_image }}</div>
+                                <div class="table-cell" style="width: 100px;">{{ singleData.locale.resolution }}</div>
                                 <div class="table-cell" style="width: 200px;">{{ singleData.locale.photo }}</div>
                                 <div class="table-cell" style="width: 400px;">{{ singleData.locale.link }}</div>
                             </div>
@@ -188,7 +188,7 @@
                                     <div class="table-cell" style="width: 100px;">{{ item.id }}</div>
 
                                     <!-- Resolution -->
-                                    <div class="table-cell" style="width: 100px;">{{ item.width }}</div>
+                                    <div class="table-cell" style="width: 200px;">{{ item.width }}</div>
 
                                     <!-- Photo -->
                                     <div class="table-cell" style="width: 300px;">
@@ -250,7 +250,7 @@
                                     {{scope.row.id}}
                                 </template>
                             </el-table-column>
-                            <el-table-column property="width" label="Resolution" width="100">
+                            <el-table-column property="width" :label="singleData.locale.resolution" width="150">
                                 <template v-slot:default="scope">
                                     {{scope.row.width}}
                                 </template>
@@ -769,6 +769,7 @@
                 id: route.params.id,
                 type: singleData.value.slug,
                 posterType: posterType.value,
+                isUpdate: true,
             });
         }).catch(() => {
             ElMessage({

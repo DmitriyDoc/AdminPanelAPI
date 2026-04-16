@@ -1,5 +1,5 @@
 <template>
-    <h3 class="text-center mt-3 mb-3">List sections</h3>
+    <h3 class="text-center mt-3 mb-3">Список секций</h3>
     <el-tabs v-model="activeSectionId" :tab-position="tabPosition" class="mt-5">
         <el-tab-pane v-for="(item) in sections" :key="item.id" :label="item.title_ru ?? item.title_en" :name="item.id.toString()">
             <div><strong>ID: </strong>{{ item.id }}</div>
@@ -18,9 +18,7 @@
                 <el-input v-model="item.title_en" maxlength="30" :placeholder="item.title_en" show-word-limit type="text" class="el-col-xl-6" />
             </div>
             <el-button type="primary" @click="handleUpdateSection(item)" class="btn btn-primary my-4">Обновить секцию</el-button>
-            <hr>
-            <h4 class="text-center mt-3 mb-3">Index page customization</h4>
-
+            <hr class="my-4">
             <!-- Формы для изображений -->
             <el-form
                 label-width="200px"

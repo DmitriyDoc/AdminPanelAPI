@@ -23,7 +23,7 @@
                         </template>
                         <el-menu-item-group>
                             <template #title><h4>Sections</h4></template>
-                            <RouterLink to="/categories/sections/"><el-menu-item index="3-1">List sections</el-menu-item></RouterLink>
+                            <RouterLink to="/categories/sections/"><el-menu-item index="3-1">{{$t('list_section')}}</el-menu-item></RouterLink>
                         </el-menu-item-group>
                         <el-menu-item-group>
                             <template #title><h4>{{$t('franchise')}}</h4></template>

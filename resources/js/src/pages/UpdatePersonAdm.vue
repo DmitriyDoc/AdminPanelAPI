@@ -4,7 +4,7 @@
             <h1>{{ singleData.nameActor }}</h1>
         </el-col>
         <el-col :span="4"><div class="grid-content ep-bg-purple" />
-            <el-image :src="singleData.info.photo" :fit="cover" style="width: 100%" />
+            <el-image :src="singleData.info.photo" :fit="cover" style="width: 100%" :style="{filter: singleData.info.died ? 'grayscale(100%) sepia(30%) brightness(90%) contrast(90%)' : 'saturate(130%) brightness(105%)' }"/>
             <div class="mt-1 mb-2">
                 <h5>{{singleData.locale.image_type}}</h5>
                 <el-radio-group v-model="imageType" size="small">
@@ -20,10 +20,10 @@
                 <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
             </div>
             <ul class="list-group mt-2">
-                <li class="list-group-item"><span><strong>{{singleData.locale.birthday}}</strong></span> {{ singleData.info.birthday ?? singleData.locale.empty }}</li>
-                <li class="list-group-item"><span><strong>{{singleData.locale.birthday_location}}</strong></span> {{ singleData.birthdayLocation ?? singleData.locale.empty }}</li>
-                <li class="list-group-item"><span><strong>{{singleData.locale.died}}</strong></span> {{ singleData.info.died ?? singleData.locale.empty}}</li>
-                <li class="list-group-item"><span><strong>{{singleData.locale.died_location}}</strong></span> {{ singleData.dieLocation ?? singleData.locale.empty}}</li>
+                <li class="list-group-item"><strong>{{singleData.locale.birthday}}</strong> {{ singleData.info.birthday ?? singleData.locale.empty }}</li>
+                <li class="list-group-item"><strong>{{singleData.locale.birthday_location}}</strong> {{ singleData.birthdayLocation ?? singleData.locale.empty }}</li>
+                <li class="list-group-item" v-if="singleData.info.died"><el-text size="large" type="danger"><strong>{{singleData.locale.died}}</strong></el-text> {{ singleData.info.died }}</li>
+                <li class="list-group-item" v-if="singleData.dieLocation"><el-text size="large" type="danger"><strong>{{singleData.locale.died_location}}</strong></el-text> {{ singleData.dieLocation }}</li>
             </ul>
         </el-col>
         <el-col :span="20" ><div class="grid-content ep-bg-purple-light" />

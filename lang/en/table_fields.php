@@ -10,6 +10,8 @@ return [
     "franchise"=>"Franchises",
     "assign_status"=>"Status",
     "photo"=>"Photo",
+    "resolution"=>"Resolution",
+    "id_image"=>"ID Image",
     "poster"=>"Poster",
     "id_person"=>"ID Person",
     "name"=>"Name",

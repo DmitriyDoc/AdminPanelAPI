@@ -352,8 +352,17 @@ class LanguageController
             'assign_poster_as' => __('movies.assign_poster_as'),
             'no_assigned' => __('movies.no_assigned'),
             'photo' => __('table_fields.photo'),
+            'resolution' => __('table_fields.resolution'),
+            'id_image' => __('table_fields.id_image'),
             'link' => __('table_fields.link'),
             'assign_status' => __('table_fields.assign_status'),
+            'step' => __('export.step'),
+            'published' => __('export.published'),
+            'assign_are_categories' => __('export.assign_are_categories'),
+            'assign_are_poster' => __('export.assign_are_poster'),
+            'resize_all_images' => __('export.resize_all_images'),
+            'movie_add_to_export' => __('export.movie_add_to_export'),
+            'movie_move_to_site' => __('export.movie_move_to_site'),
         ];
     }
     public static function localizingPersonShow() : array

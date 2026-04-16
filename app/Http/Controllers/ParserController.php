@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Events\ParserReportEvent;
 use App\Http\Controllers\Parser\CurlConnectorController;
-use App\Http\Controllers\Parser\ParserIdTypeController;
 use App\Http\Controllers\Parser\ParserStartController;
 use App\Http\Controllers\Parser\ParserUpdateCelebController;
 use App\Http\Controllers\Parser\ParserUpdateMovieController;
@@ -38,7 +37,6 @@ class ParserController extends Controller
     protected $update_en_info_table;
     protected $update_images_table;
     protected $update_posters_table;
-    protected $select_id_table;
 
     protected $occupations = [
         0 => 'actor',
@@ -107,8 +105,7 @@ class ParserController extends Controller
             'type' => 'video',
         ],
     ];
-    protected $withStory = true;
-    protected $domen = 'https://imdb.com';
+    protected $domen = 'https://www.imdb.com';
     protected $signByField;
     protected $typeFilm;
     protected $imgUrlFragment;
@@ -120,14 +117,13 @@ class ParserController extends Controller
     protected $dateFrom;
     protected $dateTo;
     protected $flagType;//movies=true;celebs=false;
-    protected $flagNewUpdate;//new=true; and update=false;
+    protected $flagNewUpdate;//new=true;  update=false;
+    protected $isUpdate;//update=false;  period=true;
     protected $titleType;
-    protected $refine;
 
     protected $sort;
     protected $typeImages;
     protected $typePosters;
-
     protected $idMovies = [];
     protected $idCeleb = [];
     protected $linksInfo = [];
@@ -187,14 +183,24 @@ class ParserController extends Controller
             $this->getImages( $linksArray, $imagesTable );
         }
     }
-    protected function linksGetter( $links, $methodName,  $pattern = null ){
-        if (!empty($links)){
+
+    protected function linksGetter($links, $methodName, $mode = 'images', $pattern = null, )
+    {
+        if (!empty($links)) {
             $infoChunks = array_chunk($links, $this->chunkSize);
-            $connector = new CurlConnectorController();
-            foreach ($infoChunks as $chunk) {
-                $pages = $connector->getCurlMulty($chunk);
-                if (is_array($pages)){
-                    $this->{$methodName}( $pages, $pattern );
+            $connector = new \App\Http\Controllers\Parser\CurlConnectorController();
+
+            foreach ($infoChunks as $chunkIndex => $chunk) {
+                if ($mode === 'info' || 'filmography') {
+                    $pages = $connector->getCurlParserInfo($chunk);
+                } elseif ($mode === 'images') {
+                    $pages = $connector->getCurlImages($chunk);
+                }
+
+                if (is_array($pages) && !empty($pages)) {
+                    $this->{$methodName}($pages, $pattern);
+                } else {
+                    Log::warning("⚠️ Empty response for chunk in $methodName");
                 }
             }
         }
@@ -221,9 +227,7 @@ class ParserController extends Controller
                         self::$reportProgress['report']['statusBar']['percent'] = 5;
                     }
                     event(new ParserReportEvent(self::$reportProgress));
-
-                    array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc");
-                    array_push($this->urls,"{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},desc");
+                    $this->urls[] = "{$this->domen}/search/title/?title_type={$this->titleType}&release_date={$day->format('Y-m-d')},{$day->format('Y-m-d')}&sort={$this->sort},asc";
 
                     $this->getIdByType($arg);
 
@@ -231,7 +235,6 @@ class ParserController extends Controller
                     event(new ParserReportEvent(self::$reportProgress));
                     Log::info(">>> PARSE PERIOD : {$day->format("Y-m-d")} IDS FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
                 }
-                Log::info(">>>  PARSE INFO FINISH FOR ->>>", [ $this->allowedTableNames[$type]['type'] ]);
             }
         }
     }
@@ -250,7 +253,6 @@ class ParserController extends Controller
             event(new ParserReportEvent(self::$reportProgress));
 
             array_push($this->urls,"{$this->domen}/search/name/{$group['value']}&sort={$this->sort},asc");
-            array_push($this->urls,"{$this->domen}/search/name/{$group['value']}&sort={$this->sort},desc");
             $this->getIdByType();
             Log::info('>>> PARSE CELEBS ID BY:', [$group['value']]);
         }

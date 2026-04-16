@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CelebsInfoRu;
 use App\Models\MoviesInfoRu;
+use App\Models\Tag;
 use \Dejurin\GoogleTranslateForFree;
 use Illuminate\Support\Facades\Log;
 
@@ -53,34 +54,80 @@ class TranslatorController
             $this->localizingTable::create($data);
         }
     }
-    public function translateTag($inputTag){
-        return $this->startTranslate($inputTag);
+    public function translateSingle($input){
+        return $this->startTranslate($input);
     }
-    public function translateMovie($dataInfo, $movieId, $columnKey, $withStory) {
+    public function translateMovie($dataInfo, $movieId, $columnKey) {
         $this->columnId = $movieId;
         $this->columnKey = $columnKey;
         $this->dataMovie['id_movie'] = $dataInfo->id_movie;
         $this->localizingTable = new MoviesInfoRu();
+
         $this->dataMovie['genres'] = null;
-        if (!empty($dataInfo->genres)){
-            $unpackGenres = json_decode($dataInfo->genres);
-            $genres = array_unique($unpackGenres);
-            $genres = json_encode($genres,JSON_UNESCAPED_UNICODE);
-            $resultGenres = $this->startTranslate($genres);
-            $resultGenres = str_replace(['«','»'] ,'"',$resultGenres);
-            $resultGenres = str_replace("\u{200B}" ,'',$resultGenres);
-            if (json_validate($resultGenres)){
-                $this->dataMovie['genres'] = $resultGenres;
+        if (!empty($dataInfo->genres)) {
+            $unpackGenres = json_decode($dataInfo->genres, true);
+            if (is_string($unpackGenres)) {
+                $unpackGenres = json_decode($unpackGenres, true);
+            }
+            if (!is_array($unpackGenres)) {
+                Log::warning('Failed to parse genres array for movie id: ' . ($idFromUrl ?? 'unknown'));
+            } else {
+                $genresClean = array_unique($unpackGenres);
+                $translatedGenresRu = [];
+                foreach ($genresClean as $tagNameEn) {
+                    $tagNameEn = trim($tagNameEn);
+                    if (empty($tagNameEn)) continue;
+                    $tagValue = strtolower(str_ireplace(' ', '_', $tagNameEn));
+                    $tag = Tag::where('value', $tagValue)->first();
+                    $tagRus = null;
+
+                    if (!$tag) {
+                        $tagRus = $this->startTranslate($tagNameEn);
+                        $tagRus = $tagRus ? str_replace(['«','»'], '"', str_replace("\u{200B}", '', $tagRus)) : $tagNameEn;
+                        $tagRus = ucfirst($tagRus);
+                        Tag::create([
+                            'value'       => $tagValue,
+                            'tag_name_en' => $tagNameEn,
+                            'tag_name_ru' => ucfirst($tagRus),
+                        ]);
+                        Log::info("New tag created: {$tagNameEn} -> {$tagRus}");
+
+                    } else {
+                        $tagRus = ucfirst($tag->tag_name_ru);
+                        if (empty($tagRus)) {
+                            $tagRus = $this->startTranslate($tagNameEn);
+                            $tagRus = $tagRus ? str_replace(['«','»'], '"', str_replace("\u{200B}", '', $tagRus)) : $tagNameEn;
+
+                            $tag->update([
+                                'tag_name_ru' => $tagRus
+                            ]);
+                            Log::info("Tag updated with RU translation: {$tagNameEn} -> {$tagRus}");
+                        }
+                    }
+                    $translatedGenresRu[] = $tagRus;
+                }
+                if (!empty($translatedGenresRu)) {
+                    $resultGenres = json_encode($translatedGenresRu, JSON_UNESCAPED_UNICODE);
+                    if (json_validate($resultGenres)) {
+                        $this->dataMovie['genres'] = $resultGenres;
+                    }
+                }
             }
         }
         $this->dataMovie['cast'] = null;
         if (!empty($dataInfo->cast)){
             $castDecode = json_decode($dataInfo->cast, true);
-            foreach ( $castDecode as $id => $item ) {
+            foreach ($castDecode as $id => $item) {
+                if (!isset($item['actor']) || !isset($item['role'])) {
+                    continue;
+                }
                 $resultCast[$id]['role'] = $this->startTranslate($item['role']);
                 $resultCast[$id]['actor'] = $this->startTranslate($item['actor']);
             }
-
+//            foreach ($castDecode as $id => $item) {
+//                $resultCast[$id]['role'] = $this->startTranslate($item['role'] ?? null);
+//                $resultCast[$id]['actor'] = $this->startTranslate($item['actor'] ?? null);
+//            }
             $resultCast = json_encode($resultCast ,JSON_UNESCAPED_UNICODE);
             $this->dataMovie['cast'] = json_validate($resultCast) ? $resultCast : null;
         }
@@ -109,20 +156,15 @@ class TranslatorController
             }
             $this->dataMovie['writers'] = json_validate($resultWriters) ? $resultWriters : $dataInfo->writers;
         }
-        if ($withStory){
-            $this->dataMovie['story_line'] = null;
-            if (!empty($dataInfo->story_line)){
-                $resultStoryLine = $dataInfo->story_line;
-                if (strlen($dataInfo->story_line) >= 4500){
-                    $resultStoryLine = mb_strimwidth($resultStoryLine,0,2500,"...");
-                }
-                $resultStoryLine = $this->startTranslate($resultStoryLine);
-                $this->dataMovie['story_line'] = str_replace("\u{200B}" ,'',$resultStoryLine);
+        $this->dataMovie['story_line'] = null;
+        if (!empty($dataInfo->story_line)){
+            $resultStoryLine = $dataInfo->story_line;
+            if (strlen($dataInfo->story_line) >= 4500){
+                $resultStoryLine = mb_strimwidth($resultStoryLine,0,2500,"...");
             }
-        } else {
-            unset($this->dataMovie['story_line']);
+            $resultStoryLine = $this->startTranslate($resultStoryLine);
+            $this->dataMovie['story_line'] = str_replace("\u{200B}" ,'',$resultStoryLine);
         }
-
         $this->dataMovie['countries'] = null;
         if (!empty($dataInfo->countries)){
             $resultCountries= $this->startTranslate($dataInfo->countries);
@@ -155,7 +197,7 @@ class TranslatorController
                         $contains_cyrillic_title = (bool) preg_match('/[\p{Cyrillic}]/u',$item['title']);
                         $resultFilmography[$keySection][$keyId]['role'] = $contains_cyrillic_role ? $item['role'] : $this->startTranslate($item['role']);
                         $resultFilmography[$keySection][$keyId]['year'] = $contains_year[0]??null;
-                        $resultFilmography[$keySection][$keyId]['title'] = $contains_cyrillic_title ? $item['title'] : $this->startTranslate($item['title']);
+                        $resultFilmography[$keySection][$keyId]['title'] = $contains_cyrillic_title ? ucfirst($item['title']) : ucfirst($this->startTranslate($item['title']));
                     }
                 }
             }

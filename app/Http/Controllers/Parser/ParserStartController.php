@@ -2,7 +2,6 @@
 
 
 namespace App\Http\Controllers\Parser;
-use App\Jobs\ParseMovieUpdateJob;
 use App\Events\ParserReportEvent;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
@@ -10,12 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\DB;
 class ParserStartController
 {
     public function parseInitStore(Request $request)
     {
-        Redis::flushDB();
         $validator = Validator::make($request->all()['data'],[
             'flag' => 'required|boolean',
             'date_from' => 'date_format:"Y-m-d"',
@@ -27,12 +25,12 @@ class ParserStartController
             'type_posters' => 'max:10',
             'switch_new_update' => 'boolean',
         ]);
-
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors()
             ], 422);
         }
+
         if ($data = $validator->getData()){
             $parserStart = new ParserController($data);
 
@@ -53,16 +51,17 @@ class ParserStartController
 
     public function parseMovieUpdate(Request $request)
     {
-        ParseMovieUpdateJob::dispatch($request->all());
-        return response()->json(['status' => 'queued']);
+        (new \App\Http\Controllers\Parser\ParserUpdateMovieController())->update($request);
     }
+
     public function parseCelebUpdate(Request $request)
     {
-        Redis::flushDB();
+        //Redis::flushDB();
         (new ParserUpdateCelebController())->update($request);
     }
     public function parseLocalization()
     {
         return LanguageController::localizingParserInfo();
     }
+
 }

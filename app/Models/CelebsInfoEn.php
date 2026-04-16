@@ -19,6 +19,8 @@ class CelebsInfoEn extends Model
         'filmography',
         'birthdayLocation',
         'dieLocation',
+        'created_at',
+        'updated_at',
     ];
 
     public function images()

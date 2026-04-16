@@ -478,6 +478,7 @@
                     id: movie_ID.value,
                     type: selectType.value,
                     posterType: posterType.value,
+                    isUpdate: false,
                 });
                 celeb_ID.value = 'nm';
             } else {

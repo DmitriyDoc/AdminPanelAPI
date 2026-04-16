@@ -10,6 +10,8 @@ return [
     "franchise"=>"Франшизы",
     "assign_status"=>"Статус",
     "photo"=>"Фото",
+    "resolution"=>"Разрешение",
+    "id_image"=>"ID изображения",
     "poster"=>"Постер",
     "id_person"=>"ID персоны",
     "name"=>"Имя",

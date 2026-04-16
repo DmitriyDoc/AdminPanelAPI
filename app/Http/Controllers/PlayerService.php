@@ -30,7 +30,9 @@ class PlayerService
         $token = env('ALLOHA_TOKEN');
 
         try {
-            $response = Http::get($baseLink, [
+            $response = Http::withOptions([
+                'verify' => false, // Отключает проверку SSL-сертификата (оставить временно пока api не обновит ssl сертификат)
+            ])->get($baseLink, [
                 'token' => $token,
                 'imdb' => $params['imdb']
             ]);

@@ -1,50 +1,44 @@
 FROM php:8.2-fpm
 
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json /var/www/
-
-# Set working directory
-WORKDIR /var/www
-
-# Install dependencies
-RUN apt-get update && apt-get install -y \
+# 1. Системные зависимости + расширения PHP
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     mariadb-client \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    locales \
-    libzip-dev \
+    vim unzip git curl wget \
+    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     jpegoptim optipng pngquant gifsicle \
-    vim \
-    unzip \
-    git \
-    curl
+    libzip-dev \
+    locales \
+    && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) pdo_mysql zip exif pcntl bcmath gd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# 2. Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install extensions
-RUN docker-php-ext-install pdo_mysql zip exif pcntl bcmath
-RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/
-RUN docker-php-ext-install gd
+# 3. Пользователь www
+RUN getent group www || groupadd -g 1000 www \
+    && id -u www >/dev/null 2>&1 || useradd -u 1000 -ms /bin/bash -g www www
 
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && chmod +x /usr/local/bin/composer \
-    && chown root:root /usr/local/bin/composer \
-    && chmod 755 /usr/local/bin/composer
+WORKDIR /var/www
 
-# Add user for laravel application
-RUN groupadd -g 1000 www
-RUN useradd -u 1000 -ms /bin/bash -g www www
+# 4. Composer install
+COPY composer.lock composer.json ./
+RUN composer install --optimize-autoloader --no-scripts --no-interaction \
+    && chown -R www:www /var/www/vendor
 
-# Copy existing application directory contents
-COPY --chown=www:www . /var/www
+# 5. Копируем проект
+COPY --chown=www:www . .
 
-# Change current user to www
+# 6. Создаём и фиксируем права на storage + bootstrap/cache
+RUN mkdir -p /var/www/storage/framework/{cache,sessions,views} \
+    && mkdir -p /var/www/bootstrap/cache \
+    && chown -R www:www /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 777 /var/www/storage/framework/sessions
+
+# Финал
 USER www
-
-# Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]

@@ -6,12 +6,8 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: digitalocean.com/php
         restart: unless-stopped
         tty: true
-        environment:
-            SERVICE_NAME: app
-            SERVICE_TAGS: dev
         working_dir: /var/www
         volumes:
             - ./:/var/www
@@ -19,18 +15,6 @@ services:
             - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
         networks:
             - shared-media-network
-        extra_hosts:
-            #get update ip: nslookup www.imdb.com or dig www.imdb.com
-            - "m.media-amazon.com:212.188.39.27"
-            - "www.imdb.com:3.174.109.174"
-            - "api.themoviedb.org:13.225.89.239"
-            - "image.tmdb.org:13.225.89.239"
-            - "www.themoviedb.org:13.225.89.239"       # Веб-сайт
-            - "api-v3.themoviedb.org:13.225.89.239"    # API v3
-            - "assets.tmdb.org:13.225.89.239"          # Ассеты
-            - "api.themoviedb.org:13.226.238.73"       # Альтернативный IP 1
-            - "api.themoviedb.org:13.226.238.120"      # Альтернативный IP 2
-            - "api.themoviedb.org:13.226.238.38"       # Альтернативный IP 3
     # Nginx Service (для админки)
     spectrum_webserver:
         container_name: spectrum_webserver
@@ -82,8 +66,9 @@ services:
         image: adminer:4
         environment:
             ADMINER_DEFAULT_DB_DRIVER: mysql
-            ADMINER_DEFAULT_DB_HOST: db:3306
-            ADMINER_DEFAULT_DB_NAME: database_spectrum
+            # Меняем 'db' на реальное имя сервиса 'spectrum_db'
+            ADMINER_DEFAULT_DB_HOST: spectrum_db
+            ADMINER_DEFAULT_DB_NAME: ${DB_DATABASE} # Лучше брать из env, а не хардкодить
         depends_on:
             - spectrum_db
         ports:
@@ -134,26 +119,65 @@ services:
         depends_on:
             - spectrum_redis
             - spectrum_db
-    # QUEUE
-    spectrum_queue_worker:
-        container_name: spectrum_queue_worker
+    #PLAYWRIGHT PARSER
+    spectrum_playwright_parser:
         build:
             context: .
-            dockerfile: Dockerfile
-        working_dir: /var/www
+            dockerfile: Dockerfile.parser
+        container_name: spectrum_playwright_parser
+        restart: unless-stopped
+        shm_size: 2gb
+        cap_add:
+            - SYS_ADMIN
+        user: pwuser
+        ipc: host
         volumes:
-            - ./:/var/www
-            - ./.env:/var/www/.env
+            - ./playwright-parser.js:/app/playwright-parser.js
         networks:
             - shared-media-network
-        command: [ "php", "artisan", "queue:work", "--sleep=3", "--tries=3" ]
+    # BROWSERLESS CHROME
+    spectrum_chromium:
+        container_name: spectrum_chromium
+        image: browserless/chrome:latest
         restart: unless-stopped
+        cap_add:
+            - SYS_ADMIN
+        security_opt:
+            - seccomp:unconfined
+        shm_size: 2g
+        environment:
+            - ENABLE_DEBUGGER=false
+            - MAX_CONCURRENT_SESSIONS=10
+            - PREBOOT_CHROME=true
+            - CONNECTION_TIMEOUT=-1
+        networks:
+            - shared-media-network
+        healthcheck:
+            test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/json/version" ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+    # BRIDGE API
+    spectrum_chromium_bridge:
+        build:
+            context: .
+            dockerfile: Dockerfile.chromium_bridge
+        container_name: spectrum_chromium_bridge
+        restart: unless-stopped
+        ports:
+            - "9224:3002"
+        environment:
+            - BROWSERLESS_WS_URL=ws://spectrum_chromium:3000
+            - MAX_CONCURRENCY=5
+            - REQUEST_TIMEOUT=25000
         depends_on:
-            - spectrum_redis
-            - spectrum_db
+            - spectrum_chromium
+        networks:
+            - shared-media-network
 networks:
     shared-media-network:
         external: true
 volumes:
     dbdata:
         driver: local
+

@@ -33,7 +33,10 @@ return [
         'sync' => [
             'driver' => 'sync',
         ],
-
+        'unique' => [
+            'driver' => 'redis',
+            'expire' => 7200,
+        ],
         'database' => [
             'driver' => 'database',
             'table' => 'jobs',
