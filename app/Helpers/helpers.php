@@ -147,6 +147,49 @@ if (!function_exists('cascaderStructure')) {
             }
         }
     }
+    if (!function_exists('getCategoryNameByTableSegment')) {
+        function getCategoryNameByTableSegment(string $segment, string $locale): ?string
+        {
+            static $segmentsCache = null;
+            if ($segmentsCache === null) {
+                $segmentsCache = [
+                    'FeatureFilm' => [
+                        'en' => 'Feature Film',
+                        'ru' => 'х/ф',
+                    ],
+                    'MiniSeries' => [
+                        'en' => 'Mini Series',
+                        'ru' => 'Мини-сериал',
+                    ],
+                    'ShortFilm' => [
+                        'en' => 'Short Film',
+                        'ru' => 'Короткий',
+                    ],
+                    'TvMovie' => [
+                        'en' => 'Tv Movie',
+                        'ru' => 'ТВ-фильм',
+                    ],
+                    'TvSeries' => [
+                        'en' => 'Tv Series',
+                        'ru' => 'ТВ-Сериал',
+                    ],
+                    'TvShort' => [
+                        'en' => 'Tv Short',
+                        'ru' => 'ТВ-короткий',
+                    ],
+                    'TvSpecial' => [
+                        'en' => 'Tv Special',
+                        'ru' => 'ТВ-специальное',
+                    ],
+                    'Video' => [
+                        'en' => 'Video',
+                        'ru' => 'Видео',
+                    ],
+                ];
+            }
+            return $segmentsCache[$segment][$locale];
+        }
+    }
     if (!function_exists('camelToSnake')) {
         function camelToSnake($input) {
             $words = preg_split('/(?=[A-Z])/', $input, -1, PREG_SPLIT_NO_EMPTY);
