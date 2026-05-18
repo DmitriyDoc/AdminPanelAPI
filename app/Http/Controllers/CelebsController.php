@@ -100,7 +100,7 @@ class CelebsController extends Controller
             6=>'TvSpecial',
             7=>'Video',
         ];
-
+        $curLocale = app()->currentLocale();
         if (!empty($id)) {
             $model = modelByName('CelebsInfo'.ucfirst(Lang::locale()));
             $modelArr = $model->where('id_celeb',$id)->with('info')->first()->toArray();
@@ -140,24 +140,28 @@ class CelebsController extends Controller
                     }
                 }
                 $allMovieIds = array_unique($allMovieIds);
-                $movieStatuses = MovieInfo::whereIn('id_movie', $allMovieIds)
-                    ->pluck('published', 'id_movie')
-                    ->toArray();
+                $moviesInfoCollection = MovieInfo::whereIn('id_movie', $allMovieIds)
+                    ->select('id_movie', 'published', 'type_film')
+                    ->get()
+                    ->keyBy('id_movie');
                 $filmographyArr = [];
                 foreach ($modelArr['filmography'] as $k => &$occupation) {
                     uasort($occupation, function ($a, $b) {
                         return ($a['year'] < $b['year']) ? 1 : -1;
                     });
-
                     foreach ($occupation as $id => $dataArr) {
-                        $status = $movieStatuses[$id] ?? null;
-
+                        $movieInfo = $moviesInfoCollection->get($id);
+                        $statusVal = $movieInfo ? $movieInfo->published : null;
+                        $typeFilmVal = $movieInfo ? getTableSegmentOrTypeId($movieInfo->type_film) : null;
+                        $categoryName = $movieInfo ? getCategoryNameByTableSegment($typeFilmVal,$curLocale) : null;
                         $filmographyArr[$k][] = [
                             'id' => $id,
                             'role' => $dataArr['role'],
                             'year' => $dataArr['year'],
                             'title' => $dataArr['title'],
-                            'status' => statusSelection($status) ?? [],
+                            'type_film' => $typeFilmVal,
+                            'cat_name' => $categoryName,
+                            'status' => statusSelection($statusVal) ?? [],
                         ];
                     }
                 }
