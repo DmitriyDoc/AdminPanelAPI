@@ -148,8 +148,11 @@ if (!function_exists('cascaderStructure')) {
         }
     }
     if (!function_exists('getCategoryNameByTableSegment')) {
-        function getCategoryNameByTableSegment(string $segment, string $locale): ?string
+        function getCategoryNameByTableSegment(string|null $segment, string $locale): ?string
         {
+            if (!$segment){
+                return '';
+            }
             static $segmentsCache = null;
             if ($segmentsCache === null) {
                 $segmentsCache = [
