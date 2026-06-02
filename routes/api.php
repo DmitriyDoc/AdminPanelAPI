@@ -62,6 +62,8 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
             Route::get('/parser/locale', [\App\Http\Controllers\Parser\ParserStartController::class,'parseLocalization']);
             // DASHBOARD QUERY
             Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
+            Route::get('/dashboard/graph-collections', [\App\Http\Controllers\DashboardController::class, 'graphByCollections']);
+            Route::get('/dashboard/graph-years', [\App\Http\Controllers\DashboardController::class, 'graphByYears']);
             // MEDIA QUERY
             Route::post('/resizing',[\App\Http\Controllers\ResizeImagesController::class, 'index']);
             Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
