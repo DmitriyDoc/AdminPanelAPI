@@ -93,6 +93,8 @@ class LanguageController
         return [
             'title' => __('dashboard.title'),
             'last_update' => __('dashboard.last_update'),
+            'published' => __('dashboard.published'),
+            'published_total' => __('dashboard.published_total'),
         ];
     }
     public static function localizingMoviesByTagsList() : array
