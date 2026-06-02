@@ -1,6 +1,6 @@
 <template>
-    <el-col :span="8">
-        <div class="statistic-card">
+    <el-col :span="8" >
+        <el-card shadow="hover" class="statistic-card" >
             <el-statistic :value="countCard.count" >
                 <template #title>
                     <div style="display: inline-flex; align-items: center">
@@ -10,11 +10,17 @@
             </el-statistic>
             <div class="statistic-footer">
                 <div class="footer-item">
-                    <span>{{ locale }}</span>
-                    <span :class="[countCard.lastAddCount  ? 'red' : 'grey']">{{countCard.lastAddCount}}</span>
+                   <div class="font-bold">
+                       <el-text type="warning">{{ locale.last_update }}</el-text>
+                       <span :class="[countCard.lastAddCount  ? 'red' : 'grey']">{{countCard.lastAddCount}}</span>
+                   </div>
+                    <div class="font-bold">
+                        <el-text type="success">{{ locale.published }}</el-text>
+                        <span :class="'red'">{{countCard.published}}</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </el-card>
     </el-col>
 </template>
 
@@ -26,7 +32,7 @@
             default: () => {}
         },
         locale: {
-            type: String,
+            type: Object,
             required: true,
             default: () => {}
         },
