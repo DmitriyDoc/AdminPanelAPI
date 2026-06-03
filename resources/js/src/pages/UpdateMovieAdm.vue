@@ -17,7 +17,7 @@
                     <el-radio value="product" >[product]</el-radio>
                 </el-radio-group>
             </div>
-            <el-button type="danger" style="width: 100%;" @click="submitSync()" :loading='!!disabledBtnSync'>
+            <el-button type="warning" style="width: 100%;" @click="submitSync('full_sync')" :loading='!!disabledBtnSync'>
                 {{singleData.locale.sync_imdb}}
             </el-button>
             <div v-if="Object.keys(percentageSync).length" class="mt-1">
@@ -211,7 +211,8 @@
                             <el-button @click="handleSelectImage()" type="info">{{singleData.locale.clear_selection}}</el-button>
                             <el-button @click="handleRemoveImage()" type="danger">{{singleData.locale.delete_selection}}</el-button>
                             <el-button @click="handleMoveToPosters()" type="primary">{{singleData.locale.move_selection}}</el-button>
-                            <el-button @click="handleSaveOrder()" type="success" >{{'Save Order Images'}}</el-button>
+                            <el-button @click="handleSaveOrder()" type="success" >{{singleData.locale.save_order_images}}</el-button>
+                            <el-button @click="submitSync('images_sync')" type="warning" :loading='!!disabledBtnSync'>{{singleData.locale.images_sync}}</el-button>
                             <template v-if="countImg > 50" >
                                 <el-button type="info" @click="handleImageLoadMore" >{{singleData.locale.next_page}}
                                     <el-icon class="el-icon--right">
@@ -235,6 +236,7 @@
                         <div class="mt-3">
                             <el-button @click="handleSelectPoster()" type="info">{{singleData.locale.clear_selection}}</el-button>
                             <el-button @click="handleRemovePoster()" type="danger">{{singleData.locale.delete_selection}}</el-button>
+                            <el-button @click="submitSync('posters_sync')" type="warning" :loading='!!disabledBtnSync'>{{singleData.locale.posters_sync}}</el-button>
                         </div>
                     </div>
                     <template v-if="postersData.length">
@@ -758,7 +760,7 @@
         })
     }
 
-    const submitSync = () => {
+    const submitSync = (typeSync) => {
         ElMessageBox.confirm(singleData.value.locale.sync_notice + '\n' + `Are you sure?`, 'WARNING', {
             confirmButtonText: 'OK',
             cancelButtonText: 'Cancel',
@@ -769,7 +771,7 @@
                 id: route.params.id,
                 type: singleData.value.slug,
                 posterType: posterType.value,
-                isUpdate: true,
+                typeSync: typeSync,
             });
         }).catch(() => {
             ElMessage({

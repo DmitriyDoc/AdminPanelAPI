@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Parser;
 use App\Events\ParserReportEvent;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
+use App\Jobs\ParseMovieUpdateJob;
+use App\Jobs\ParseCelebUpdateJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 class ParserStartController
 {
     public function parseInitStore(Request $request)
@@ -51,13 +52,59 @@ class ParserStartController
 
     public function parseMovieUpdate(Request $request)
     {
-        (new \App\Http\Controllers\Parser\ParserUpdateMovieController())->update($request);
+        try {
+            $validated = $request->validate([
+                'data.id' => 'required|string|regex:/^tt\d{7,10}$/',
+                'data.type' => 'required|string',
+                'data.posterType' => 'required|string',
+                'data.typeSync' => 'required|string',
+            ]);
+
+            $movieData = $validated['data'];
+            ParseMovieUpdateJob::dispatch(
+                movieData: [
+                    'id' => $movieData['id'],
+                    'posterType' => $movieData['posterType'],
+                    'typeSync' => $movieData['typeSync'],
+                ],
+                type: $movieData['type']
+            )->onQueue('parsing_movie');
+
+            return response()->json(['status' => 'queued']);
+
+        } catch (ValidationException $e) {
+            Log::error("Validation Failed in parseMovieUpdate", [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            throw $e;
+        }
     }
 
     public function parseCelebUpdate(Request $request)
     {
-        //Redis::flushDB();
-        (new ParserUpdateCelebController())->update($request);
+        try {
+            $validated = $request->validate([
+                'data.id' => 'required|string|regex:/^nm\d{7,10}$/',
+                'data.imageType' => 'required|string',
+            ]);
+
+            $celebData = $validated['data'];
+
+            ParseCelebUpdateJob::dispatch([
+                'id' => $celebData['id'],
+                'posterType' => $celebData['imageType'],
+            ])->onQueue('parsing_celeb');
+
+            return response()->json(['status' => 'queued']);
+
+        } catch (ValidationException $e) {
+            Log::error("Validation Failed in parseCelebUpdate", [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            throw $e;
+        }
     }
     public function parseLocalization()
     {

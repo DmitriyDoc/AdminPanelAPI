@@ -39,7 +39,13 @@
                             >
                                 <el-table-column type="selection" width="55" />
                                 <el-table-column type="index" label="№" width="50"/>
-                                <el-table-column prop="year" :label="singleData.locale.year" width="120" />
+                                <el-table-column prop="year" :label="singleData.locale.year" width="60" />
+                                <el-table-column prop="id" :label="singleData.locale.id_movie" width="120" />
+                                <el-table-column label="Тип" width="100" align="center">
+                                    <template v-slot:default="scope" >
+                                        <el-text type="warning">{{scope.row.cat_name}}</el-text>
+                                    </template>
+                                </el-table-column>
                                 <el-table-column prop="status" :label="singleData.locale.status" width="130" >
                                     <template v-slot:default="scope">
                                         <el-text :type="scope.row.status.status_type">
@@ -47,7 +53,19 @@
                                         </el-text>
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="id" :label="singleData.locale.id_movie" width="120" />
+                                <el-table-column prop="status" property="id" label="Синхронизация" width="140" align="center">
+                                    <template v-slot:default="scope" >
+                                        <div v-if="scope.row.status.status_type === 'info'">
+                                            <el-button  type="primary" :icon="Refresh" @click="submitMovieSync(scope.row.id,scope.row.type_film,'full_sync')"  circle />
+                                        </div>
+                                        <div v-else-if="scope.row.status.status_type === 'success'">
+                                            <el-text type="success"> <el-icon><Select /></el-icon></el-text>
+                                        </div>
+                                        <div v-else >
+                                            <el-icon><Minus style="color: red;"/></el-icon>
+                                        </div>
+                                    </template>
+                                </el-table-column>
                                 <el-table-column prop="title" property="id" :label="singleData.locale.title" width="400">
                                     <template v-slot:default="scope">
                                         <RouterLink :to="{ name: 'showMovie', params: { id: scope.row.id }}">
@@ -138,11 +156,12 @@
     import { storeToRefs } from 'pinia';
     import { RouterLink } from 'vue-router'
     import { usePersonsStore } from "../store/personsStore";
+    import { useMoviesStore } from "../store/moviesStore";
     import { useMediaStore } from "../store/mediaStore";
     import { useProgressBarStore } from "../store/progressBarStore";
     import { useLanguageStore } from "../store/languageStore";
-    import type { TabsPaneContext } from 'element-plus';
-    import { ArrowRight } from '@element-plus/icons-vue'
+    import {ElButton, TabsPaneContext} from 'element-plus';
+    import { ArrowRight, Refresh, Select, Minus } from '@element-plus/icons-vue'
     import { ref, watch, reactive, onMounted } from "vue";
     import { ElMessage, ElMessageBox, ElTable } from "element-plus";
 
@@ -150,6 +169,7 @@
     const personsStore = usePersonsStore();
     const progressBarStore = useProgressBarStore();
     const languageStore = useLanguageStore();
+    const moviesStore = useMoviesStore();
 
     const { singleData, disabledBtnSync, route, error, } = storeToRefs(personsStore);
     const { statusBar, percentageSync } = storeToRefs(progressBarStore);
@@ -274,7 +294,25 @@
             })
         })
     }
-
+    const submitMovieSync = (movieId,cat,typeSync) => {
+        ElMessageBox.confirm(`Refresh movie by ID:` + movieId + '\n' + `Are you sure?`, 'WARNING', {
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+        }).then(() => {
+            moviesStore.syncItem({
+                id: movieId,
+                type: cat,
+                posterType: 'poster',
+                typeSync: typeSync,
+            });
+        }).catch(() => {
+            ElMessage({
+                type: 'info',
+                message: 'Sync canceled',
+            })
+        })
+    }
 </script>
 
 <style lang="scss" scoped>

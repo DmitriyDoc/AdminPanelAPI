@@ -16,7 +16,6 @@ class ParserUpdateMovieController extends ParserController
 
     public function parseMovies(array $params, string $id): void
     {
-        $this->isUpdate = false;
         $this->signByField = 'id_movie';
         $this->typeFilm = snakeToCamel($params['segment'],true);
         $this->imgUrlFragment = '/title/';
@@ -33,6 +32,7 @@ class ParserUpdateMovieController extends ParserController
         $this->parserStart([
             'typeImages' => $params['typeImages'] ?? 'still_frame',
             'typePosters' => $params['typePosters'] ?? 'poster',
+            'typeSync' => 'full_sync',
         ]);
 
     }
@@ -40,7 +40,6 @@ class ParserUpdateMovieController extends ParserController
     public function update(Request $request)
     {
         if ($data = $request->all()){
-            $this->isUpdate = $data['data']['isUpdate'];
             $segment = camelToSnake($data['data']['type']);
             $this->signByField = 'id_movie';
             $this->typeFilm = $data['data']['type'];
@@ -60,7 +59,8 @@ class ParserUpdateMovieController extends ParserController
                 $this->parserStart([
                     'typeImages'=>'still_frame',
                     'typePosters'=>$data['data']['posterType'],
-                    ]);
+                    'typeSync'=>$data['data']['typeSync'],
+                ]);
             }
         }
     }
@@ -76,32 +76,46 @@ class ParserUpdateMovieController extends ParserController
             Log::info(">>> LOCALIZING MOVIE ID FINISH",[$movieId]);
         }
     }
+
     public function parserStart($params) : void
     {
-        event(new CurrentPercentageEvent(['percent'=>10,'action'=>__('parser.general_data_parser'),'color'=>'']));
         foreach ($this->idMovies as $id) {
             array_push($this->linksInfo, $this->domen . $this->imgUrlFragment . $id.'/');
             array_push($this->linksIdsImages, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes='.$params['typeImages']);
             array_push($this->linksIdsPosters, $this->domen . $this->imgUrlFragment . $id . '/mediaindex?ref_=ttmi_mi&contentTypes='.$params['typePosters']);
         }
-        $this->linksGetter($this->linksInfo, 'getMoviesInfo', 'info',null);
 
-        event(new CurrentPercentageEvent(['percent'=>30,'action'=>__('parser.images_id_parser'),'color'=>'']));
-        $this->linksGetter($this->linksIdsImages, 'getIdImages', 'images',self::ID_PATTERN);
-
-        event(new CurrentPercentageEvent(['percent'=>40,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
-        $this->createIdArrayAndGetImages($this->update_images_table, $this->linksImages, $this->idMovies);
-
-        event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.posters_id_parser'),'color'=>'']));
-        $this->linksGetter($this->linksIdsPosters, 'getIdImages',  'images',self::ID_PATTERN);
-
-        event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.posters_by_id_parser'),'color'=>'']));
-        $this->createIdArrayAndGetImages($this->update_posters_table, $this->linksPosters, $this->idMovies );
-
-        event(new CurrentPercentageEvent(['percent'=>90,'action'=>__('parser.localization_parser'),'color'=>'']));
-        foreach ($this->idMovies as $id) {
-            $this->localizing($id);
+        switch ($params['typeSync']) {
+            case 'full_sync':
+                event(new CurrentPercentageEvent(['percent'=>10,'action'=>__('parser.general_data_parser'),'color'=>'']));
+                $this->linksGetter($this->linksInfo, 'getMoviesInfo', 'info', null);
+                event(new CurrentPercentageEvent(['percent'=>30,'action'=>__('parser.images_id_parser'),'color'=>'']));
+                $this->linksGetter($this->linksIdsImages, 'getIdImages', 'images', self::ID_PATTERN);
+                event(new CurrentPercentageEvent(['percent'=>40,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
+                $this->createIdArrayAndGetImages($this->update_images_table, $this->linksImages, $this->idMovies);
+                event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.posters_id_parser'),'color'=>'']));
+                $this->linksGetter($this->linksIdsPosters, 'getIdImages', 'images', self::ID_PATTERN);
+                event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.posters_by_id_parser'),'color'=>'']));
+                $this->createIdArrayAndGetImages($this->update_posters_table, $this->linksPosters, $this->idMovies);
+                event(new CurrentPercentageEvent(['percent'=>90,'action'=>__('parser.localization_parser'),'color'=>'']));
+                foreach ($this->idMovies as $id) {
+                    $this->localizing($id);
+                }
+                break;
+            case 'images_sync':
+                event(new CurrentPercentageEvent(['percent'=>30,'action'=>__('parser.images_id_parser'),'color'=>'']));
+                $this->linksGetter($this->linksIdsImages, 'getIdImages', 'images', self::ID_PATTERN);
+                event(new CurrentPercentageEvent(['percent'=>40,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
+                $this->createIdArrayAndGetImages($this->update_images_table, $this->linksImages, $this->idMovies);
+                break;
+            case 'posters_sync':
+                event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.posters_id_parser'),'color'=>'']));
+                $this->linksGetter($this->linksIdsPosters, 'getIdImages', 'images', self::ID_PATTERN);
+                event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.posters_by_id_parser'),'color'=>'']));
+                $this->createIdArrayAndGetImages($this->update_posters_table, $this->linksPosters, $this->idMovies);
+                break;
         }
+
         $this->idMovies = [];
         event(new CurrentPercentageEvent(['percent'=>100,'action'=>__('parser.sync_completed_parser'),'color'=>'success']));
     }
