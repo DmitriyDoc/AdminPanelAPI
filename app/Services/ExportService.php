@@ -211,147 +211,192 @@ class ExportService
     }
     public function exportMovies(bool $switchAll): array
     {
-        // Настройки
-        $maxTotalMovies = 30;
+        $maxTotalMovies = 20;
         $chunkSize = 10;
+        $maxRetries = 3;
 
-        return DB::transaction(function () use ($switchAll, $maxTotalMovies, $chunkSize) {
-            try {
-                //$statusMovie = $switchAll ? 2 : 1;
-                $statusMovie = 1;
-                $movies = MovieInfo::with(['localazingRu', 'localazingEn'])
-                    ->where('published', $statusMovie)
-                    ->limit($maxTotalMovies)
-                    ->get();
+        $statusMovie = 1;
 
-                if ($movies->isEmpty()) {
-                    return [
-                        'success' => false,
-                        'message' => 'No movies found to export',
-                        'type' => 'warning',
-                        'status' => 200,
-                    ];
-                }
+        // 🔍 ВАЖНО: Сначала считаем ОБЩЕЕ количество фильмов для экспорта
+        $totalPendingCount = MovieInfo::where('published', $statusMovie)->count();
 
-                $allChunks = $movies->chunk($chunkSize);
-                $processedMovieIds = [];
-                $lastResponse = null;
-                $success = true;
+        if ($totalPendingCount === 0) {
+            return ['success' => false, 'message' => 'No movies found', 'type' => 'warning', 'status' => 200];
+        }
 
-                foreach ($allChunks as $chunk) {
-                    $moviesData = $chunk->map(fn($movie) => $this->mapMovieToKinospectrFormat($movie))->toArray();
+        // Затем берём лимитированную выборку для текущей итерации
+        $movies = MovieInfo::with(['localazingRu', 'localazingEn'])
+            ->where('published', $statusMovie)
+            ->limit($maxTotalMovies)
+            ->get();
 
+        $processedIds = [];
+        $allChunks = $movies->chunk($chunkSize);
+
+        // Отправляем чанки ВНЕ транзакции
+        foreach ($allChunks as $index => $chunk) {
+            $moviesData = $chunk->map(fn($m) => $this->mapMovieToKinospectrFormat($m))->toArray();
+
+            $attempt = 0;
+            $success = false;
+
+            while ($attempt < $maxRetries && !$success) {
+                try {
                     $response = Http::withToken(config('services.kinospectr.api_token'))
+                        ->timeout(120)
+                        ->retry(2, 1000)
                         ->post(config('services.kinospectr.api_url') . '/api/movies/import', [
                             'movies' => $moviesData,
                             'switchAll' => $switchAll,
+                            'chunk_index' => $index,
                         ]);
 
                     if ($response->successful()) {
-                        $movieIds = $chunk->pluck('id')->toArray();
-                        $processedMovieIds = array_merge($processedMovieIds, $movieIds);
-                        $lastResponse = $response->json();
+                        $success = true;
+                        $processedIds = array_merge($processedIds, $chunk->pluck('id')->toArray());
+                        Log::info("Chunk {$index} sent successfully");
                     } else {
-                        Log::error('Failed to export movies chunk to Kinospectr', [
-                            'status' => $response->status(),
-                            'response' => $response->body(),
-                            'movie_count' => count($moviesData),
-                        ]);
-
-                        $success = false;
-                        $lastResponse = [
-                            'success' => false,
-                            'type' => 'error',
-                            'message' => 'Failed to export movies chunk: ' . $response->body(),
-                            'status' => $response->status(),
-                        ];
-                        break; // остановить экспорт при ошибке
+                        $attempt++;
+                        sleep(pow(2, $attempt));
                     }
+                } catch (\Exception $e) {
+                    $attempt++;
+                    sleep(pow(2, $attempt));
                 }
-
-                if (!empty($processedMovieIds)) {
-                    MovieInfo::whereIn('id', $processedMovieIds)->update(['published' => 2]);
-                }
-
-                if ($success) {
-                    return [
-                        'success' => true,
-                        'body' => $lastResponse,
-                        'message' => count($processedMovieIds) . ' movies sent successfully and marked as exported',
-                        'type' => 'success',
-                        'status' => 200,
-                    ];
-                }
-
-                return $lastResponse;
-
-            } catch (\Exception $e) {
-                Log::error('Exception during movie export to Kinospectr', [
-                    'error' => $e->getMessage(),
-                ]);
-
-                return [
-                    'success' => false,
-                    'message' => 'An error occurred: ' . $e->getMessage(),
-                    'type' => 'error',
-                    'status' => 500,
-                ];
             }
-        });
+
+            if (!$success) {
+                Log::error("Chunk {$index} failed after {$maxRetries} attempts");
+            }
+        }
+
+        // Обновляем статус ТОЛЬКО для подтверждённо отправленных
+        if (!empty($processedIds)) {
+            DB::transaction(function () use ($processedIds) {
+                MovieInfo::whereIn('id', $processedIds)->update(['published' => 2]);
+            });
+        }
+
+        // 📊 Формируем ответ с правильными цифрами
+        $remainingCount = $totalPendingCount - count($processedIds);
+
+        return [
+            'success' => count($processedIds) > 0,
+            'sent_count' => count($processedIds),           // Сколько отправили в этом запуске
+            'total_pending' => $totalPendingCount,          // Сколько всего было в очереди
+            'remaining' => max(0, $remainingCount),         // Сколько осталось
+            'message' => sprintf(
+                'Export %d/%d movies (%d remaining)',
+                count($processedIds),
+                $totalPendingCount,
+                max(0, $remainingCount)
+            ),
+            'type' => $remainingCount <= 0 ? 'success' : 'partial',
+            'status' => 200
+        ];
     }
     public function exportTaxonomies(bool $switchAll)
     {
+        // 1. Получаем текущий пул фильмов (те же 20 штук, что и в exportMovies)
         $statusMovie = $switchAll ? 2 : 1;
-        $categories = Category::all()->map(function ($category) {
-            return [
-                'id' => $category->id,
-                'index_id' => $category->index_id,
-                'value' => $category->value,
-                'title_en' => $category->title_en,
-                'title_ru' => $category->title_ru,
-            ];
-        })->toArray();
-        $movieCategories = MovieCategory::all()->map(function ($catMovie) {
-            return [
-                'imdb_id' => $catMovie->id_movie,
-                'id_movie' => null,
-                'id_category' => $catMovie->id_category,
-            ];
-        })->toArray();
-        $collections = Collection::all()->map(function ($collection) {
-            return [
-                'id' => $collection->id,
-                'category_id' => $collection->category_id,
-                'value' => $collection->value,
-                'label_en' => $collection->label_en,
-                'label_ru' => $collection->label_ru,
-                'created_at' => $collection->created_at,
-                'updated_at' => $collection->updated_at,
-            ];
-        })->toArray();
-        $franchises = LocalizingFranchise::all()->map(function ($franchise) {
-            return [
-                'id' => $franchise->id,
-                'value' => $franchise->value,
-                'label_en' => $franchise->label_en,
-                'label_ru' => $franchise->label_ru,
-                'created_at' => $franchise->created_at,
-                'updated_at' => $franchise->updated_at,
-            ];
-        })->toArray();
 
-        $collectionsCategoriesPivots = CollectionsCategoriesPivot::whereIn('id_movie', function ($query) use ($statusMovie) {
-            $query->select('id_movie')
-                ->from('movies_info')
-                ->where('published', $statusMovie);
-        })->get()->map(function ($pivot) {
+        // Берем фильмы, чтобы узнать, какие таксономии они используют
+        $movies = MovieInfo::where('published', $statusMovie)
+            ->limit(20)
+            ->get();
+
+        if ($movies->isEmpty()) {
+            return ['success' => false, 'message' => 'No movies to process', 'type' => 'warning'];
+        }
+
+        $movieImdbIds = $movies->pluck('id_movie')->unique()->toArray(); // imdb_id фильмов
+
+        if (empty($movieImdbIds)) {
+            return ['success' => false, 'message' => 'No IMDB IDs found', 'type' => 'warning'];
+        }
+
+        // 2. Собираем связанные ID таксономий
+        // Категории фильмов
+        $relatedCategoryIds = MovieCategory::whereIn('id_movie', $movieImdbIds)
+            ->pluck('id_category')
+            ->unique()
+            ->toArray();
+
+        // Коллекции и Франшизы (через пивот)
+        $pivots = CollectionsCategoriesPivot::whereIn('id_movie', $movieImdbIds)->get();
+
+        $relatedCollectionIds = $pivots->pluck('collection_id')->unique()->toArray();
+        $relatedFranchiseIds = $pivots->pluck('franchise_id')->filter()->unique()->toArray();
+
+        // 3. Загружаем ТОЛЬКО нужные данные
+
+        // Категории
+        $categories = [];
+        if (!empty($relatedCategoryIds)) {
+            $categories = Category::whereIn('id', $relatedCategoryIds)->get()->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'index_id' => $category->index_id,
+                    'value' => $category->value,
+                    'title_en' => $category->title_en,
+                    'title_ru' => $category->title_ru,
+                ];
+            })->toArray();
+        }
+
+        // Связи Фильм-Категория (только для этих фильмов)
+        $movieCategories = [];
+        if (!empty($relatedCategoryIds)) {
+            $movieCategories = MovieCategory::whereIn('id_movie', $movieImdbIds)
+                ->whereIn('id_category', $relatedCategoryIds)
+                ->get()->map(function ($catMovie) {
+                    return [
+                        'imdb_id' => $catMovie->id_movie,
+                        'id_movie' => null, // Принимающая сторона сама resolvet это
+                        'id_category' => $catMovie->id_category,
+                    ];
+                })->toArray();
+        }
+
+        // Коллекции
+        $collections = [];
+        if (!empty($relatedCollectionIds)) {
+            $collections = Collection::whereIn('id', $relatedCollectionIds)->get()->map(function ($collection) {
+                return [
+                    'id' => $collection->id,
+                    'category_id' => $collection->category_id,
+                    'value' => $collection->value,
+                    'label_en' => $collection->label_en,
+                    'label_ru' => $collection->label_ru,
+                    'created_at' => $collection->created_at,
+                    'updated_at' => $collection->updated_at,
+                ];
+            })->toArray();
+        }
+
+        // Франшизы
+        $franchises = [];
+        if (!empty($relatedFranchiseIds)) {
+            $franchises = LocalizingFranchise::whereIn('id', $relatedFranchiseIds)->get()->map(function ($franchise) {
+                return [
+                    'id' => $franchise->id,
+                    'value' => $franchise->value,
+                    'label_en' => $franchise->label_en,
+                    'label_ru' => $franchise->label_ru,
+                    'created_at' => $franchise->created_at,
+                    'updated_at' => $franchise->updated_at,
+                ];
+            })->toArray();
+        }
+
+        // Пивоты (только для этих фильмов)
+        $collectionsCategoriesPivots = $pivots->map(function ($pivot) {
             return [
                 'id_movie' => $pivot->id_movie,
                 'collection_id' => $pivot->collection_id,
                 'franchise_id' => $pivot->franchise_id,
             ];
         })->toArray();
-
 
         $taxonomiesData = [
             'categories' => $categories,
@@ -360,28 +405,43 @@ class ExportService
             'franchises' => $franchises,
             'collections_categories_pivots' => $collectionsCategoriesPivots,
         ];
-        $response = Http::withToken(config('services.kinospectr.api_token'))
-            ->post(config('services.kinospectr.api_url') . '/api/taxonomies/import', [
-                'taxonomies' => $taxonomiesData,
-                'switchAll' => $switchAll,
-            ]);
 
-        if ($response->successful()) {
-            return [
-                'body' => $response->json(),
-                'message' => 'Taxonomies sent successfully',
-                'status' => $response->status(),
-            ];
+        // Проверка на пустоту перед отправкой
+        $hasData = !empty($categories) || !empty($movieCategories) || !empty($collections) || !empty($franchises) || !empty($collectionsCategoriesPivots);
+
+        if (!$hasData && !$switchAll) {
+            return ['success' => true, 'message' => 'No relevant taxonomies for this batch', 'type' => 'info'];
         }
 
-        Log::error('Failed to export taxonomies to Kinospectr', [
-            'status' => $response->status(),
-            'response' => $response->body(),
-        ]);
+        try {
+            $response = Http::withToken(config('services.kinospectr.api_token'))
+                ->timeout(60) // Уменьшаем таймаут, так как данных мало
+                ->connectTimeout(10)
+                ->post(config('services.kinospectr.api_url') . '/api/taxonomies/import', [
+                    'taxonomies' => $taxonomiesData,
+                    'switchAll' => $switchAll,
+                ]);
 
-        throw new \Exception('Failed to export taxonomies to Kinospectr');
+            if ($response->successful()) {
+                return [
+                    'body' => $response->json(),
+                    'message' => 'Taxonomies sent successfully',
+                    'status' => $response->status(),
+                ];
+            }
+
+            Log::error('Failed to export taxonomies to Kinospectr', [
+                'status' => $response->status(),
+                'response' => $response->body(),
+            ]);
+
+            throw new \Exception('Failed to export taxonomies: ' . $response->status());
+
+        } catch (\Exception $e) {
+            Log::error('Exception during taxonomy export', ['error' => $e->getMessage()]);
+            throw $e;
+        }
     }
-
     public function exportTags($switchAll)
     {
         $statusMovie = $switchAll ? 2 : 1;
