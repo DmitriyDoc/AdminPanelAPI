@@ -25,7 +25,7 @@
                             </template>
                         </RouterView>
                     </div>
-                    <el-footer class="container mt-3">&copy;2025 Spectrum Admin Panel</el-footer>
+                    <el-footer class="container mt-3"> &copy;{{ startYear }}-{{ currentYear }} Spectrum Admin Panel</el-footer>
                 </main>
             </el-container>
 
@@ -34,13 +34,15 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue';
+    import { ref,computed } from 'vue';
     import { Menu as IconMenu, Message, Setting } from '@element-plus/icons-vue'
     import HeaderAdm from "../components/HeaderAdm.vue";
     import AsideAdm from "../components/AsideAdm.vue";
     import HeaderUser from "../components/HeaderUser.vue";
     import PageLoader from './PageLoader.vue';
 
+    const startYear = 2024;
+    const currentYear = computed(() => new Date().getFullYear());
     const asyncLoading = ref(false);
 </script>
 
