@@ -15,7 +15,17 @@ services:
             - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
         networks:
             - shared-media-network
-    # Nginx Service (для админки)
+        extra_hosts:
+            - "xray-host:172.18.0.1"
+            - "spectrum.local:host-gateway"
+            - "media-api.local:host-gateway"
+            - "kinospectr.local:host-gateway"
+        environment:
+            - HTTP_PROXY=http://xray-host:10809
+            - HTTPS_PROXY=http://xray-host:10809
+            - NO_PROXY=localhost,127.0.0.1,spectrum.local,media-api.local,kinospectr.local,spectrum_db,spectrum_redis
+
+    # Nginx Service
     spectrum_webserver:
         container_name: spectrum_webserver
         image: nginx:alpine
@@ -28,6 +38,7 @@ services:
             - ./nginx/conf.d/:/etc/nginx/conf.d/
         networks:
             - shared-media-network
+
     # MySQL Service
     spectrum_db:
         container_name: spectrum_db
@@ -48,6 +59,7 @@ services:
             - ./mysql/my.cnf:/etc/mysql/my.cnf
         networks:
             - shared-media-network
+
     # Redis Service
     spectrum_redis:
         container_name: spectrum_redis
@@ -59,6 +71,7 @@ services:
         command: ["redis-server", "--bind", "spectrum_redis", "--port", "6379","--stop-writes-on-bgsave-error", "no"]
         networks:
             - shared-media-network
+
     # Adminer client
     spectrum_adminer:
         container_name: spectrum_adminer
@@ -66,15 +79,15 @@ services:
         image: adminer:4
         environment:
             ADMINER_DEFAULT_DB_DRIVER: mysql
-            # Меняем 'db' на реальное имя сервиса 'spectrum_db'
             ADMINER_DEFAULT_DB_HOST: spectrum_db
-            ADMINER_DEFAULT_DB_NAME: ${DB_DATABASE} # Лучше брать из env, а не хардкодить
+            ADMINER_DEFAULT_DB_NAME: ${DB_DATABASE}
         depends_on:
             - spectrum_db
         ports:
             - "${ADMINER_PORT:-8080}:8080"
         networks:
             - shared-media-network
+
     # Composer
     spectrum_composer:
         container_name: spectrum_composer
@@ -87,6 +100,7 @@ services:
             - spectrum_php
         networks:
             - shared-media-network
+
     # NPM
     spectrum_npm:
         container_name: spectrum_npm
@@ -102,6 +116,7 @@ services:
         command: ["npm", "run", "dev", "--", "--host"]
         networks:
             - shared-media-network
+
     # SOCKET
     spectrum_socket:
         container_name: spectrum_socket
@@ -119,7 +134,8 @@ services:
         depends_on:
             - spectrum_redis
             - spectrum_db
-    #PLAYWRIGHT PARSER
+
+    # PLAYWRIGHT PARSER
     spectrum_playwright_parser:
         build:
             context: .
@@ -135,6 +151,16 @@ services:
             - ./playwright-parser.js:/app/playwright-parser.js
         networks:
             - shared-media-network
+        extra_hosts:
+            - "xray-host:172.18.0.1"
+            - "spectrum.local:host-gateway"
+            - "media-api.local:host-gateway"
+            - "kinospectr.local:host-gateway"
+        environment:
+            - HTTP_PROXY=http://xray-host:10809
+            - HTTPS_PROXY=http://xray-host:10809
+            - NO_PROXY=localhost,127.0.0.1,spectrum.local,media-api.local,kinospectr.local,spectrum_db,spectrum_redis
+
     # BROWSERLESS CHROME
     spectrum_chromium:
         container_name: spectrum_chromium
@@ -152,11 +178,15 @@ services:
             - CONNECTION_TIMEOUT=-1
         networks:
             - shared-media-network
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+            - "spectrum.local:host-gateway"
         healthcheck:
             test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/json/version" ]
             interval: 30s
             timeout: 10s
             retries: 3
+
     # BRIDGE API
     spectrum_chromium_bridge:
         build:
@@ -174,10 +204,39 @@ services:
             - spectrum_chromium
         networks:
             - shared-media-network
+
+    # Queue Worker Service
+    spectrum_worker:
+        container_name: spectrum_worker
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        tty: true
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - ./.env:/var/www/.env
+        command: [ "php", "artisan", "queue:work", "database", "--queue=parsing_movie,parsing_celeb", "--sleep=10", "--tries=2", "--timeout=600", "--max-jobs=1", "--rest=10" ]
+        networks:
+            - shared-media-network
+        depends_on:
+            - spectrum_db
+            - spectrum_redis
+        extra_hosts:
+            - "xray-host:172.18.0.1"
+            - "spectrum.local:host-gateway"
+            - "media-api.local:host-gateway"
+            - "kinospectr.local:host-gateway"
+        environment:
+            - HTTP_PROXY=http://xray-host:10809
+            - HTTPS_PROXY=http://xray-host:10809
+            - NO_PROXY=localhost,127.0.0.1,spectrum.local,media-api.local,kinospectr.local,spectrum_db,spectrum_redis
+
 networks:
     shared-media-network:
         external: true
+
 volumes:
     dbdata:
         driver: local
-
