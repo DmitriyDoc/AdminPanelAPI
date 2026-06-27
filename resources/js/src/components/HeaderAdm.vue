@@ -11,8 +11,9 @@
         <el-menu-item index="1"><router-link to="/dashboard">{{$t('dashboard')}}</router-link></el-menu-item>
         <el-menu-item index="2"><router-link to="/parser">{{$t('parser')}}</router-link></el-menu-item>
         <el-menu-item index="3"><router-link to="/movies">{{$t('movies')}}</router-link></el-menu-item>
-        <el-menu-item index="4"><router-link to="/persons">{{$t('persons')}}</router-link></el-menu-item>
-        <el-menu-item index="5"><router-link to="/export"> {{$t('export')}}</router-link></el-menu-item>
+        <el-menu-item index="4"><router-link to="/charts">{{$t('charts')}}</router-link></el-menu-item>
+        <el-menu-item index="5"><router-link to="/persons">{{$t('persons')}}</router-link></el-menu-item>
+        <el-menu-item index="6"><router-link to="/export"> {{$t('export')}}</router-link></el-menu-item>
 
         <LangSwitchAdm />
     </el-menu>

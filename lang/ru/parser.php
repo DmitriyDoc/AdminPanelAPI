@@ -45,4 +45,61 @@ return [
     'posters_by_id_parser' => "Сбор постеров по ID...",
     'localization_parser' => "Локализация...",
     'sync_completed_parser' => "Синхронизация завершена.",
+    // Чарты
+    'charts_start_parsing' => 'Начинаем парсинг :total чартов',
+    'chart_processing' => 'Обрабатываем чарт :id (:current из :total)',
+    'chart_parsed_success' => '✅ Чарт :id успешно обработан',
+    'chart_parsed_failed' => '❌ Ошибка при обработке чарта :id: :error',
+    'charts_parsing_completed' => 'Парсинг чартов завершен. Успешно: :success, Ошибок: :failed, Всего: :total',
+
+    'chart_single_start' => 'Начинаем парсинг чарта :id',
+    'chart_single_processing' => 'Обрабатываем чарт :id...',
+    'chart_single_success' => '✅ Чарт :id успешно обработан',
+    'chart_single_failed' => '❌ Ошибка при обработке чарта :id: :error',
+
+    'chart_new_start' => 'Добавляем и парсим новый чарт :id',
+    'chart_new_processing' => 'Обрабатываем новый чарт :id...',
+    'chart_new_success' => '✅ Новый чарт :id успешно добавлен и обработан',
+    'chart_new_failed' => '❌ Ошибка при добавлении чарта :id: :error',
+    'chart_new_parsed_success' => '🆕 Новый чарт :id добавлен и обработан',
+    'invalid_chart_url' => 'Некорректный URL чарта',
+
+    'charts_update_all_queued' => 'Парсинг всех чартов успешно завершен',
+    'chart_update_queued' => 'Парсинг чарта :id успешно завершен',
+    'chart_add_and_parse_queued' => 'Новый чарт успешно добавлен',
+    'invalid_action' => 'Некорректное действие',
+    // UI для списка чартов
+    'parser_controls' => 'Управление парсером',
+    'sync_all_charts' => 'Обновить все списки',
+    'parse_chart' => 'Парсить список',
+    'sync_chart' => 'Обновить список',
+    'view_movies' => 'Просмотр фильмов',
+    'remove' => 'Удалить',
+    'chart_id_placeholder' => 'например, in0000312',
+
+    // Подтверждения
+    'confirm_sync_all_title' => 'Подтверждение',
+    'confirm_sync_all_message' => 'Будет запущен парсинг ВСЕХ чартов (in0000001 - in0000313). Это займет много времени. Продолжить?',
+    'confirm_sync_one_title' => 'Подтверждение парсинга',
+    'confirm_sync_one_message' => 'Начать парсинг чарта с ID: :id?',
+    'confirm_button' => 'Да, запустить',
+    'cancel_button' => 'Отмена',
+    'parsing_canceled' => 'Парсинг отменен',
+    'delete_canceled' => 'Удаление отменено',
+
+    // Валидация
+    'invalid_chart_id' => 'Неверный формат ID чарта. Используйте формат in0000312 или ls1234567',
+    'enter_chart_id' => 'Пожалуйста, введите ID чарта',
+
+    // Удаление
+    'confirm_delete_title' => 'Предупреждение',
+    'confirm_delete_message' => 'Вы уверены? Список с ID: :id будет удален. Продолжить?',
+
+    // Прогресс-бар чартов
+    'currently_parsing' => 'Текущий парсинг',
+    'parsing_completed' => 'Парсинг завершен',
+    'success' => 'Успешно',
+    'failed' => 'Ошибок',
+    // Синхронизация фильмов
+    'sync_movie' => 'Синхронизировать с IMDB',
 ];

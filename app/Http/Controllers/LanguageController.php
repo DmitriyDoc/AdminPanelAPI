@@ -395,4 +395,95 @@ class LanguageController
             'delete_selection' => __('buttons.delete_selection'),
         ];
     }
+    public static function localizingChartsList(): array
+    {
+        return [
+            'search_by_title_id' => __('table_fields.search_by_title_id'),
+            'search_here'=> __('navigation.search_here'),
+            'reset'=> __('navigation.reset'),
+            'go'=> __('navigation.go'),
+            'spin_by'=> __('navigation.spin_by'),
+            'sort_by'=> __('navigation.sort_by'),
+            'jump_to'=> __('navigation.jump_to'),
+            'movies_sort_fields'=> __('sort.movies_sort_fields'),
+            'created_at'=> __('table_fields.created_at'),
+            'updated_at'=> __('table_fields.updated_at'),
+            'actions'=> __('table_fields.actions'),
+            'chart_id' => __('table_fields.chart_id'),
+            'title_chart' => __('table_fields.title_chart'),
+            'movies_count' => __('table_fields.movies_count'),
+            'last_parsed_at' => __('table_fields.last_parsed_at'),
+            'table_sort_fields' => [
+                ['value' => 'chart_id', 'label' => __('table_fields.chart_id')],
+                ['value' => 'title_en', 'label' => __('table_fields.title_en')],
+                ['value' => 'title_ru', 'label' => __('table_fields.title_ru')],
+                ['value' => 'movies_count', 'label' => __('table_fields.movies_count')],
+                ['value' => 'last_parsed_at', 'label' => __('table_fields.last_parsed_at')],
+                ['value' => 'updated_at', 'label' => __('table_fields.updated_at')],
+            ],
+            // 🔧 Ключи для парсера
+            'parser_controls' => __('parser.parser_controls'),
+            'sync_all_charts' => __('parser.sync_all_charts'),
+            'parse_chart' => __('parser.parse_chart'),
+            'sync_chart' => __('parser.sync_chart'),
+            'view_movies' => __('parser.view_movies'),
+            'remove' => __('parser.remove'),
+            'chart_id_placeholder' => __('parser.chart_id_placeholder'),
+
+            // 🔧 Ключи для подтверждений
+            'confirm_sync_all_title' => __('parser.confirm_sync_all_title'),
+            'confirm_sync_all_message' => __('parser.confirm_sync_all_message'),
+            'confirm_sync_one_title' => __('parser.confirm_sync_one_title'),
+            'confirm_sync_one_message' => __('parser.confirm_sync_one_message'),
+            'confirm_button' => __('parser.confirm_button'),
+            'cancel_button' => __('parser.cancel_button'),
+            'parsing_canceled' => __('parser.parsing_canceled'),
+            'delete_canceled' => __('parser.delete_canceled'),
+
+            // 🔧 Ключи для валидации
+            'invalid_chart_id' => __('parser.invalid_chart_id'),
+            'enter_chart_id' => __('parser.enter_chart_id'),
+
+            // 🔧 Ключи для удаления
+            'confirm_delete_title' => __('parser.confirm_delete_title'),
+            'confirm_delete_message' => __('parser.confirm_delete_message'),
+
+            // 🔧 Ключи для прогресс-бара чартов
+            'currently_parsing' => __('parser.currently_parsing'),
+            'parsing_completed' => __('parser.parsing_completed'),
+            'success' => __('parser.success'),
+            'failed' => __('parser.failed'),
+        ];
+    }
+
+    public static function localizingChartMoviesList(): array
+    {
+        return [
+            'search_by_title_id' => __('table_fields.search_by_title_movie_id'),
+            'search_here' => __('navigation.search_here'),
+            'reset' => __('navigation.reset'),
+            'go' => __('navigation.go'),
+            'spin_by' => __('navigation.spin_by'),
+            'sort_by' => __('navigation.sort_by'),
+            'jump_to' => __('navigation.jump_to'),
+            'created_at' => __('table_fields.created_at'),
+            'poster' => __('table_fields.poster'),
+            'status' => __('table_fields.status'),
+            'id_movie' => __('table_fields.id_movie'),
+            'year' => __('table_fields.year'),
+            'title' => __('table_fields.title'),
+            'updated_at' => __('table_fields.updated_at'),
+            'actions' => __('table_fields.actions'),
+            'back_to_charts' => __('table_fields.back_to_charts'),
+            'chart_title' => __('table_fields.chart_title'),
+            'sync_movie' => __('parser.sync_movie'),
+            'table_sort_fields' => [
+                ['value' => 'position', 'label' => __('table_fields.position')],
+                ['value' => 'published', 'label' => __('table_fields.status')],
+                ['value' => 'year_release', 'label' => __('table_fields.year')],
+                ['value' => 'updated_at', 'label' => __('table_fields.updated_at')],
+                ['value' => 'created_at', 'label' => __('table_fields.created_at')],
+            ],
+        ];
+    }
 }

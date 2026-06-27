@@ -45,4 +45,61 @@ return [
     'posters_by_id_parser' => "Parsing posters by ID...",
     'localization_parser' => "Localization...",
     'sync_completed_parser' => "Synchronization completed.",
+    // Charts
+    'charts_start_parsing' => 'Starting parsing of :total charts',
+    'chart_processing' => 'Processing chart :id (:current of :total)',
+    'chart_parsed_success' => '✅ Chart :id parsed successfully',
+    'chart_parsed_failed' => '❌ Error parsing chart :id: :error',
+    'charts_parsing_completed' => 'Charts parsing completed. Success: :success, Failed: :failed, Total: :total',
+
+    'chart_single_start' => 'Starting to parse chart :id',
+    'chart_single_processing' => 'Processing chart :id...',
+    'chart_single_success' => '✅ Chart :id parsed successfully',
+    'chart_single_failed' => '❌ Error parsing chart :id: :error',
+
+    'chart_new_start' => 'Adding and parsing new chart :id',
+    'chart_new_processing' => 'Processing new chart :id...',
+    'chart_new_success' => '✅ New chart :id added and parsed successfully',
+    'chart_new_failed' => '❌ Error adding chart :id: :error',
+    'chart_new_parsed_success' => '🆕 New chart :id added and parsed',
+    'invalid_chart_url' => 'Invalid chart URL',
+
+    'charts_update_all_queued' => 'All charts parsing success',
+    'chart_update_queued' => 'Chart :id parsing success',
+    'chart_add_and_parse_queued' => 'New chart success added',
+    'invalid_action' => 'Invalid action',
+    // UI for charts list
+    'parser_controls' => 'Parser Controls',
+    'sync_all_charts' => 'Sync All Charts',
+    'parse_chart' => 'Parse Chart',
+    'sync_chart' => 'Sync Chart',
+    'view_movies' => 'View Movies',
+    'remove' => 'Remove',
+    'chart_id_placeholder' => 'e.g. in0000312',
+
+    // Confirmations
+    'confirm_sync_all_title' => 'Confirmation',
+    'confirm_sync_all_message' => 'This will queue parsing for ALL charts (in0000001 - in0000313). It may take a long time. Continue?',
+    'confirm_sync_one_title' => 'Confirm Parsing',
+    'confirm_sync_one_message' => 'Start parsing chart with ID: :id?',
+    'confirm_button' => 'Yes, start parsing',
+    'cancel_button' => 'Cancel',
+    'parsing_canceled' => 'Parsing canceled',
+    'delete_canceled' => 'Delete canceled',
+
+    // Validation
+    'invalid_chart_id' => 'Invalid chart ID format. Use format like in0000312 or ls1234567',
+    'enter_chart_id' => 'Please enter chart ID',
+
+    // Delete
+    'confirm_delete_title' => 'WARNING',
+    'confirm_delete_message' => 'Are you sure? Chart with ID: :id will be deleted. Continue?',
+
+    // Charts progress bar
+    'currently_parsing' => 'Currently parsing',
+    'parsing_completed' => 'Parsing completed',
+    'success' => 'Success',
+    'failed' => 'Failed',
+    // Movie synchronization
+    'sync_movie' => 'Sync with IMDB',
 ];
