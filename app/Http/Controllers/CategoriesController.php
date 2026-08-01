@@ -8,6 +8,7 @@ use App\Models\CollectionsCategoriesPivot;
 use App\Models\CollectionsFranchisesPivot;
 use App\Models\LocalizingFranchise;
 use App\Models\MovieCategory;
+use App\Models\MovieInfo;
 use App\Models\TagsMoviesPivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -148,6 +149,11 @@ class CategoriesController extends Controller
             'short' => 'boolean',
             'adult' => 'boolean',
         ])->safe()->all();
+
+        MovieInfo::where('id_movie', $data['id_movie'])
+            ->where('published', 2)
+            ->update(['published' => 1]);
+
         if (!empty($data['categories'])){
             if (count($data['categories']) >= 2) {
                 foreach ($data['categories'] as $arrLeft){
