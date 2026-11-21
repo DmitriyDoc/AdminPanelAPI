@@ -22,18 +22,9 @@
                             <el-icon><setting /></el-icon><h3>{{$t('categories')}}</h3>
                         </template>
                         <el-menu-item-group>
-                            <template #title><h4>Sections</h4></template>
-                            <RouterLink to="/categories/sections/"><el-menu-item index="3-1">{{$t('list_section')}}</el-menu-item></RouterLink>
-                        </el-menu-item-group>
-                        <el-menu-item-group>
-                            <template #title><h4>{{$t('franchise')}}</h4></template>
-                            <RouterLink to="/categories/franchise/"><el-menu-item index="3-1">{{$t('add_franchise')}}</el-menu-item></RouterLink>
-                            <RouterLink to="/categories/franchise/list"><el-menu-item index="3-1">{{$t('list_franchises')}}</el-menu-item></RouterLink>
-                        </el-menu-item-group>
-                        <el-menu-item-group>
-                            <template #title><h4>{{$t('collection')}}</h4></template>
-                            <RouterLink to="/categories/collection/"><el-menu-item index="3-1">{{$t('add_collection')}}</el-menu-item></RouterLink>
-                            <RouterLink to="/categories/collection/list"><el-menu-item index="3-1">{{$t('list_collections')}}</el-menu-item></RouterLink>
+                            <template #title><h4>{{ $t('sections') }}</h4></template>
+                            <RouterLink to="/categories/sections/"><el-menu-item index="3-1">{{$t('assign_section')}}</el-menu-item></RouterLink>
+                            <RouterLink to="/categories/management/"><el-menu-item index="3-1">{{$t('partition_management')}}</el-menu-item></RouterLink>
                         </el-menu-item-group>
                         <el-menu-item-group>
                             <template #title><h4>{{$t('tags')}}</h4></template>

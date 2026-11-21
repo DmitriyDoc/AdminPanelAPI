@@ -14,7 +14,7 @@ class LocalizingFranchise extends Model
     protected $fillable = [
         'id',
         'value',
-        'label',
+        'label_en',
         'label_ru',
         'created_at',
         'updated_at',

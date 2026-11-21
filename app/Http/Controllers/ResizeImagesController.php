@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Http;
 class ResizeImagesController extends Controller
 {
     private const imageLimit = 10;
-    private const batchSize = 1;
+    private const batchSize = 10;
     private $file;
     private $movieId;
     private $originalMovieId;
@@ -83,40 +83,39 @@ class ResizeImagesController extends Controller
     private function resizeImages()
     {
         $this->modelImages = convertVariableToModelName('Images', getTableSegmentOrTypeId($this->movieType), ['App', 'Models']);
-        $moviesImages = $this->modelImages::where('id_movie', $this->originalMovieId )->limit(self::imageLimit)->get(['srcset', 'id'])->toArray();
+        $moviesImages = $this->modelImages::where('id_movie', $this->originalMovieId)->limit(self::imageLimit)->get(['srcset', 'id'])->toArray();
 
         $this->dirPosterName = 'images';
-        //Log::debug("RESIZE-IMAGES-START--ID--{$this->movieId} ---> IMAGES-COUNT: " . count($moviesImages));
         if (empty($moviesImages)) {
             Log::info("NO-IMAGES-FOUND--ID--{$this->movieId} ---> No images to process in 'images' directory");
             return;
         }
+
         $urls = array_map(function ($image) {
-          if (!empty($image['srcset'])){
-              return getLargestImageUrl($image['srcset']);
-          }
+            if (!empty($image['srcset'])){
+                return getLargestImageUrl($image['srcset']);
+            }
         }, $moviesImages);
         $ids = array_column($moviesImages, 'id');
-        //Log::debug("RESIZE-IMAGES-URLS--ID--{$this->movieId} ---> URLS: " . json_encode($urls));
-        //Log::debug("RESIZE-IMAGES-IDS--ID--{$this->movieId} ---> IDS: " . json_encode($ids));
 
         $validUrls = array_filter($urls, function ($url) {
             return !empty($url) && filter_var($url, FILTER_VALIDATE_URL);
         });
+
         if (empty($validUrls)) {
             Log::info("NO-VALID-URLS--ID--{$this->movieId} ---> All URLs are invalid or empty");
             return;
         }
 
         $files = $this->getFilesFromSrcBatch($urls, $ids);
-        //Log::debug("RESIZE-IMAGES-FILES--ID--{$this->movieId} ---> FILES-RECEIVED: " . json_encode(array_keys($files)));
 
         $batchFiles = [];
         foreach ($moviesImages as $index => $image) {
             $this->file = $files[$image['id']] ?? null;
-            //Log::debug("PROCESSING-IMAGE--ID--{$this->movieId} ---> IMAGE-ID: {$image['id']}, URL: {$urls[$index]}, HAS-FILE: " . (!empty($this->file['content']) ? 'Yes' : 'No'));
+
             if (!empty($this->file['content'])) {
                 if ($this->putFileToTempDirectory($image['id'])) {
+                    // Уже правильно: saveImages возвращает массив путей для одного файла
                     $batchFiles[] = [
                         'fileName' => $image['id'],
                         'paths' => $this->saveImages($image['id']),
@@ -147,26 +146,30 @@ class ResizeImagesController extends Controller
         $originalId = $this->modelPoster::where('id', $this->posterOriginalId)->where('id_movie', $this->originalMovieId)->get('srcset')->toArray();
         $this->dirPosterName = 'original_poster';
         $dirResizeThumbsArr = [['dir' => 'small', 'width' => 200, 'maxHeight' => 800], ['dir' => 'medium', 'width' => 400, 'maxHeight' => 1200]];
+
         if (!empty($originalId)) {
             $url = getImageUrlByWidth($originalId[0]['srcset']);
             $this->file = $this->getFileFromSrc($url['src']);
 
             if (!empty($this->file['content'])) {
-                //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$this->posterOriginalId}, URL: {$url}");
                 if ($this->putFileToTempDirectory($this->posterOriginalId)) {
-                    $batchFiles = [];
+                    // ОБЪЕДИНЯЕМ все размеры в один массив
+                    $allPaths = [];
                     foreach ($dirResizeThumbsArr as $item) {
-                        $batchFiles[] = [
-                            'fileName' => $this->posterOriginalId,
-                            'paths' => $this->saveThumbnails($item, $this->posterOriginalId),
-                        ];
+                        $paths = $this->saveThumbnails($item, $this->posterOriginalId);
+                        $allPaths = array_merge($allPaths, $paths);
                     }
+
                     $actualFileName = $this->posterOriginalId;
                     $fullSizePaths = $this->saveFullSize($this->posterOriginalId, $actualFileName);
+                    $allPaths = array_merge($allPaths, $fullSizePaths);
+
+                    // ОДИН элемент в batchFiles вместо 3
                     $batchFiles[] = [
                         'fileName' => $actualFileName,
-                        'paths' => $fullSizePaths,
+                        'paths' => $allPaths,
                     ];
+
                     $this->sendBatchFiles($batchFiles);
                 }
             }
@@ -178,25 +181,28 @@ class ResizeImagesController extends Controller
         $russianId = $this->modelPoster::where('id', $this->posterRussianId)->where('id_movie', $this->originalMovieId)->get('srcset')->toArray();
         $this->dirPosterName = 'russian_poster';
         $dirResizeThumbsArr = [['dir' => 'small', 'width' => 200, 'maxHeight' => 800], ['dir' => 'medium', 'width' => 400, 'maxHeight' => 1200]];
+
         if (!empty($russianId)) {
             $url = getImageUrlByWidth($russianId[0]['srcset']);
             $this->file = $this->getFileFromSrc($url['src']);
+
             if (!empty($this->file['content'])) {
-                //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$this->posterRussianId}, URL: {$url}");
                 if ($this->putFileToTempDirectory($this->posterRussianId)) {
-                    $batchFiles = [];
+                    $allPaths = [];
                     foreach ($dirResizeThumbsArr as $item) {
-                        $batchFiles[] = [
-                            'fileName' => $this->posterRussianId,
-                            'paths' => $this->saveThumbnails($item, $this->posterRussianId),
-                        ];
+                        $paths = $this->saveThumbnails($item, $this->posterRussianId);
+                        $allPaths = array_merge($allPaths, $paths);
                     }
-                    $actualFileName = $this->posterOriginalId;
-                    $fullSizePaths = $this->saveFullSize($this->posterOriginalId, $actualFileName);
+
+                    $actualFileName = $this->posterRussianId;  // ← Исправлено: было posterOriginalId
+                    $fullSizePaths = $this->saveFullSize($this->posterRussianId, $actualFileName);
+                    $allPaths = array_merge($allPaths, $fullSizePaths);
+
                     $batchFiles[] = [
                         'fileName' => $actualFileName,
-                        'paths' => $fullSizePaths,
+                        'paths' => $allPaths,
                     ];
+
                     $this->sendBatchFiles($batchFiles);
                 }
             }
@@ -209,26 +215,29 @@ class ResizeImagesController extends Controller
             $this->dirPosterName = 'characters_posters';
             $dirResizeThumbsArr = ['dir' => 'small', 'width' => 200, 'maxHeight' => 400];
             $charactersIdArr = $this->modelPoster::where('id_movie', $this->originalMovieId)->whereIn('id', $posterIdArr)->get(['srcset', 'id'])->toArray();
+
             if (!empty($charactersIdArr)) {
                 $urls = array_map(function ($item) {
                     return getImageUrlByWidth($item['srcset'])['src'];
                 }, $charactersIdArr);
                 $ids = array_column($charactersIdArr, 'id');
                 $files = $this->getFilesFromSrcBatch($urls, $ids);
+
                 $batchFiles = [];
                 foreach ($charactersIdArr as $index => $item) {
                     $fileName = $item['id'];
                     $this->file = $files[$fileName] ?? null;
+
                     if (!empty($this->file['content'])) {
-                        //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$fileName}, URL: {$urls[$index]}");
                         if ($this->putFileToTempDirectory($fileName)) {
+                            // ОБЪЕДИНЯЕМ thumbnails и full_size в один элемент
+                            $thumbnailPaths = $this->saveThumbnails($dirResizeThumbsArr, $fileName);
+                            $fullSizePaths = $this->saveFullSize($fileName);
+                            $allPaths = array_merge($thumbnailPaths, $fullSizePaths);
+
                             $batchFiles[] = [
                                 'fileName' => $fileName,
-                                'paths' => $this->saveThumbnails($dirResizeThumbsArr, $fileName),
-                            ];
-                            $batchFiles[] = [
-                                'fileName' => $fileName,
-                                'paths' => $this->saveFullSize($fileName),
+                                'paths' => $allPaths,
                             ];
                         }
                     }
@@ -244,27 +253,28 @@ class ResizeImagesController extends Controller
             $this->dirPosterName = 'alt_posters';
             $dirResizeThumbsArr = ['dir' => 'small', 'width' => 200, 'maxHeight' => 400];
             $altIdArr = $this->modelPoster::where('id_movie', $this->originalMovieId)->whereIn('id', $posterIdArr)->get(['srcset', 'id'])->toArray();
+
             if (!empty($altIdArr)) {
                 $urls = array_map(function ($item) {
                     return getImageUrlByWidth($item['srcset'])['src'];
                 }, $altIdArr);
                 $ids = array_column($altIdArr, 'id');
-
                 $files = $this->getFilesFromSrcBatch($urls, $ids);
+
                 $batchFiles = [];
                 foreach ($altIdArr as $index => $item) {
                     $fileName = $item['id'];
                     $this->file = $files[$fileName] ?? null;
+
                     if (!empty($this->file['content'])) {
-                        //Log::debug("PRE-PUT-FILE--ID--{$this->movieId} ---> DIR: {$this->dirPosterName}, IMAGE-ID: {$fileName}, URL: {$urls[$index]}");
                         if ($this->putFileToTempDirectory($fileName)) {
+                            $thumbnailPaths = $this->saveThumbnails($dirResizeThumbsArr, $fileName);
+                            $fullSizePaths = $this->saveFullSize($fileName);
+                            $allPaths = array_merge($thumbnailPaths, $fullSizePaths);
+
                             $batchFiles[] = [
                                 'fileName' => $fileName,
-                                'paths' => $this->saveThumbnails($dirResizeThumbsArr, $fileName),
-                            ];
-                            $batchFiles[] = [
-                                'fileName' => $fileName,
-                                'paths' => $this->saveFullSize($fileName),
+                                'paths' => $allPaths,
                             ];
                         }
                     }
@@ -494,7 +504,7 @@ class ResizeImagesController extends Controller
                                 $multipart[] = [
                                     'name' => "images[{$fileIndex}]",
                                     'contents' => file_get_contents($filePath),
-                                    'filename' => "{$batch['fileName']}.jpg",
+                                    'filename' => basename($path),
                                 ];
                                 $multipart[] = [
                                     'name' => "images[{$fileIndex}][size]",
@@ -513,11 +523,11 @@ class ResizeImagesController extends Controller
                     }
                     //Log::debug("BATCH-MULTIPART-STRUCTURE--ID--{$this->movieId} ---> CHUNK: {$chunkIndex}, MULTIPART-COUNT: " . count($multipart));
                     $url = env('API_HOST_URL') . "/api/images/batch/{$this->movieType}/{$this->movieId}";
-                    Log::info("BATCH-SEND--ID--{$this->movieId} ---> URL: {$url}, CHUNK: {$chunkIndex}, FILES: {$fileIndex}");
+                    //Log::info("BATCH-SEND--ID--{$this->movieId} ---> URL: {$url}, CHUNK: {$chunkIndex}, FILES: {$fileIndex}");
                     $response = $http->asMultipart()->post($url, $multipart);
 
                     if ($response->successful()) {
-                        Log::info("BATCH-UPLOADED--ID--{$this->movieId} ---> CHUNK: {$chunkIndex}, RESPONSE: " . $response->body());
+                        //Log::info("BATCH-UPLOADED--ID--{$this->movieId} ---> CHUNK: {$chunkIndex}, RESPONSE: " . $response->body());
                         $success = true;
                         foreach ($chunk as $batch) {
                             foreach ($batch['paths'] as $path) {
@@ -548,7 +558,7 @@ class ResizeImagesController extends Controller
 
         Storage::disk('temp')->deleteDirectory("/{$this->movieId}");
         Storage::disk('resized')->deleteDirectory("/{$this->movieType}/{$this->movieId}");
-        Log::info("DELETED-TEMP--ID--{$this->movieId} ---> PATH: /temp/{$this->movieId}, /resized/{$this->movieType}/{$this->movieId}");
+        //Log::info("DELETED-TEMP--ID--{$this->movieId} ---> PATH: /temp/{$this->movieId}, /resized/{$this->movieType}/{$this->movieId}");
     }
 
     private function putFileToTempDirectory($imageId)
@@ -565,7 +575,7 @@ class ResizeImagesController extends Controller
         try {
             if (!Storage::disk('temp')->exists($directory)) {
                 Storage::disk('temp')->makeDirectory($directory, 0755, true, true);
-                Log::info("CREATED-DIRECTORY--ID--{$this->movieId} ---> PATH: {$directory}");
+                //Log::info("CREATED-DIRECTORY--ID--{$this->movieId} ---> PATH: {$directory}");
             }
         } catch (\Exception $e) {
             Log::error("FAILED-CREATE-DIRECTORY--ID--{$this->movieId} ---> PATH: {$directory}, ERROR: {$e->getMessage()}");
@@ -634,7 +644,7 @@ class ResizeImagesController extends Controller
             $image = Image::read($tempPath);
             $originalWidth = $image->width();
             $originalHeight = $image->height();
-            Log::debug("TEMP-FILE-DIMENSIONS--ID--{$this->originalMovieId} ---> HASHED-ID: {$this->movieId}, IMAGE-ID: {$imageId}, WIDTH: {$originalWidth}, HEIGHT: {$originalHeight}");
+            //Log::debug("TEMP-FILE-DIMENSIONS--ID--{$this->originalMovieId} ---> HASHED-ID: {$this->movieId}, IMAGE-ID: {$imageId}, WIDTH: {$originalWidth}, HEIGHT: {$originalHeight}");
             unset($image);
         } catch (\Exception $e) {
             Log::info("INVALID-IMAGE--ID--{$this->movieId} ---> IMAGE-ID: {$imageId}, ERROR: {$e->getMessage()}");
@@ -649,44 +659,49 @@ class ResizeImagesController extends Controller
         $content = null;
         $expectedSize = null;
 
-        Log::debug("GET-FILE-FROM-SRC--ID--{$this->movieId} ---> URL: {$url}");
         if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
-            Log::warning("INVALID-URL--ID--{$this->movieId} ---> URL: {$url}");
             return ['content' => null, 'expectedSize' => null, 'lastUrl' => $url];
         }
 
         try {
             $client = new Client([
-                'timeout' => 30,
-                'connect_timeout' => 10,
+                'timeout' => 30,         // ← УМЕНЬШЕНО до 30 сек
+                'connect_timeout' => 10, // ← УМЕНЬШЕНО до 10 сек
                 'allow_redirects' => true,
+                'http_errors' => false,
+                'curl' => [
+                    CURLOPT_TCP_KEEPALIVE => 1,
+                    CURLOPT_TCP_NODELAY => 1,
+                ],
             ]);
 
             $response = $client->get($url, [
                 'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (compatible; YourApp/1.0)',
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                    'Accept-Language' => 'ru-RU,ru;q=0.9,en;q=0.8',
+                    // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ
+                    'Referer' => 'https://www.imdb.com/',
                 ],
-                'http_errors' => false,
             ]);
 
-            Log::debug("GET-FILE-RESPONSE--ID--{$this->movieId} ---> URL: {$url}, STATUS: {$response->getStatusCode()}");
             if ($response->getStatusCode() === 200) {
                 $content = $response->getBody()->getContents();
-                $expectedSize = $response->hasHeader('Content-Length') ? (int) $response->getHeaderLine('Content-Length') : null;
+                $expectedSize = $response->hasHeader('Content-Length')
+                    ? (int) $response->getHeaderLine('Content-Length')
+                    : null;
+
                 $finfo = finfo_open();
                 $mimeType = finfo_buffer($finfo, $content, FILEINFO_MIME_TYPE);
                 finfo_close($finfo);
-                if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif'])) {
+
+                if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
                     Log::warning("INVALID-MIME-TYPE--ID--{$this->movieId} ---> URL: {$url}, MIME: {$mimeType}");
                     return ['content' => null, 'expectedSize' => null, 'lastUrl' => $url];
                 }
-            } else {
-                Log::info("NOT-FOUND--ID--{$this->movieId} ---> SRC: {$url}, STATUS: {$response->getStatusCode()}");
             }
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            Log::info("EXCEPTION--ID--{$this->movieId} ---> SRC: {$url}, ERROR: {$e->getMessage()}");
         } catch (\Exception $e) {
-            Log::info("GENERAL-EXCEPTION--ID--{$this->movieId} ---> SRC: {$url}, ERROR: {$e->getMessage()}");
+            Log::warning("GET-FILE-EXCEPTION--ID--{$this->movieId} ---> URL: {$url}, ERROR: {$e->getMessage()}");
         }
 
         return ['content' => $content, 'expectedSize' => $expectedSize, 'lastUrl' => $url];
@@ -694,52 +709,60 @@ class ResizeImagesController extends Controller
 
     private function getFilesFromSrcBatch($urls, $ids)
     {
-        //Log::debug("GET-FILES-BATCH-START--ID--{$this->movieId} ---> URL-COUNT: " . count($urls) . ", ID-COUNT: " . count($ids));
         if (count($urls) !== count($ids)) {
-            Log::error("MISMATCH-URLS-IDS--ID--{$this->movieId} ---> URL-COUNT: " . count($urls) . ", ID-COUNT: " . count($ids));
+            Log::error("MISMATCH-URLS-IDS--ID--{$this->movieId}");
             return [];
         }
 
         $client = new Client([
-            'timeout' => 30,
-            'connect_timeout' => 10,
+            'timeout' => 30,           // ← УМЕНЬШЕНО: 30 сек вместо 120. Если виснет, лучше упасть быстро.
+            'connect_timeout' => 10,   // ← УМЕНЬШЕНО: 10 сек на установку соединения.
             'allow_redirects' => true,
+            'http_errors' => false,
+            'curl' => [
+                CURLOPT_TCP_KEEPALIVE => 1,
+                CURLOPT_TCP_KEEPIDLE => 120,
+                CURLOPT_TCP_KEEPINTVL => 60,
+                CURLOPT_TCP_NODELAY => 1,
+            ],
         ]);
 
         $requests = function () use ($urls) {
             foreach ($urls as $index => $url) {
                 if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL)) {
-                    //Log::debug("BATCH-REQUEST--ID--{$this->movieId} ---> INDEX: {$index}, URL: {$url}");
                     yield new GuzzleRequest('GET', $url, [
-                        'User-Agent' => 'Mozilla/5.0 (compatible; YourApp/1.0)',
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                        'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                        'Accept-Language' => 'ru-RU,ru;q=0.9,en;q=0.8',
+                        // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Amazon любит этот заголовок
+                        'Referer' => 'https://www.imdb.com/',
+                        'Connection' => 'keep-alive',
                     ]);
-                } else {
-                    Log::warning("BATCH-SKIP-INVALID-URL--ID--{$this->movieId} ---> INDEX: {$index}, URL: {$url}");
                 }
             }
         };
 
         $results = [];
         $pool = new Pool($client, $requests(), [
-            'concurrency' => 10,
+            'concurrency' => 2,  // ← ЕЩЕ БОЛЕЕ БЕРЕЖНЫЙ РЕЖИМ: 2 вместо 3. Это резко снижает шанс триггера rate-limit.
             'fulfilled' => function ($response, $index) use (&$results, $urls, $ids) {
-                //Log::debug("BATCH-FULFILLED--ID--{$this->movieId} ---> INDEX: {$index}, URL: {$urls[$index]}, STATUS: {$response->getStatusCode()}");
                 if ($response->getStatusCode() === 200) {
                     $content = $response->getBody()->getContents();
-                    $expectedSize = $response->hasHeader('Content-Length') ? (int) $response->getHeaderLine('Content-Length') : null;
+                    $expectedSize = $response->hasHeader('Content-Length')
+                        ? (int) $response->getHeaderLine('Content-Length')
+                        : null;
                     $results[$ids[$index]] = [
                         'content' => $content,
                         'expectedSize' => $expectedSize,
                         'lastUrl' => $urls[$index],
                     ];
-                    //Log::debug("BATCH-SUCCESS--ID--{$this->movieId} ---> INDEX: {$index}, ID: {$ids[$index]}, CONTENT-LENGTH: " . strlen($content));
                 } else {
-                    Log::info("BATCH-NOT-FOUND--ID--{$this->movieId} ---> INDEX: {$index}, URL: {$urls[$index]}, STATUS: {$response->getStatusCode()}");
+                    Log::info("BATCH-NOT-FOUND--ID--{$this->movieId} ---> INDEX: {$index}, STATUS: {$response->getStatusCode()}");
                     $results[$ids[$index]] = ['content' => null, 'expectedSize' => null, 'lastUrl' => $urls[$index]];
                 }
             },
             'rejected' => function ($reason, $index) use (&$results, $urls, $ids) {
-                Log::info("BATCH-EXCEPTION--ID--{$this->movieId} ---> INDEX: {$index}, URL: {$urls[$index]}, ERROR: {$reason->getMessage()}");
+                Log::warning("BATCH-EXCEPTION--ID--{$this->movieId} ---> INDEX: {$index}, ERROR: {$reason->getMessage()}");
                 $results[$ids[$index]] = ['content' => null, 'expectedSize' => null, 'lastUrl' => $urls[$index]];
             },
         ]);
@@ -747,7 +770,9 @@ class ResizeImagesController extends Controller
         $promise = $pool->promise();
         $promise->wait();
 
-        //Log::debug("GET-FILES-BATCH-COMPLETE--ID--{$this->movieId} ---> RESULTS: " . json_encode(array_keys($results)));
+        $successCount = count(array_filter($results, fn($r) => $r['content'] !== null));
+        Log::info("BATCH-DOWNLOAD-COMPLETE--ID--{$this->movieId} ---> SUCCESS: {$successCount}/" . count($urls));
+
         return $results;
     }
 }

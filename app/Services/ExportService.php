@@ -155,6 +155,8 @@ class ExportService
             return response()->json(['success' => false, 'message' => 'No section directories found'], 422);
         }
 
+        $sectionIds = array_map('basename', $sectionDirs);
+
         foreach ($sectionDirs as $sectionDir) {
             $sectionId = basename($sectionDir);
             $subDirs = [
@@ -167,23 +169,31 @@ class ExportService
 
             foreach ($subDirs as $field => $path) {
                 $files = Storage::disk('public')->files($path);
-                if (empty($files)) {
-                    Log::warning("No files found in {$path} for section {$sectionId}");
-                    continue;
-                }
+                if (empty($files)) continue;
+
                 foreach ($files as $file) {
                     $filePath = Storage::disk('public')->path($file);
-                    if (!is_readable($filePath)) {
-                        Log::error("File is not readable: {$filePath}");
-                        continue;
-                    }
-                    $filename = basename($file);
+                    if (!is_readable($filePath)) continue;
+
+                    $originalFilename = basename($file);
+
                     $formData[] = [
                         'name' => "sections[{$sectionId}][{$field}][]",
                         'contents' => file_get_contents($filePath),
-                        'filename' => $filename,
+                        'filename' => $originalFilename, // Возвращаем оригинальное имя
                     ];
                 }
+            }
+        }
+
+        // Получаем категории
+        $categories = Category::whereIn('id', $sectionIds)->get(['id', 'index_id', 'value', 'title_en', 'title_ru'])->toArray();
+        foreach ($categories as $index => $category) {
+            foreach ($category as $key => $value) {
+                $formData[] = [
+                    'name' => "categories[{$index}][{$key}]",
+                    'contents' => $value,
+                ];
             }
         }
 
@@ -192,12 +202,11 @@ class ExportService
             return response()->json(['success' => false, 'message' => 'No files to export'], 422);
         }
 
-        //Log::info('Sections data prepared for export:', ['sections' => array_map('basename', $sectionDirs), 'files_count' => count($formData)]);
-
         try {
             $response = Http::withToken(config('services.kinospectr.api_token'))
                 ->asMultipart()
                 ->post(config('services.kinospectr.api_url') . '/api/sections/import', $formData);
+
             if ($response->successful()) {
                 return response()->json(['success' => true, 'type' => 'success', 'message' => $response->json()['message'] ]);
             } else {
@@ -209,126 +218,189 @@ class ExportService
             return response()->json(['success' => false, 'type' => 'error', 'message' => 'Error exporting sections: ' . $e->getMessage()], 500);
         }
     }
-    public function exportMovies(bool $switchAll): array
+    public function exportMovies(bool $isFullSync = false): array
     {
-        $maxTotalMovies = 20;
-        $chunkSize = 10;
+        if ($isFullSync) {
+            set_time_limit(600);
+        }
+
+        $statusMovie = $isFullSync ? 2 : 1;
+        $dbChunkSize = $isFullSync ? 100 : 20;
+        $apiChunkSize = 50;
         $maxRetries = 3;
 
-        $statusMovie = 1;
-
-        // 🔍 ВАЖНО: Сначала считаем ОБЩЕЕ количество фильмов для экспорта
+        // Получаем общее заявленное количество заранее для итогового отчета
         $totalPendingCount = MovieInfo::where('published', $statusMovie)->count();
 
         if ($totalPendingCount === 0) {
-            return ['success' => false, 'message' => 'No movies found', 'type' => 'warning', 'status' => 200];
+            return [
+                'success' => false,
+                'message' => $isFullSync ? 'Нет опубликованных фильмов для синхронизации' : 'No movies found',
+                'type' => 'warning',
+                'status' => 200
+            ];
         }
 
-        // Затем берём лимитированную выборку для текущей итерации
-        $movies = MovieInfo::with(['localazingRu', 'localazingEn'])
-            ->where('published', $statusMovie)
-            ->limit($maxTotalMovies)
-            ->get();
+        $totalProcessed = 0;
+        $totalSkipped = 0;
+        $validationErrorsLog = [];
 
-        $processedIds = [];
-        $allChunks = $movies->chunk($chunkSize);
+        // chunkById безопасно выгружает данные порциями по ID, не перегружая оперативную память
+        MovieInfo::where('published', $statusMovie)
+            ->with(['localazingRu', 'localazingEn'])
+            ->orderBy('id') // Обязательно для chunkById
+            ->chunkById($dbChunkSize, function ($movies) use (&$totalProcessed, &$totalSkipped, &$validationErrorsLog, $apiChunkSize, $maxRetries, $isFullSync) {
 
-        // Отправляем чанки ВНЕ транзакции
-        foreach ($allChunks as $index => $chunk) {
-            $moviesData = $chunk->map(fn($m) => $this->mapMovieToKinospectrFormat($m))->toArray();
+                $validMoviesData = [];
 
-            $attempt = 0;
-            $success = false;
+                // 1. Валидация текущей порции из БД
+                foreach ($movies as $movie) {
+                    $mappedData = $this->mapMovieToKinospectrFormat($movie);
 
-            while ($attempt < $maxRetries && !$success) {
-                try {
-                    $response = Http::withToken(config('services.kinospectr.api_token'))
-                        ->timeout(120)
-                        ->retry(2, 1000)
-                        ->post(config('services.kinospectr.api_url') . '/api/movies/import', [
-                            'movies' => $moviesData,
-                            'switchAll' => $switchAll,
-                            'chunk_index' => $index,
-                        ]);
-
-                    if ($response->successful()) {
-                        $success = true;
-                        $processedIds = array_merge($processedIds, $chunk->pluck('id')->toArray());
-                        Log::info("Chunk {$index} sent successfully");
-                    } else {
-                        $attempt++;
-                        sleep(pow(2, $attempt));
+                    if ($mappedData === null) {
+                        $totalSkipped++;
+                        $validationErrorsLog[] = "Movie ID {$movie->id} (IMDB: {$movie->id_movie}): Critical mapping error.";
+                        continue;
                     }
-                } catch (\Exception $e) {
-                    $attempt++;
-                    sleep(pow(2, $attempt));
+
+                    $errors = $this->validateMovieData($mappedData);
+                    if (!empty($errors)) {
+                        $totalSkipped++;
+                        $validationErrorsLog[] = "Movie ID {$movie->id} (IMDB: {$movie->id_movie}): " . implode('; ', $errors);
+                        continue;
+                    }
+
+                    $validMoviesData[] = $mappedData;
                 }
-            }
 
-            if (!$success) {
-                Log::error("Chunk {$index} failed after {$maxRetries} attempts");
-            }
-        }
+                if (empty($validMoviesData)) {
+                    if (!$isFullSync) {
+                        return false; // Останавливаем цикл для штатного режима, если нет валидных
+                    }
+                    return; // Переходим к следующему чанку БД при полной синхронизации
+                }
 
-        // Обновляем статус ТОЛЬКО для подтверждённо отправленных
-        if (!empty($processedIds)) {
-            DB::transaction(function () use ($processedIds) {
-                MovieInfo::whereIn('id', $processedIds)->update(['published' => 2]);
+                // 2. Получаем связи категорий только для валидных фильмов текущего чанка
+                $imdbIdsToExport = array_column($validMoviesData, 'imdb_id');
+                $movieCategoriesLinks = MovieCategory::whereIn('id_movie', $imdbIdsToExport)
+                    ->get(['id_movie', 'id_category'])
+                    ->map(fn($mc) => ['imdb_id' => $mc->id_movie, 'id_category' => $mc->id_category])
+                    ->toArray();
+
+                // 3. Разбиваем на микро-чанки для отправки на API (по 10 штук)
+                $apiChunks = array_chunk($validMoviesData, $apiChunkSize);
+
+                foreach ($apiChunks as $index => $chunk) {
+                    $chunkImdbIds = array_column($chunk, 'imdb_id');
+                    $chunkLinks = array_values(array_filter($movieCategoriesLinks, fn($link) => in_array($link['imdb_id'], $chunkImdbIds)));
+
+                    $attempt = 0;
+                    $success = false;
+
+                    while ($attempt < $maxRetries && !$success) {
+                        try {
+                            $response = Http::withToken(config('services.kinospectr.api_token'))
+                                ->timeout(120)
+                                ->retry(2, 1000)
+                                ->post(config('services.kinospectr.api_url') . '/api/movies/import', [
+                                    'movies' => $chunk,
+                                    'movie_categories' => $chunkLinks,
+                                    'chunk_index' => $index,
+                                ]);
+
+                            if ($response->successful()) {
+                                $success = true;
+                                $totalProcessed += count($chunk); // Успешно отправлено
+                            } else {
+                                $attempt++;
+                                sleep(pow(2, $attempt)); // Экспоненциальная задержка (1с, 2с, 4с)
+                            }
+                        } catch (\Exception $e) {
+                            $attempt++;
+                            sleep(pow(2, $attempt));
+                        }
+                    }
+
+                    // Если после всех попыток отправка не удалась, считаем эти фильмы пропущенными
+                    if (!$success) {
+                        $totalSkipped += count($chunk);
+                    }
+                }
+
+                // 4. Обновляем статус ТОЛЬКО для штатного экспорта
+                // Для полной синхронизации статус не меняем (они уже = 2)
+                if (!$isFullSync) {
+                    $processedImdbIds = array_column($validMoviesData, 'imdb_id');
+                    MovieInfo::whereIn('id_movie', $processedImdbIds)->update(['published' => 2]);
+
+                    // Прерываем chunkById после первой итерации для штатного режима (нам нужно только 20 шт.)
+                    return false;
+                }
             });
-        }
 
-        // 📊 Формируем ответ с правильными цифрами
-        $remainingCount = $totalPendingCount - count($processedIds);
+        // 5. Формируем итоговый сверенный отчет
+        $message = $isFullSync
+            ? "Полная синхронизация завершена: успешно отправлено {$totalProcessed} из {$totalPendingCount}. Пропущено (ошибки валидации или сбои API): {$totalSkipped}."
+            : sprintf('Успешно экспортировано  %d/%d фильмов. Пропущенно недопустимых: %d.', $totalProcessed, $totalPendingCount, $totalSkipped);
 
         return [
-            'success' => count($processedIds) > 0,
-            'sent_count' => count($processedIds),           // Сколько отправили в этом запуске
-            'total_pending' => $totalPendingCount,          // Сколько всего было в очереди
-            'remaining' => max(0, $remainingCount),         // Сколько осталось
-            'message' => sprintf(
-                'Export %d/%d movies (%d remaining)',
-                count($processedIds),
-                $totalPendingCount,
-                max(0, $remainingCount)
-            ),
-            'type' => $remainingCount <= 0 ? 'success' : 'partial',
-            'status' => 200
+            'success' => $totalProcessed > 0,
+            'sent_count' => $totalProcessed,
+            'total_pending' => $totalPendingCount,
+            'remaining' => $isFullSync ? 0 : max(0, $totalPendingCount - $totalProcessed),
+            'skipped_invalid' => $totalSkipped,
+            'message' => $message,
+            'type' => ($totalSkipped === 0) ? 'success' : 'partial',
+            'status' => 200,
+            // Обрезаем лог ошибок до 100 записей, чтобы не "повесить" фронтенд гигантским JSON-ответом
+            'skipped_details' => array_slice($validationErrorsLog, 0, 100)
         ];
     }
-    public function exportTaxonomies(bool $switchAll)
+    public function exportTaxonomies()
     {
-        // 1. Получаем текущий пул фильмов (те же 20 штук, что и в exportMovies)
-        $statusMovie = $switchAll ? 2 : 1;
+        // 1. Получаем пул фильмов
+        $statusMovie =  1;
 
-        // Берем фильмы, чтобы узнать, какие таксономии они используют
         $movies = MovieInfo::where('published', $statusMovie)
             ->limit(20)
             ->get();
 
         if ($movies->isEmpty()) {
-            return ['success' => false, 'message' => 'No movies to process', 'type' => 'warning'];
+            return ['success' => false, 'message' => 'No movies to process', 'type' => 'warning', 'status' => 200];
         }
 
-        $movieImdbIds = $movies->pluck('id_movie')->unique()->toArray(); // imdb_id фильмов
+        $movieImdbIds = $movies->pluck('id_movie')->unique()->toArray();
 
         if (empty($movieImdbIds)) {
-            return ['success' => false, 'message' => 'No IMDB IDs found', 'type' => 'warning'];
+            return ['success' => false, 'message' => 'No IMDB IDs found', 'type' => 'warning', 'status' => 200];
         }
 
-        // 2. Собираем связанные ID таксономий
-        // Категории фильмов
-        $relatedCategoryIds = MovieCategory::whereIn('id_movie', $movieImdbIds)
+        $existingLocalMovies = MovieInfo::whereIn('id_movie', $movieImdbIds)
+            ->pluck('id_movie')
+            ->toArray();
+
+        $validImdbIds = array_intersect($movieImdbIds, $existingLocalMovies);
+
+        if (empty($validImdbIds)) {
+            Log::warning("Taxonomies export skipped: Movies exist in Info but not in Main Movies table yet.", [
+                'attempted_ids' => $movieImdbIds
+            ]);
+            return ['success' => true, 'message' => 'Movies are not fully created in local DB yet. Try again later.', 'type' => 'info', 'status' => 200];
+        }
+
+        // Собираем связанные ID таксономий (БЕЗ movie_categories, так как они теперь идут с фильмами)
+        $relatedCategoryIds = MovieCategory::whereIn('id_movie', $validImdbIds)
             ->pluck('id_category')
             ->unique()
             ->toArray();
 
-        // Коллекции и Франшизы (через пивот)
-        $pivots = CollectionsCategoriesPivot::whereIn('id_movie', $movieImdbIds)->get();
+        $pivots = CollectionsCategoriesPivot::whereIn('id_movie', $validImdbIds)->get();
 
         $relatedCollectionIds = $pivots->pluck('collection_id')->unique()->toArray();
-        $relatedFranchiseIds = $pivots->pluck('franchise_id')->filter()->unique()->toArray();
-
-        // 3. Загружаем ТОЛЬКО нужные данные
+        $relatedFranchiseIds = $pivots->pluck('franchise_id')
+            ->filter(fn($id) => $id > 0)
+            ->unique()
+            ->toArray();
 
         // Категории
         $categories = [];
@@ -342,20 +414,6 @@ class ExportService
                     'title_ru' => $category->title_ru,
                 ];
             })->toArray();
-        }
-
-        // Связи Фильм-Категория (только для этих фильмов)
-        $movieCategories = [];
-        if (!empty($relatedCategoryIds)) {
-            $movieCategories = MovieCategory::whereIn('id_movie', $movieImdbIds)
-                ->whereIn('id_category', $relatedCategoryIds)
-                ->get()->map(function ($catMovie) {
-                    return [
-                        'imdb_id' => $catMovie->id_movie,
-                        'id_movie' => null, // Принимающая сторона сама resolvet это
-                        'id_category' => $catMovie->id_category,
-                    ];
-                })->toArray();
         }
 
         // Коллекции
@@ -389,44 +447,44 @@ class ExportService
             })->toArray();
         }
 
-        // Пивоты (только для этих фильмов)
         $collectionsCategoriesPivots = $pivots->map(function ($pivot) {
             return [
-                'id_movie' => $pivot->id_movie,
+                'id_movie'      => $pivot->id_movie,
                 'collection_id' => $pivot->collection_id,
-                'franchise_id' => $pivot->franchise_id,
+                'franchise_id'  => (int) $pivot->franchise_id,
             ];
-        })->toArray();
-
+        })->unique(function ($item) {
+            return $item['id_movie'] . '|' . $item['collection_id'] . '|' . $item['franchise_id'];
+        })->values()->toArray();
         $taxonomiesData = [
             'categories' => $categories,
-            'movie_categories' => $movieCategories,
             'collections' => $collections,
             'franchises' => $franchises,
             'collections_categories_pivots' => $collectionsCategoriesPivots,
         ];
 
-        // Проверка на пустоту перед отправкой
-        $hasData = !empty($categories) || !empty($movieCategories) || !empty($collections) || !empty($franchises) || !empty($collectionsCategoriesPivots);
+        $hasData = !empty($categories) || !empty($collections) || !empty($franchises) || !empty($collectionsCategoriesPivots);
 
-        if (!$hasData && !$switchAll) {
-            return ['success' => true, 'message' => 'No relevant taxonomies for this batch', 'type' => 'info'];
+        if (!$hasData) {
+            return ['success' => true, 'message' => 'No relevant taxonomies for this batch', 'type' => 'info', 'status' => 200];
         }
 
         try {
             $response = Http::withToken(config('services.kinospectr.api_token'))
-                ->timeout(60) // Уменьшаем таймаут, так как данных мало
+                ->timeout(60)
                 ->connectTimeout(10)
                 ->post(config('services.kinospectr.api_url') . '/api/taxonomies/import', [
                     'taxonomies' => $taxonomiesData,
-                    'switchAll' => $switchAll,
                 ]);
 
             if ($response->successful()) {
+                $totalCount = count($categories) + count($collections) + count($franchises) + count($collectionsCategoriesPivots);
                 return [
-                    'body' => $response->json(),
-                    'message' => 'Taxonomies sent successfully',
-                    'status' => $response->status(),
+                    'success' => true,
+                    'message' => "Успешно экспортировано таксономий: {$totalCount} записей.",
+                    'sent_count' => $totalCount,
+                    'type' => 'success',
+                    'status' => 200,
                 ];
             }
 
@@ -439,12 +497,12 @@ class ExportService
 
         } catch (\Exception $e) {
             Log::error('Exception during taxonomy export', ['error' => $e->getMessage()]);
-            throw $e;
+            return ['success' => false, 'message' => $e->getMessage(), 'type' => 'error', 'status' => 500];
         }
     }
-    public function exportTags($switchAll)
+    public function exportTags()
     {
-        $statusMovie = $switchAll ? 2 : 1;
+        $statusMovie = 1;
         $tags = Tag::all()->map(function ($category) {
             return [
                 'id' => $category->id,
@@ -475,14 +533,16 @@ class ExportService
         $response = Http::withToken(config('services.kinospectr.api_token'))
             ->post(config('services.kinospectr.api_url') . '/api/tags/import', [
                 'tags' => $tagsData,
-                'switchAll' => $switchAll,
             ]);
 
         if ($response->successful()) {
+            $totalCount = count($tags) + count($tagsMoviesPivots);
             return [
-                'body' => $response->json(),
-                'message' => 'Tags sent successfully',
-                'status' => $response->status(),
+                'success' => true,
+                'message' => "Успешно экспортировано тегов: {$totalCount} записей.",
+                'sent_count' => $totalCount,
+                'type' => 'success',
+                'status' => 200,
             ];
         }
 
@@ -493,24 +553,102 @@ class ExportService
 
         throw new \Exception('Failed to export tags to Kinospectr');
     }
-    protected function mapMovieToKinospectrFormat(MovieInfo $movie): array
+    protected function validateMovieData(array $data): array
     {
+        $errors = [];
+
+        // Список обязательных полей согласно ТЗ
+        $requiredFields = [
+            'imdb_id',
+            'active',
+            'type_film',
+            'hash_imdb_id',
+            'title_en',
+            'title_ru',
+            'year_release',
+            'rating',
+            'genres_en',
+            'genres_ru',
+            'cast_en',
+            'cast_ru',
+            'countries_en',
+            'countries_ru',
+            'story_line_en',
+            'story_line_ru',
+        ];
+
+        foreach ($requiredFields as $field) {
+            $value = $data[$field] ?? null;
+
+            // Проверка на пустоту: null, false, empty string, empty array
+            if (is_null($value) || (is_string($value) && trim($value) === '') || (is_array($value) && empty($value))) {
+                $errors[] = "Field '{$field}' is empty or missing.";
+            }
+        }
+
+        return $errors;
+    }
+    protected function mapMovieToKinospectrFormat(MovieInfo $movie): ?array
+    {
+        // Если нет ID фильма, дальше идти бессмысленно
+        if (empty($movie->id_movie)) {
+            Log::warning("Movie ID is missing for MovieInfo ID: {$movie->id}");
+            return null;
+        }
+
         $hasher = new IdHasher($movie->id_movie);
         $hashDecodeId = $hasher->getResult();
 
-        $companies = unserialize($movie->companies);
-        $companies = isset($companies['companies']) ? $companies['companies'] : [];
+        // Если хеш не сгенерировался, тоже проблема
+        if (empty($hashDecodeId)) {
+            Log::warning("Hash generation failed for Movie ID: {$movie->id_movie}");
+            return null;
+        }
 
-        $genresEn = $movie->localazingEn ? json_decode($movie->localazingEn->genres, true) : null;
-        $genresRu = $movie->localazingRu ? json_decode($movie->localazingRu->genres, true) : null;
-        $castEn = $movie->localazingEn ? json_decode($movie->localazingEn->cast, true) : null;
-        $castRu = $movie->localazingRu ? json_decode($movie->localazingRu->cast, true) : null;
-        $directorsEn = $movie->localazingEn ? json_decode($movie->localazingEn->directors, true) : null;
-        $directorsRu = $movie->localazingRu ? json_decode($movie->localazingRu->directors, true) : null;
-        $writersEn = $movie->localazingEn ? json_decode($movie->localazingEn->writers, true) : null;
-        $writersRu = $movie->localazingRu ? json_decode($movie->localazingRu->writers, true) : null;
-        $countriesEn = $movie->localazingEn ? json_decode($movie->localazingEn->countries, true) : null;
-        $countriesRu = $movie->localazingRu ? json_decode($movie->localazingRu->countries, true) : null;
+        $companiesRaw = $movie->companies;
+        $companies = [];
+        if (!empty($companiesRaw)) {
+            $unserialized = unserialize($companiesRaw);
+            if (is_array($unserialized) && isset($unserialized['companies'])) {
+                $companies = $unserialized['companies'];
+            }
+        }
+
+        // Helper для безопасного декодирования JSON
+        $decodeJson = function ($localization, $field) {
+            if (!$localization || empty($localization->$field)) {
+                return null;
+            }
+            $decoded = json_decode($localization->$field, true);
+            // json_decode возвращает null при ошибке или если поле было null/пустой строкой
+            return $decoded;
+        };
+
+        $locales = [
+            'En' => $movie->localazingEn,
+            'Ru' => $movie->localazingRu,
+        ];
+
+        $genresEn = $decodeJson($locales['En'], 'genres');
+        $genresRu = $decodeJson($locales['Ru'], 'genres');
+
+        $castEn = $decodeJson($locales['En'], 'cast');
+        $castRu = $decodeJson($locales['Ru'], 'cast');
+
+        $directorsEn = $decodeJson($locales['En'], 'directors');
+        $directorsRu = $decodeJson($locales['Ru'], 'directors');
+
+        $writersEn = $decodeJson($locales['En'], 'writers');
+        $writersRu = $decodeJson($locales['Ru'], 'writers');
+
+        $countriesEn = $decodeJson($locales['En'], 'countries');
+        $countriesRu = $decodeJson($locales['Ru'], 'countries');
+
+        $storyLineEn = $locales['En'] ? $locales['En']->story_line : null;
+        $storyLineRu = $locales['Ru'] ? $locales['Ru']->story_line : null;
+
+        $releaseDateEn = $locales['En'] ? $locales['En']->release_date : null;
+        $releaseDateRu = $locales['Ru'] ? $locales['Ru']->release_date : null;
 
         return [
             'imdb_id' => $movie->id_movie,
@@ -535,12 +673,84 @@ class ExportService
             'writers_ru' => $writersRu,
             'countries_en' => $countriesEn,
             'countries_ru' => $countriesRu,
-            'story_line_en' => $movie->localazingEn ? $movie->localazingEn->story_line : null,
-            'story_line_ru' => $movie->localazingRu ? $movie->localazingRu->story_line : null,
-            'release_date_en' => $movie->localazingEn ? $movie->localazingEn->release_date : null,
-            'release_date_ru' => $movie->localazingRu ? $movie->localazingRu->release_date : null,
+            'story_line_en' => $storyLineEn,
+            'story_line_ru' => $storyLineRu,
+            'release_date_en' => $releaseDateEn,
+            'release_date_ru' => $releaseDateRu,
             'poster' => $movie->poster ?? null,
             'poster_ru' => $movie->poster_ru ?? null,
         ];
+    }
+
+    public function exportFullTaxonomies(): array
+    {
+        try {
+            // Собираем ВСЕ данные, без ограничений по фильмам
+            $categories = Category::all(['id', 'index_id', 'value', 'title_en', 'title_ru'])->toArray();
+            $collections = Collection::all(['id', 'category_id', 'value', 'label_en', 'label_ru', 'created_at', 'updated_at'])->toArray();
+
+            // Обратите внимание: в отправляющем сервисе модель может называться LocalizingFranchise
+            $franchises = \App\Models\LocalizingFranchise::all(['id', 'value', 'label_en', 'label_ru', 'created_at', 'updated_at'])->toArray();
+
+            $pivots = CollectionsCategoriesPivot::all(['id_movie', 'collection_id', 'franchise_id'])->toArray();
+
+            $taxonomiesData = [
+                'categories' => $categories,
+                'collections' => $collections,
+                'franchises' => $franchises,
+                'collections_categories_pivots' => $pivots,
+            ];
+
+            $response = Http::withToken(config('services.kinospectr.api_token'))
+                ->timeout(120)
+                ->post(config('services.kinospectr.api_url') . '/api/taxonomies/import-full', [
+                    'taxonomies' => $taxonomiesData,
+                ]);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'status' => 200,
+                    'data' => $response->json(),
+                ];
+            }
+
+            throw new \Exception('Failed to export full taxonomies: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception during full taxonomy export', ['error' => $e->getMessage()]);
+            return ['success' => false, 'status' => 500, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function exportFullTags(): array
+    {
+        try {
+            $tags = Tag::all(['id', 'value', 'tag_name_en', 'tag_name_ru', 'created_at', 'updated_at'])->toArray();
+            $pivots = TagsMoviesPivot::all(['id_movie', 'id_tag', 'type_film'])->toArray();
+
+            $tagsData = [
+                'tags' => $tags,
+                'tags_movies_pivots' => $pivots,
+            ];
+
+            $response = Http::withToken(config('services.kinospectr.api_token'))
+                ->timeout(120)
+                ->post(config('services.kinospectr.api_url') . '/api/tags/import-full', [
+                    'tags' => $tagsData,
+                ]);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'status' => 200,
+                    'data' => $response->json(),
+                ];
+            }
+
+            throw new \Exception('Failed to export full tags: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception during full tags export', ['error' => $e->getMessage()]);
+            return ['success' => false, 'status' => 500, 'message' => $e->getMessage()];
+        }
     }
 }

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssignPoster;
 use App\Models\Category;
 use App\Models\CollectionsCategoriesPivot;
+use App\Models\MovieCategory;
 use App\Models\MovieInfo;
+use App\Models\TMDb\MoviePoster;
 use App\Services\ApiRequestImages;
 use App\Services\IdHasher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -17,155 +21,257 @@ use GuzzleHttp\Pool;
 
 class SectionsController extends Controller
 {
-    public function index(Request $request, $slug): array
+    public function index(Request $request, string $slug): array
     {
-        $hashedIds = [];
-        $apiPreviewLinks = [];
-        $allowedSectionsNames = [
-            0 => 'yellow',
-            1 => 'green',
-            2 => 'blue',
-            3 => 'cyan',
-            4 => 'purple',
-            5 => 'black',
-            6 => 'brown',
-            7 => 'red',
-            8 => 'silver',
-            9 => 'tan',
-        ];
-        $currentLocale = Lang::locale();
-        if (in_array($slug, $allowedSectionsNames)) {
-            $section = Category::where('value', $slug)->with('children')->first()->toArray();
-            foreach ($section['children'] as $collection) {
-                $collectionIds[] = $collection['id'];
-            }
-            $pivot = CollectionsCategoriesPivot::query();
-            $moviesIds = $pivot->whereIn('collection_id', $collectionIds)->get(['id_movie', 'type_film'])->toArray();
+        $allowedSectionsNames = ['yellow', 'green', 'blue', 'cyan', 'purple', 'black', 'brown', 'red', 'silver', 'tan'];
 
-            $typeFilmArray = [];
-            $collection = collect();
-            $collectionResponse = [];
+        if (!in_array($slug, $allowedSectionsNames)) {
+            return [];
+        }
 
-            if (!empty($moviesIds)) {
-                array_walk($moviesIds, function ($item, $key) use (&$typeFilmArray) {
-                    $typeFilmArray[] = $item['id_movie'];
-                });
-                $model = modelByName('MovieInfo');
-                $allowedFilterFields = $model->getFillable();
-                $titleFieldName = transformTitleByLocale();
+        $currentLocale = App::getLocale();
 
-                if ($query = $request->query('search')) {
-                    $searchQuery = trim(strtolower(strip_tags($query)));
-                    $model = $model->whereIn('id_movie', $typeFilmArray)->where($allowedFilterFields[1], 'like', '%' . $searchQuery . '%')->orWhere($allowedFilterFields[3], 'like', '%' . $searchQuery . '%');
-                }
+        $section = Category::where('value', $slug)->with('children')->first();
+        if (!$section) {
+            return [];
+        }
 
-                $collection->add($model->select('type_film', 'id_movie', $titleFieldName, 'published', 'year_release', 'created_at', 'updated_at')->whereIn('id_movie', $typeFilmArray)->with(['assignPoster', 'categories'])->get()->all());
-                $collapsed = $collection->collapse();
-                $sorted = $collapsed->sort();
-                if ($sorted->isNotEmpty()) {
-                    $allowedSortFields = ['desc', 'asc'];
+        $collectionIds = $section->children->pluck('id')->toArray();
+        if (empty($collectionIds)) {
+            return $this->buildEmptyResponse($section, $currentLocale);
+        }
 
-                    $limit = $request->query('limit', 50);
-                    $sortDir = strtolower($request->query('spin', 'asc'));
-                    $sortBy = $request->query('orderBy', 'updated_at');
-                    $perPage = $request->query('page', 1);
-                    if (!empty($searchQuery)) {
-                        $perPage = 1;
-                    }
-                    if (!in_array($sortBy, $allowedFilterFields)) {
-                        $sortBy = $allowedSortFields[0];
-                    }
+        $movieIds = CollectionsCategoriesPivot::whereIn('collection_id', $collectionIds)
+            ->pluck('id_movie')
+            ->unique()
+            ->toArray();
 
-                    if (in_array($sortDir, $allowedSortFields)) {
-                        if ($sortDir == 'desc') {
-                            $sorted = $sorted->sortByDesc($sortBy);
-                        } elseif ($sortDir == 'asc') {
-                            $sorted = $sorted->sortBy($sortBy);
-                        }
-                    }
-                    $collectionSort = $sorted->forPage($perPage, $limit);
-                    $collectionSortArr = $collectionSort->values()->toArray();
-                    foreach ($collectionSortArr as $movieItem) {
-                        if ($movieItem['assign_poster']) {
-                            $idsPostersArr[getTableSegmentOrTypeId($movieItem['assign_poster']['type_film'])][] = $movieItem['assign_poster']['id_poster_original'];
-                        }
-                    }
-                    if (!empty($idsPostersArr)) {
-                        $posterCollection = collect();
-                        foreach ($idsPostersArr as $key => $item) {
-                            $model = convertVariableToModelName('Posters', $key, ['App', 'Models']);
-                            $posterCollection->add($model->select('srcset', 'id_movie')->whereIn('id', $item)->get()->all());
-                        }
-                        $collapsedPosters = $posterCollection->collapse()->toArray();
-                    }
-                    foreach ($collectionSortArr as $movieItem) {
-                        $hasher = new IdHasher($movieItem['id_movie']);
-                        $hashedIds[$hasher->getResult() ?? ''][] = ['old_id' => $movieItem['id_movie']];
-                        $hashedIds['api'][] = $hasher->getResult();
-                    }
+        if (empty($movieIds)) {
+            return $this->buildEmptyResponse($section, $currentLocale);
+        }
 
-                    if (!empty($hashedIds)) {
-                        $data = ['movieIds' => $hashedIds['api']];
-                        $apiService = new ApiRequestImages();
-                        $previewImagesApi = $apiService->sendApiRequest(env('API_HOST_URL') . "/api/images/batch/types/original_poster/small", 'POST', $data, true);
-                        if ($previewImagesApi['status'] === 200 && $previewImagesApi['data']['success']) {
-                            unset($hashedIds['api']);
-                            foreach ($previewImagesApi['data']['images'] as $k => $image) {
-                                if (is_array($image) && !empty($image) && isset($image[0]['url']) && is_string($image[0]['url']) && filter_var($image[0]['url'], FILTER_VALIDATE_URL)) {
-                                    $imageUrl = str_replace('http://media-api.local:8081', env('API_HOST_URL'), $image[0]['url']);
-                                    $apiPreviewLinks[$k] = $imageUrl;
-                                }
-                            }
-                        }
-                    }
-                    foreach ($collectionSort->values()->toArray() as $k => $item) {
-                        if (!empty($section)){
-                            foreach ($section['children'] as $col){
-                                foreach ($item['categories'] as $key => $cat){
-                                    if (!empty($cat['collection_id'] )){
-                                        if ($cat['collection_id'] == $col['id'] ){
-                                            $collectionResponse['data'][$k]['collection'][$key]['label'] = $col['label_'.$currentLocale];
-                                            $collectionResponse['data'][$k]['collection'][$key]['value'] = $col['value'];
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (!empty($collapsedPosters)){
-                            foreach ($hashedIds as $hashKey => $ids) {
-                                foreach ($collapsedPosters as $posterItem){
-                                    if ($item['id_movie'] == $posterItem['id_movie']){
-                                        $img = explode(',',$posterItem['srcset'] ?? '');
-                                        if ($posterItem['id_movie'] == $ids[0]['old_id']){
-                                            $collectionResponse['data'][$k]['poster'] = $previewImagesApi['data']['images'][$hashKey] ? $previewImagesApi['data']['images'][$hashKey][0]['url'] : ($img[0]??'');
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        $collectionResponse['data'][$k]['title'] = $item['title']??$item['original_title'];
-                        $collectionResponse['data'][$k]['published'] = statusSelection($item['published']) ?? [];
-                        $collectionResponse['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['created_at'])) ?? '';
-                        $collectionResponse['data'][$k]['updated_at'] = date('Y-m-d', strtotime($item['updated_at'])) ?? '';
-                        $collectionResponse['data'][$k]['year'] = $item['year_release'] ?? null;
-                        $collectionResponse['data'][$k]['id_movie'] = $item['id_movie'] ?? '';
-                        $collectionResponse['data'][$k]['type_film'] = getTableSegmentOrTypeId($item['type_film']) ?? '';
-                    }
-                    unset($hashedIds);
-                    unset($previewImagesApi);
-                    foreach ($section['children'] as $k => $item){
-                        $collectionResponse['collections'][$k]['label'] = $item['label_'.$currentLocale];
-                        $collectionResponse['collections'][$k]['value'] = $item['value'];
-                    }
+        $model = modelByName('MovieInfo');
+        $titleFieldName = transformTitleByLocale();
+        $allowedFilterFields = $model->getFillable();
 
-                }
-                $collectionResponse['total'] = $collapsed->count();
-                $collectionResponse['locale'] = LanguageController::localizingSectionsList();
-                $collectionResponse['title'] = $section['title_'.$currentLocale];
-                return $collectionResponse;
+        $query = $model->select('id_movie', 'type_film', $titleFieldName, 'published', 'year_release', 'created_at', 'updated_at')
+            ->whereIn('id_movie', $movieIds)
+            ->with(['assignPoster', 'categories']);
+
+        if ($searchQuery = $request->query('search')) {
+            $safeQuery = trim(strtolower(strip_tags($searchQuery)));
+            $query->where(function ($q) use ($safeQuery, $allowedFilterFields, $titleFieldName) {
+                $q->where($titleFieldName, 'like', '%' . $safeQuery . '%')
+                    ->orWhere($allowedFilterFields[1] ?? 'original_title', 'like', '%' . $safeQuery . '%')
+                    ->orWhere($allowedFilterFields[3] ?? 'year_release', 'like', '%' . $safeQuery . '%');
+            });
+        }
+
+        $limit = (int) $request->query('limit', 50);
+        $sortDir = in_array(strtolower($request->query('spin', 'asc')), ['asc', 'desc']) ? strtolower($request->query('spin', 'asc')) : 'asc';
+        $sortBy = $request->query('orderBy', 'updated_at');
+
+        if (!in_array($sortBy, $allowedFilterFields)) {
+            $sortBy = 'updated_at';
+        }
+
+        $paginatedMovies = $query->orderBy($sortBy, $sortDir)->paginate($limit);
+        $movieItems = $paginatedMovies->items();
+
+        if (empty($movieItems)) {
+            return $this->buildEmptyResponse($section, $currentLocale, 0);
+        }
+
+        $movieIdsOnPage = array_column($movieItems, 'id_movie');
+        $assignField = 'id_poster_original';
+
+        $assignedPosterIds = [];
+        foreach ($movieItems as $item) {
+            if (!empty($item->assignPoster->$assignField)) {
+                $assignedPosterIds[] = $item->assignPoster->$assignField;
             }
         }
-        return [];
+
+        $assignedPostersMap = [];
+        if (!empty($assignedPosterIds)) {
+            $assignedPosters = MoviePoster::whereIn('id', $assignedPosterIds)->get();
+            foreach ($assignedPosters as $poster) {
+                $assignedPostersMap[$poster->id] = $poster;
+            }
+        }
+
+        $posterSourceMap = [];
+        foreach ($movieItems as $item) {
+            $posterSourceMap[$item->id_movie] = '-';
+        }
+
+        if (!empty($assignedPosterIds)) {
+            $tmdbPairs = MoviePoster::whereIn('id', $assignedPosterIds)->pluck('id_movie', 'id')->toArray();
+            foreach ($movieItems as $item) {
+                $assignedId = $item->assignPoster->id_poster_original ?? null;
+                if ($assignedId && isset($tmdbPairs[$assignedId])) {
+                    if ((string)$tmdbPairs[$assignedId] === (string)$item->id_movie) {
+                        $posterSourceMap[$item->id_movie] = 'tmdb';
+                    }
+                }
+            }
+        }
+
+        $imdbChecksByType = [];
+        foreach ($movieItems as $item) {
+            if ($posterSourceMap[$item->id_movie] === '-') {
+                $assignedId = $item->assignPoster->id_poster_original ?? null;
+                if ($assignedId) {
+                    $typeSlug = getTableSegmentOrTypeId($item->type_film);
+                    if ($typeSlug) {
+                        if (!isset($imdbChecksByType[$typeSlug])) {
+                            $imdbChecksByType[$typeSlug] = [];
+                        }
+                        $imdbChecksByType[$typeSlug][$assignedId] = $item->id_movie;
+                    }
+                }
+            }
+        }
+
+        foreach ($imdbChecksByType as $typeSlug => $expectedPairs) {
+            $modelName = 'App\\Models\\Posters' . ucfirst($typeSlug);
+            if (class_exists($modelName)) {
+                $posterIdsToCheck = array_keys($expectedPairs);
+                $foundLegacyPairs = $modelName::whereIn('id', $posterIdsToCheck)->pluck('id_movie', 'id')->toArray();
+
+                foreach ($foundLegacyPairs as $foundPosterId => $foundMovieId) {
+                    if (isset($expectedPairs[$foundPosterId]) && (string)$expectedPairs[$foundPosterId] === (string)$foundMovieId) {
+                        $posterSourceMap[$foundMovieId] = 'imdb';
+                    }
+                }
+            }
+        }
+
+        $localePosters = MoviePoster::whereIn('id_movie', $movieIdsOnPage)
+            ->where('locale', $currentLocale)
+            ->get()
+            ->groupBy('id_movie');
+
+        $legacyPosterIdsByType = [];
+        foreach ($movieItems as $item) {
+            $typeSlug = getTableSegmentOrTypeId($item->type_film);
+            if ($typeSlug) {
+                $legacyPosterIdsByType[$typeSlug][] = $item->id_movie;
+            }
+        }
+
+        $legacyPostersMap = [];
+        foreach ($legacyPosterIdsByType as $typeSlug => $ids) {
+            $modelName = 'App\\Models\\Posters' . ucfirst($typeSlug);
+            if (class_exists($modelName)) {
+                $posters = $modelName::whereIn('id_movie', $ids)->get(['id_movie', 'srcset'])->toArray();
+                foreach ($posters as $p) {
+                    if (!isset($legacyPostersMap[$p['id_movie']])) {
+                        $legacyPostersMap[$p['id_movie']] = $p['srcset'];
+                    }
+                }
+            }
+        }
+
+        $responseData = [];
+        $sectionChildrenMap = collect($section->children)->keyBy('id');
+
+        foreach ($movieItems as $item) {
+            $posterUrl = $this->getPosterUrlForSection(
+                $item->id_movie,
+                $item,
+                $assignField,
+                $assignedPostersMap,
+                $localePosters,
+                $legacyPostersMap
+            );
+
+            $categoriesData = [];
+            foreach ($item->categories as $cat) {
+                if (isset($sectionChildrenMap[$cat->collection_id])) {
+                    $child = $sectionChildrenMap[$cat->collection_id];
+                    $categoriesData[] = [
+                        'label' => $child->{'label_' . $currentLocale},
+                        'value' => $child->value,
+                    ];
+                }
+            }
+
+            $responseData[] = [
+                'id_movie'      => $item->id_movie,
+                'type_film'     => getTableSegmentOrTypeId($item->type_film),
+                'title'         => $item->{$titleFieldName} ?? $item->original_title ?? '',
+                'year'          => $item->year_release,
+                'published'     => statusSelection($item->published) ?? [],
+                'created_at'    => $item->created_at ? date('Y-m-d', strtotime($item->created_at)) : '',
+                'updated_at'    => $item->updated_at ? date('Y-m-d', strtotime($item->updated_at)) : '',
+                'poster'        => $posterUrl,
+                'poster_source' => $posterSourceMap[$item->id_movie] ?? '-',
+                'collection'    => $categoriesData,
+            ];
+        }
+
+        $collectionsList = [];
+        foreach ($section->children as $child) {
+            $collectionsList[] = [
+                'label' => $child->{'label_' . $currentLocale},
+                'value' => $child->value,
+            ];
+        }
+
+        return [
+            'data'        => $responseData,
+            'total'       => $paginatedMovies->total(),
+            'locale'      => LanguageController::localizingSectionsList(),
+            'title'       => $section->{'title_' . $currentLocale},
+            'collections' => $collectionsList,
+        ];
+    }
+    private function getPosterUrlForSection(string $idMovie, object $item, string $assignField, array $assignedPostersMap, $localePosters, array $legacyPostersMap): string
+    {
+        // ПРИОРИТЕТ 1: Назначенный постер (из предварительно загруженного мапа)
+        $assignedId = $item->assignPoster->$assignField ?? null;
+
+        if ($assignedId && isset($assignedPostersMap[$assignedId])) {
+            $poster = $assignedPostersMap[$assignedId];
+
+            if ((string)$poster->id_movie === (string)$idMovie) {
+                return $poster->display_url;
+            }
+        }
+
+        // ПРИОРИТЕТ 2: Любой доступный постер TMDB для этого фильма и локали
+        if ($localePosters->has($idMovie) && $localePosters[$idMovie]->isNotEmpty()) {
+            return $localePosters[$idMovie]->first()->display_url;
+        }
+
+        // ПРИОРИТЕТ 3: Legacy постер (IMDb) из предварительно загруженного мапа
+        if (isset($legacyPostersMap[$idMovie])) {
+            $img = explode(',', $legacyPostersMap[$idMovie]);
+            if (!empty($img[0])) {
+                return trimAfterImageExtension($img[0]) ?? '';
+            }
+        }
+
+        return '';
+    }
+    private function buildEmptyResponse(object $section, string $currentLocale, int $total = 0): array
+    {
+        $collectionsList = [];
+        foreach ($section->children as $child) {
+            $collectionsList[] = [
+                'label' => $child->{'label_' . $currentLocale},
+                'value' => $child->value,
+            ];
+        }
+
+        return [
+            'data'        => [],
+            'total'       => $total,
+            'locale'      => LanguageController::localizingSectionsList(),
+            'title'       => $section->{'title_' . $currentLocale},
+            'collections' => $collectionsList,
+        ];
     }
     private function getFilesFromSrcBatch(array $urls, array $ids, string $sectionId): array
     {
@@ -245,14 +351,21 @@ class SectionsController extends Controller
 
         return in_array($typeFilm, [2, 5]) ? 'tv' : 'movie';
     }
-
     public function updateImages(Request $request)
     {
         $request->validate([
-            'sections.*.section_logo' => 'required|image|mimes:jpeg,png,gif|max:10240',
-            'sections.*.backdrop' => 'required|image|mimes:jpeg,png,gif|max:10240',
+            // Делаем поля nullable - могут быть файлы ИЛИ URL
+            'sections.*.section_logo' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
+            'sections.*.backdrop' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
             'sections.*.film_logo_ru' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
             'sections.*.film_logo_en' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
+
+            // Отдельные поля для URL из TMDB
+            'sections.*.section_logo_url' => 'nullable|url',
+            'sections.*.backdrop_url' => 'nullable|url',
+            'sections.*.film_logo_ru_url' => 'nullable|url',
+            'sections.*.film_logo_en_url' => 'nullable|url',
+
             'sections.*.poster_ids' => 'nullable|array|min:7|max:10',
             'sections.*.poster_ids.*' => 'string|regex:/^tt\d{7,}$/',
         ]);
@@ -260,58 +373,92 @@ class SectionsController extends Controller
         $sectionsFiles = $request->file('sections') ?? [];
         $sectionsInput = $request->input('sections', []);
 
-        if (empty($sectionsFiles)) {
-            Log::error('No sections files received');
-            return response()->json(['success' => false, 'message' => 'Нет данных для обработки (файлы отсутствуют).'], 422);
+        // Проверяем что есть хоть какие-то данные
+        $hasAnyData = false;
+        foreach ($sectionsInput as $sectionId => $data) {
+            if (!empty($sectionsFiles[$sectionId]) ||
+                !empty($data['section_logo_url']) ||
+                !empty($data['backdrop_url']) ||
+                !empty($data['film_logo_ru_url']) ||
+                !empty($data['film_logo_en_url']) ||
+                !empty($data['poster_ids'])) {
+                $hasAnyData = true;
+                break;
+            }
         }
 
-        foreach ($sectionsFiles as $sectionId => $data) {
-            if (!isset($data['section_logo']) || !isset($data['backdrop'])) {
-                Log::error("Missing required files for section {$sectionId}");
-                return response()->json(['success' => false, 'message' => "Отсутствуют обязательные файлы для секции {$sectionId}"], 422);
-            }
+        if (!$hasAnyData && empty($sectionsFiles)) {
+            Log::error('No sections data received');
+            return response()->json(['success' => false, 'message' => 'Нет данных для обработки.'], 422);
+        }
 
-            // Сохранение section_logo
+        foreach ($sectionsInput as $sectionId => $data) {
+            // === Section Logo ===
             $sectionLogoPath = "sections/{$sectionId}/section_logo";
             if (Storage::disk('public')->exists($sectionLogoPath)) {
                 Storage::disk('public')->deleteDirectory($sectionLogoPath);
             }
-            $sectionLogoFile = $data['section_logo'];
-            $sectionLogoFilename = $sectionLogoFile->getClientOriginalName();
-            $sectionLogoFile->storeAs($sectionLogoPath, $sectionLogoFilename, 'public');
 
+            if (isset($sectionsFiles[$sectionId]['section_logo'])) {
+                // Загружен файл вручную
+                $sectionLogoFile = $sectionsFiles[$sectionId]['section_logo'];
+                $sectionLogoFilename = $sectionLogoFile->getClientOriginalName();
+                $sectionLogoFile->storeAs($sectionLogoPath, $sectionLogoFilename, 'public');
+            } elseif (!empty($data['section_logo_url'])) {
+                // URL из TMDB
+                $this->downloadAndSaveImage($data['section_logo_url'], "{$sectionLogoPath}/logo.png");
+            }
 
-
+            // === Backdrop ===
             $backdropPath = "sections/{$sectionId}/backdrop";
             if (Storage::disk('public')->exists($backdropPath)) {
                 Storage::disk('public')->deleteDirectory($backdropPath);
             }
-            $backdropFile = $data['backdrop'];
-            $backdropFilename = $backdropFile->getClientOriginalName();
-            $backdropFile->storeAs($backdropPath, $backdropFilename, 'public');
 
+            if (isset($sectionsFiles[$sectionId]['backdrop'])) {
+                // Загружен файл вручную
+                $backdropFile = $sectionsFiles[$sectionId]['backdrop'];
+                $backdropFilename = $backdropFile->getClientOriginalName();
+                $backdropFile->storeAs($backdropPath, $backdropFilename, 'public');
+            } elseif (!empty($data['backdrop_url'])) {
+                // URL из TMDB
+                $this->downloadAndSaveImage($data['backdrop_url'], "{$backdropPath}/backdrop.jpg");
+            }
 
-            if (isset($data['film_logo_ru'])) {
-                $filmLogoRuPath = "sections/{$sectionId}/film_logos/ru";
-                if (Storage::disk('public')->exists($filmLogoRuPath)) {
-                    Storage::disk('public')->deleteDirectory($filmLogoRuPath);
-                }
-                $filmLogoRuFile = $data['film_logo_ru'];
+            // === Film Logo RU ===
+            $filmLogoRuPath = "sections/{$sectionId}/film_logos/ru";
+            if (Storage::disk('public')->exists($filmLogoRuPath)) {
+                Storage::disk('public')->deleteDirectory($filmLogoRuPath);
+            }
+
+            if (isset($sectionsFiles[$sectionId]['film_logo_ru'])) {
+                // Загружен файл вручную
+                $filmLogoRuFile = $sectionsFiles[$sectionId]['film_logo_ru'];
                 $filmLogoRuFilename = $filmLogoRuFile->getClientOriginalName();
                 $filmLogoRuFile->storeAs($filmLogoRuPath, $filmLogoRuFilename, 'public');
+            } elseif (!empty($data['film_logo_ru_url'])) {
+                // URL из TMDB
+                $this->downloadAndSaveImage($data['film_logo_ru_url'], "{$filmLogoRuPath}/logo.png");
             }
 
-            if (isset($data['film_logo_en'])) {
-                $filmLogoEnPath = "sections/{$sectionId}/film_logos/en";
-                if (Storage::disk('public')->exists($filmLogoEnPath)) {
-                    Storage::disk('public')->deleteDirectory($filmLogoEnPath);
-                }
-                $filmLogoEnFile = $data['film_logo_en'];
+            // === Film Logo EN ===
+            $filmLogoEnPath = "sections/{$sectionId}/film_logos/en";
+            if (Storage::disk('public')->exists($filmLogoEnPath)) {
+                Storage::disk('public')->deleteDirectory($filmLogoEnPath);
+            }
+
+            if (isset($sectionsFiles[$sectionId]['film_logo_en'])) {
+                // Загружен файл вручную
+                $filmLogoEnFile = $sectionsFiles[$sectionId]['film_logo_en'];
                 $filmLogoEnFilename = $filmLogoEnFile->getClientOriginalName();
                 $filmLogoEnFile->storeAs($filmLogoEnPath, $filmLogoEnFilename, 'public');
+            } elseif (!empty($data['film_logo_en_url'])) {
+                // URL из TMDB
+                $this->downloadAndSaveImage($data['film_logo_en_url'], "{$filmLogoEnPath}/logo.png");
             }
 
-            $posterIds = $sectionsInput[$sectionId]['poster_ids'] ?? [];
+            // === Posters (без изменений) ===
+            $posterIds = $data['poster_ids'] ?? [];
             if (!empty($posterIds)) {
                 $validIds = [];
                 foreach ($posterIds as $imdbId) {
@@ -341,11 +488,24 @@ class SectionsController extends Controller
 
                 $apiPreviewLinks = [];
                 if (!empty($hashedIds)) {
-                    $apiData = ['movieIds' => array_keys($hashedIds)];
+                    $movieTypesMap = [];
+                    $movieItems = MovieInfo::whereIn('id_movie', $validIds)->where('published', 2)->get(['id_movie', 'type_film'])->toArray();
+                    foreach ($movieItems as $movieItem) {
+                        $hasher = new IdHasher($movieItem['id_movie']);
+                        $hashedId = $hasher->getResult();
+                        if ($hashedId) {
+                            $movieTypesMap[$hashedId] = $movieItem['type_film'];
+                        }
+                    }
+
+                    $apiData = [
+                        'movieIds' => array_keys($hashedIds),
+                        'movieTypes' => $movieTypesMap,
+                    ];
                     $apiService = new ApiRequestImages();
                     $previewImagesApi = $apiService->sendApiRequest(env('API_HOST_URL') . "/api/images/batch/types/original_poster/small", 'POST', $apiData, true);
 
-                    if ($previewImagesApi['status'] === 200 && $previewImagesApi['data']['success']) {
+                    if ($previewImagesApi && isset($previewImagesApi['status']) && $previewImagesApi['status'] === 200 && isset($previewImagesApi['data']['success']) && $previewImagesApi['data']['success']) {
                         foreach ($previewImagesApi['data']['images'] as $k => $image) {
                             if (is_array($image) && !empty($image) && isset($image[0]['url']) && is_string($image[0]['url']) && filter_var($image[0]['url'], FILTER_VALIDATE_URL)) {
                                 $imageUrl = str_replace('http://media-api.local:8081', env('API_HOST_URL'), $image[0]['url']);
@@ -393,9 +553,9 @@ class SectionsController extends Controller
                 }
             }
         }
+
         return response()->json(['success' => true]);
     }
-
     public function deleteImage(Request $request)
     {
         $data = $request->validate([
@@ -420,7 +580,6 @@ class SectionsController extends Controller
         }
         return response()->json(['success' => false, 'message' => 'Файл не найден'], 404);
     }
-
     public function sectionImages()
     {
         $sectionsDir = 'sections';
@@ -449,13 +608,260 @@ class SectionsController extends Controller
                 $files = Storage::disk('public')->files($path);
                 foreach ($files as $file) {
                     $url = Storage::disk('public')->url($file);
+
+                    // ← ДОБАВИТЬ: Добавляем версионирование через время изменения файла
+                    $fullPath = Storage::disk('public')->path($file);
+                    if (file_exists($fullPath)) {
+                        $version = filemtime($fullPath);
+                        $url .= (str_contains($url, '?') ? '&' : '?') . "v={$version}";
+                    }
+
                     $result[$sectionId][$key][] = $url;
                 }
             }
         }
         return response()->json($result);
     }
+    private function downloadAndSaveImage(string $url, string $path): bool
+    {
+        try {
+            $proxy = env('HTTP_PROXY') ?: env('HTTPS_PROXY') ?: null;
 
+            $clientOptions = [
+                'timeout' => 60,
+                'connect_timeout' => 10,
+                'allow_redirects' => true,
+                'verify' => false,
+            ];
+
+            // Если прокси указан - используем его
+            if ($proxy) {
+                $clientOptions['proxy'] = $proxy;
+            }
+
+            $client = new Client($clientOptions);
+
+            $response = $client->get($url, [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                Log::error("Download failed: Status {$response->getStatusCode()}", ['url' => $url]);
+                return false;
+            }
+
+            $content = $response->getBody()->getContents();
+
+            if (empty($content)) {
+                Log::error("Downloaded content is empty", ['url' => $url]);
+                return false;
+            }
+
+            Storage::disk('public')->put($path, $content);
+
+            Log::info("Successfully downloaded", [
+                'url' => $url,
+                'path' => $path,
+                'size' => strlen($content)
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error("Exception during download", [
+                'url' => $url,
+                'path' => $path,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+    private function doDownload(string $url, string $path): bool
+    {
+        try {
+            $client = new Client([
+                'timeout' => 60, // Увеличили до 60 секунд
+                'connect_timeout' => 10,
+                'allow_redirects' => true,
+                'verify' => false,
+            ]);
+
+            $response = $client->get($url, [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                Log::error("Download failed: Status {$response->getStatusCode()}", ['url' => $url]);
+                return false;
+            }
+
+            $content = $response->getBody()->getContents();
+
+            if (empty($content)) {
+                Log::error("Downloaded content is empty", ['url' => $url]);
+                return false;
+            }
+
+            // Проверяем, что это действительно изображение
+            $finfo = finfo_open();
+            $mimeType = finfo_buffer($finfo, $content, FILEINFO_MIME_TYPE);
+            finfo_close($finfo);
+
+            if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])) {
+                Log::error("Invalid mime type", ['url' => $url, 'mime' => $mimeType]);
+                return false;
+            }
+
+            Storage::disk('public')->put($path, $content);
+
+            Log::info("Successfully downloaded", [
+                'url' => $url,
+                'path' => $path,
+                'size' => strlen($content),
+                'mime' => $mimeType
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error("Exception during download", [
+                'url' => $url,
+                'path' => $path,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+    public function getSuggestedMovies(Request $request)
+    {
+        $request->validate([
+            'section_id' => 'required|integer|exists:categories,id',
+        ]);
+
+        $sectionId = $request->input('section_id');
+        $limit = 20;
+
+        try {
+            // Получаем секцию с её детьми (коллекциями)
+            $section = Category::with('children')->findOrFail($sectionId);
+
+            // Собираем ID всех категорий секции (родитель + дети)
+            $categoryIds = [$section->id];
+            if ($section->children && $section->children->count() > 0) {
+                $categoryIds = array_merge($categoryIds, $section->children->pluck('id')->toArray());
+            }
+
+            // Получаем все IMDB ID фильмов из этих категорий через movie_categories
+            $movieIds = MovieCategory::whereIn('id_category', $categoryIds)
+                ->pluck('id_movie')
+                ->unique()
+                ->toArray();
+
+            if (empty($movieIds)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'current_imdb_id' => $section->index_id,
+                    'section_title' => $section->{'title_' . app()->getLocale()}
+                ]);
+            }
+
+            // Запрос к MovieInfo
+            $query = MovieInfo::whereIn('id_movie', $movieIds)
+                ->where('published', 2); // Только опубликованные
+
+            // Исключаем текущий index_id секции
+            if ($section->index_id) {
+                $query->where('id_movie', '!=', $section->index_id);
+            }
+
+            // Определяем поле заголовка по локали
+            $titleFieldName = transformTitleByLocale();
+
+            // Получаем фильмы с постерами, сортируем по году DESC, рейтингу DESC
+            $movies = $query
+                ->select('id', 'id_movie', $titleFieldName . ' as title', 'year_release', 'rating', 'type_film')
+                ->with(['assignPoster'])
+                ->orderBy('year_release', 'desc')
+                ->orderBy('rating', 'desc')
+                ->limit($limit)
+                ->get();
+
+            // Формируем ответ
+            $result = [];
+            $apiService = new ApiRequestImages();
+
+            foreach ($movies as $movie) {
+                $posterUrl = '';
+
+                // Пытаемся получить постер через API (как в show методе)
+                if ($movie->type_film && $movie->id_movie) {
+                    try {
+                        $hasher = new IdHasher($movie->id_movie);
+                        $hashDecodeId = $hasher->getResult();
+
+                        if ($hashDecodeId) {
+                            // Пробуем получить через API
+                            $posterApi = $apiService->sendApiRequest(
+                                env('API_HOST_URL') . "/api/images/{$movie->type_film}/{$hashDecodeId}/original_poster"
+                            );
+
+                            if (isset($posterApi['status']) && $posterApi['status'] === 200 &&
+                                isset($posterApi['data']['success']) && $posterApi['data']['success']) {
+                                $posterUrl = $posterApi['data']['images']['medium'][0]['url'] ?? '';
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to get poster from API', [
+                            'id_movie' => $movie->id_movie,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
+                // Fallback: если API не вернул постер - берём из assignPoster
+                if (empty($posterUrl) && $movie->assignPoster && !empty($movie->assignPoster->srcset)) {
+                    $img = explode(',', $movie->assignPoster->srcset)[0];
+                    $posterUrl = trimAfterImageExtension(trim($img));
+                }
+
+                $result[] = [
+                    'id' => $movie->id,
+                    'id_movie' => $movie->id_movie,
+                    'title' => $movie->title,
+                    'year' => $movie->year_release,
+                    'rating' => $movie->rating,
+                    'poster' => $posterUrl,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+                'current_imdb_id' => $section->index_id,
+                'section_title' => $section->{'title_' . app()->getLocale()},
+                'total_found' => count($result)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('getSuggestedMovies error', [
+                'section_id' => $sectionId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка получения списка фильмов: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function destroy(Request $request): void
     {
         $data = Validator::make($request->all(), [

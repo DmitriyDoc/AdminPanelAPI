@@ -73,7 +73,7 @@ class ParserUpdateMovieController extends ParserController
 
             ParserController::$reportProgress['report']['finishInfo'][camelToSnake($this->typeFilm)][] = $movieId;
             event(new ParserReportEvent(ParserController::$reportProgress));
-            Log::info(">>> LOCALIZING MOVIE ID FINISH",[$movieId]);
+            //Log::info(">>> LOCALIZING MOVIE ID FINISH",[$movieId]);
         }
     }
 

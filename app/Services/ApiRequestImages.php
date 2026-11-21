@@ -37,7 +37,7 @@ class ApiRequestImages
                 $http = $http->withToken($token);
             }
 
-            Log::debug("API-REQUEST-START ---> URL: {$url}, METHOD: {$method}, USE-TOKEN: " . ($useToken ? 'true' : 'false') . ", DATA: " . json_encode($data));
+            //Log::debug("API-REQUEST-START ---> URL: {$url}, METHOD: {$method}, USE-TOKEN: " . ($useToken ? 'true' : 'false') . ", DATA: " . json_encode($data));
 
             switch (strtoupper($method)) {
                 case 'POST':
@@ -54,7 +54,7 @@ class ApiRequestImages
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                Log::debug("API-REQUEST-SUCCESS ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($responseData));
+                //Log::debug("API-REQUEST-SUCCESS ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($responseData));
                 return [
                     'success' => true,
                     'status' => $response->status(),
@@ -78,7 +78,7 @@ class ApiRequestImages
                     'data' => null,
                 ];
             } else {
-                Log::error("API-REQUEST-FAILED ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($response->body()));
+                Log::warning("API-REQUEST-FAILED ---> URL: {$url}, METHOD: {$method}, STATUS: {$response->status()}, RESPONSE: " . json_encode($response->body()));
                 return [
                     'success' => false,
                     'status' => $response->status(),

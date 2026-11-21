@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Parser\TMDBImages;
 use App\Models\AssignPoster;
 use App\Models\MovieInfo;
 use Carbon\Carbon;
@@ -10,6 +11,7 @@ use App\Events\DashboardCurrentPercentageEvent;
 use App\Models\CollectionsCategoriesPivot;
 use App\Models\Collection;
 use App\Models\Category;
+use PHPUnit\Exception;
 
 class DashboardController
 {
@@ -112,7 +114,6 @@ class DashboardController
         }
 
         // 2. Основной запрос: Категории -> Коллекции -> Count
-        // Важно: берем c.value как цвет (yellow, green...)
         $data = DB::table('collections_categories_pivot as ccp')
             ->join('collections as col', 'col.id', '=', 'ccp.collection_id')
             ->join('categories as c', 'c.id', '=', 'col.category_id')
@@ -125,7 +126,7 @@ class DashboardController
             ->orderBy('movies_count', 'desc')
             ->get();
 
-        // 3. Считаем "Без категории" для полноты картины (опционально)
+        // 3. Считаем "Без категории" для полноты картины
         $withCollectionCount = DB::table('collections_categories_pivot')
             ->whereIn('id_movie', $publishedMovieIds)
             ->distinct('id_movie')
@@ -136,15 +137,19 @@ class DashboardController
         // 4. Группировка данных для фронтенда
         $grouped = $data->groupBy('category_id')->map(function($items) {
             $first = $items->first();
+
+            // ВАЖНО: оборачиваем collections в collect() после filter()
+            $collections = collect($items->map(fn($item) => [
+                'id' => $item->collection_id,
+                'label' => $item->collection_label,
+                'count' => (int) $item->movies_count
+            ])->values()->filter(fn($c) => $c['count'] > 0)->values());
+
             return [
                 'id' => $first->category_id,
                 'name' => $first->category_name,
-                'color_key' => $first->category_color ?? 'gray', // yellow, green, blue...
-                'collections' => $items->map(fn($item) => [
-                    'id' => $item->collection_id,
-                    'label' => $item->collection_label,
-                    'count' => (int) $item->movies_count
-                ])->values()->filter(fn($c) => $c['count'] > 0)
+                'color_key' => $first->category_color ?? 'gray',
+                'collections' => $collections
             ];
         })->values();
 
@@ -154,16 +159,19 @@ class DashboardController
                 'id' => 999,
                 'name' => __('dashboard.uncategorized') ?? 'Прочее',
                 'color_key' => 'gray',
-                'collections' => [[
+                'collections' => collect([[
                     'id' => 0,
                     'label' => 'Не распределено',
                     'count' => $uncategorizedCount
-                ]]
+                ]])
             ]);
         }
 
         // Общая сумма для проверки
-        $totalInGraph = $grouped->sum(fn($cat) => $cat['collections']->sum('count'));
+        // Исправлено: гарантируем работу с коллекцией
+        $totalInGraph = collect($grouped)->sum(fn($cat) =>
+        collect($cat['collections'])->sum('count')
+        );
 
         return response()->json([
             'data' => $grouped,
@@ -274,6 +282,6 @@ class DashboardController
     }
     public function test()
     {
-        return [];
+
     }
 }

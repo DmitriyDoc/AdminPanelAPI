@@ -44,37 +44,73 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
      */
     Route::middleware('auth:sanctum')->group(function () {
         // SET LOCALE
-        Route::get('/locale',[\App\Http\Controllers\LanguageController::class, 'changeLocale'])->withoutMiddleware('localization');
+        Route::get('/locale',[\App\Http\Controllers\LanguageController::class, 'changeLocale']);
         // EXPORT
         Route::post('/movies/send', [\App\Http\Controllers\AdminMovieController::class, 'send']);
         Route::post('/taxonomies/send', [\App\Http\Controllers\AdminTaxonomyController::class, 'send']);
         Route::post('/tags/send', [\App\Http\Controllers\AdminTagsController::class, 'send']);
         Route::post('/index/send', [\App\Http\Controllers\AdminIndexController::class, 'send']);
         Route::post('/collections/send', [\App\Http\Controllers\AdminCollectionsController::class, 'send']);
+        Route::post('/taxonomies/send-full', [\App\Http\Controllers\AdminBackupController::class, 'sendFullTaxonomies']);
+        Route::post('/tags/send-full', [\App\Http\Controllers\AdminBackupController::class, 'sendFullTags']);
+        //Route::post('/movies/send-full', [\App\Http\Controllers\AdminMovieController::class, 'sendFull']);
         // CHECK  LANGUAGE
         Route::middleware('localization')->group(function () {
             // BALANCER ALLOHA
             Route::get('/balancer', [\App\Http\Controllers\BalancerController::class, 'getMovieByImdb']);
-            // PARSER
-            Route::post('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
-            Route::post('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
-            Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInitStore']);
-            Route::get('/parser/locale', [\App\Http\Controllers\Parser\ParserStartController::class,'parseLocalization']);
+            // PARSER IMDb
+            //Route::post('/updatemovie', [\App\Http\Controllers\Parser\ParserStartController::class,'parseMovieUpdate']);
+            //Route::post('/updateceleb', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCelebUpdate']);
+            //Route::post('/parser', [\App\Http\Controllers\Parser\ParserStartController::class,'parseInitStore']);
+            //Route::get('/parser/locale', [\App\Http\Controllers\Parser\ParserStartController::class,'parseLocalization']);
+            Route::post('/parser/charts', [\App\Http\Controllers\Parser\ParserStartController::class,'parseCharts']);
+            // API TMDb
+            Route::post('/updatemovie', [\App\Http\Controllers\TMDb\TmdbMovieUpdateController::class,'parseMovieUpdate']);
+            Route::post('/updateceleb', [\App\Http\Controllers\TMDb\TmdbCelebUpdateController::class,'parseCelebUpdate']);
+            Route::get('/section/tmdb-images', [\App\Http\Controllers\TMDb\TmdbImagesController::class,'getTMDBImages']);
+            // ==========================================
+            // IMPORT ROUTES
+            // ==========================================
+            Route::prefix('import')->group(function () {
+                Route::controller(\App\Http\Controllers\TMDb\TmdbImportController::class)->group(function () {
+                    Route::post('/one',  'importOne');
+                    Route::get('/lists',  'getLists');
+                    Route::get('/list/{type}', 'getList');
+                    Route::post('/many', 'importMany');
+                });
+            });
+            // ==========================================
+            // MEDIA ROUTES
+            // ==========================================
+            Route::prefix('media')->group(function () {
+                Route::get('/show/images/{id}', [\App\Http\Controllers\Media\MediaController::class, 'showImages']);
+                Route::get('/show/posters/{id}', [\App\Http\Controllers\Media\MediaController::class, 'showPosters']);
+                Route::post('/poster_assign', [\App\Http\Controllers\Media\MediaController::class, 'store']);
+                Route::patch('/move', [\App\Http\Controllers\Media\MediaController::class, 'moveImagesToPosters']);
+                Route::post('/reorder', [\App\Http\Controllers\Media\MediaController::class, 'reorderImages']);
+                Route::delete('/delete', [\App\Http\Controllers\Media\MediaController::class, 'destroy']);
+                Route::get('/{type}/{slug}/{id}', [\App\Http\Controllers\Media\MediaController::class, 'index']);
+            });
+            // ==========================================
+            // RESIZE IMAGES
+            // ==========================================
+            Route::post('/resize-images', [\App\Http\Controllers\Resize\ResizeImagesController::class, 'index']);
+
             // DASHBOARD QUERY
             Route::get('/dashboard',[\App\Http\Controllers\DashboardController::class, 'index']);
             Route::get('/dashboard/graph-collections', [\App\Http\Controllers\DashboardController::class, 'graphByCollections']);
             Route::get('/dashboard/graph-years', [\App\Http\Controllers\DashboardController::class, 'graphByYears']);
             // MEDIA QUERY
-            Route::post('/resizing',[\App\Http\Controllers\ResizeImagesController::class, 'index']);
-            Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
-                Route::get('/media/show/images/{id}', 'showImages');
-                Route::get('/media/show/posters/{id}', 'showPosters');
-                Route::get('/media/{type}/{slug}/{id}', 'index');
-                Route::post('/media/poster_assign', 'store');
-                Route::patch('/media/move', 'moveImagesToPosters');
-                Route::post('/media/images/reorder','reorderImages');
-                Route::delete('/media', 'destroy');
-            });
+            //Route::post('/resize-images',[\App\Http\Controllers\ResizeImagesController::class, 'index']);
+            //Route::controller(\App\Http\Controllers\MediaController::class)->group(function () {
+                //Route::get('/media/show/images/{id}', 'showImages');
+                //Route::get('/media/show/posters/{id}', 'showPosters');
+                //Route::post('/media/poster_assign', 'store');
+                //Route::patch('/media/move', 'moveImagesToPosters');
+                //Route::post('/media/reorder','reorderImages');
+                //Route::delete('/media/delete', 'destroy');
+                //Route::get('/media/{type}/{slug}/{id}', 'index');
+            //});
             // Resources QUERY
             Route::controller(\App\Http\Controllers\MoviesController::class)->group(function () {
                 Route::get('/movies/export/show', 'showExportMovies');
@@ -83,6 +119,11 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
                 Route::put('/movies/update', 'update');
                 Route::post('/publication','publication');
                 Route::delete('/movies', 'destroy');
+            });
+            Route::controller(\App\Http\Controllers\ChartsController::class)->group(function () {
+                Route::get('/charts', 'index');
+                Route::get('/charts/{chart_id}', 'showMovies');
+                Route::delete('/charts', 'destroy');
             });
             Route::controller(\App\Http\Controllers\CelebsController::class)->group(function () {
                 Route::get('/persons', 'index');
@@ -106,7 +147,31 @@ Route::group(['middleware' => [\App\Http\Middleware\VerifyAPIAccess::class, 'thr
                 Route::post('/section/update-images', 'updateImages');
                 Route::post('/section/update', 'updateSection');
                 Route::delete('/section/images', 'deleteImage');
+                Route::get('/section/suggested-movies', 'getSuggestedMovies');
                 Route::delete('/sections', 'destroy');
+            });
+            Route::controller(\App\Http\Controllers\CategoriesManagementController::class)->group(function () {
+                Route::get('/categories/manage/list', 'list');
+
+                Route::post('/categories/manage/category', 'createCategory');
+                Route::patch('/categories/manage/category/{id}', 'updateCategory');
+                Route::delete('/categories/manage/category/{id}', 'deleteCategory');
+
+                Route::post('/categories/manage/collection', 'createCollection');
+                Route::patch('/categories/manage/collection/{id}', 'updateCollection');
+                Route::delete('/categories/manage/collection/{id}', 'deleteCollection');
+
+                Route::post('/categories/manage/franchise', 'createFranchise');
+                Route::patch('/categories/manage/franchise/{id}', 'updateFranchise');
+                Route::delete('/categories/manage/franchise/{id}', 'deleteFranchise');
+
+                Route::post('/categories/manage/move-collection', 'moveCollection');
+                Route::post('/categories/manage/assign-franchise-to-collection', 'assignFranchiseToCollection');
+                Route::post('/categories/manage/sync-franchise-collections', 'syncFranchiseCollections');
+
+                Route::get('/categories/manage/collection-images', 'getCollectionImages');
+                Route::post('/categories/manage/collection-image', 'updateCollectionImage');
+                Route::delete('/categories/manage/collection-image', 'deleteCollectionImageManage');
             });
             Route::controller(\App\Http\Controllers\CollectionsController::class)->group(function () {
                 Route::get('/collections/{slugSect}/{slugColl}', 'index');

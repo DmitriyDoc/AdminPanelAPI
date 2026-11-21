@@ -23,6 +23,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     const valueSort = ref(state.value.sortBy);
     const disabledBtnUpdate = ref(false);
     const disabledBtnSync = ref(false);
+    const disabledBtnInfoSync = ref(false);
     const loader = ref(true);
     const error = ref();
 
@@ -102,9 +103,9 @@ export const useMoviesStore = defineStore('moviesStore',() => {
     }
     const syncItem = async (params) => {
         disabledBtnSync.value = true;
+        disabledBtnInfoSync.value = true;
         axios.post('/updatemovie',{ data: params}).then((response) => {
             if (response.status === 200) {
-                //disabledBtnSync.value = false;
                 showItem();
                 ElMessage({
                     type: 'success',
@@ -161,6 +162,7 @@ export const useMoviesStore = defineStore('moviesStore',() => {
         route,
         disabledBtnUpdate,
         disabledBtnSync,
+        disabledBtnInfoSync,
         locale,
         loader,
         error,

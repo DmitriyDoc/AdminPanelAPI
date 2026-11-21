@@ -39,11 +39,11 @@ class PlayerService
             $body = $response->getBody()->getContents();
             $data = json_decode($body, true);
 
-            Log::info('Alloha API request:', [
-                'url' => $baseLink . '?token=' . $token . '&imdb=' . $params['imdb'],
-                'status' => $response->status(),
-                'body' => substr($body, 0, 500) // Логируем первые 500 символов ответа
-            ]);
+//            Log::info('Alloha API request:', [
+//                'url' => $baseLink . '?token=' . $token . '&imdb=' . $params['imdb'],
+//                'status' => $response->status(),
+//                'body' => substr($body, 0, 500) // Логируем первые 500 символов ответа
+//            ]);
 
             if (!is_array($data) || !isset($data['status'])) {
                 Log::error('Alloha API вернул некорректный формат данных: ' . $body);

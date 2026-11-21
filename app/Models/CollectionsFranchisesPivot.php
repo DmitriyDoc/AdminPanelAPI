@@ -11,4 +11,6 @@ class CollectionsFranchisesPivot extends Model
     protected $guarded = false;
     protected $table = 'collections_franchises_pivot';
     public $timestamps = false;
+
+    protected $fillable = ['id', 'collection_id'];
 }

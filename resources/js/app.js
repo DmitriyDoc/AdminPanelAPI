@@ -12,8 +12,31 @@ import axios from 'axios';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 
+// ==========================================
+// ГЛОБАЛЬНАЯ НАСТРОЙКА AXIOS (КРИТИЧЕСКИ ВАЖНО)
+// ==========================================
 axios.defaults.baseURL = `/api`;
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true; // Разрешает отправку и получение куки (сессия, XSRF-TOKEN)
+axios.defaults.withXSRFToken = true;   // Автоматически читает куку 'XSRF-TOKEN' и подставляет её в заголовок 'X-XSRF-TOKEN'
+
+axios.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response && (error.response.status === 401 || error.response.status === 419) && !originalRequest._retry) {
+            originalRequest._retry = true;
+            try {
+                await axios.get('/sanctum/csrf-cookie');
+                return axios(originalRequest);
+            } catch (refreshError) {
+                window.location.href = '/';
+                return Promise.reject(refreshError);
+            }
+        }
+        return Promise.reject(error);
+    }
+);
 
 createApp(App).use(i18nVue, {
     resolve: async lang => {

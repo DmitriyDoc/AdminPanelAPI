@@ -1,7 +1,7 @@
 <?php
 
-
 namespace App\Http\Controllers\Parser;
+
 use App\Events\ParserReportEvent;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ParserController;
@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+
 class ParserStartController
 {
     public function parseInitStore(Request $request)
@@ -106,9 +107,72 @@ class ParserStartController
             throw $e;
         }
     }
+
+    public function parseCharts(Request $request)
+    {
+        // 🔧 ИСПРАВЛЕНИЕ: Используем массив для правил с regex, содержащим |
+        $validator = Validator::make($request->all()['data'] ?? [], [
+            'action' => 'required|string|in:update_all,update_one',
+            'chart_id' => [
+                'nullable',
+                'string',
+                'regex:/^(in)\d{7,10}$/'
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $data = $validator->validated();
+        $parserStart = new ParserController();
+
+        try {
+            switch ($data['action']) {
+                case 'update_all':
+                    // Запускаем парсинг всех списков
+                    $parserStart->parseAllCharts();
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => __('parser.charts_update_all_queued')
+                    ]);
+
+                case 'update_one':
+                    // Обновляем конкретный список по ID
+                    if (!empty($data['chart_id'])) {
+                        $parserStart->parseChart($data['chart_id']);
+
+                        return response()->json([
+                            'status' => 'success',
+                            'message' => __('parser.chart_update_queued', ['id' => $data['chart_id']])
+                        ]);
+                    }
+                    break;
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => __('parser.invalid_action')
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error("Error in parseCharts", [
+                'error' => $e->getMessage(),
+                'data' => $data
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function parseLocalization()
     {
         return LanguageController::localizingParserInfo();
     }
-
 }

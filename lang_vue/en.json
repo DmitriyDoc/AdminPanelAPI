@@ -21,7 +21,8 @@
     "list_franchises":"List Franchise",
     "add_collection":"Add Collection",
     "list_collections":"List Collection",
-    "list_section":"List sections",
+    "assign_section":"Assigning sections",
+    "partition_management":"Partition Management",
     "actor":"Actor",
     "actress":"Actress",
     "producer":"Producer",
@@ -37,8 +38,10 @@
     "movies":"Movies",
     "persons":"Persons",
     "export":"Export",
+    "import":"Import",
     "export_movies":"Export movies",
     "export_taxonomies":"Export taxonomies",
     "export_tags":"Export tags",
-    "export_index_images":"Export index images"
+    "export_index_images":"Export index images",
+    "charts":"IMDb Charts"
 }

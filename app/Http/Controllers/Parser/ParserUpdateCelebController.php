@@ -78,11 +78,11 @@ class ParserUpdateCelebController extends ParserController
         event(new CurrentPercentageEvent(['percent'=>30,'action'=>__('parser.credits_data_parser'),'color'=>'']));
         $this->linksGetter($this->linksCredits,'credits','filmography', null);
 
-//        event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.images_id_parser'),'color'=>'']));
-//        $this->linksGetter($this->linksIdsImages,'getIdImages','images',self::ACTOR_PATTERN );
-//
-//        event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
-//        $this->createIdArrayAndGetImages($this->update_images_table,$this->linksImages,$this->idCeleb );
+        event(new CurrentPercentageEvent(['percent'=>50,'action'=>__('parser.images_id_parser'),'color'=>'']));
+        $this->linksGetter($this->linksIdsImages,'getIdImages','images',self::ACTOR_PATTERN );
+
+        event(new CurrentPercentageEvent(['percent'=>70,'action'=>__('parser.images_by_id_parser'),'color'=>'']));
+        $this->createIdArrayAndGetImages($this->update_images_table,$this->linksImages,$this->idCeleb );
 
         event(new CurrentPercentageEvent(['percent'=>90,'action'=>__('parser.localization_parser'),'color'=>'']));
         foreach ($this->idCeleb as $id) {

@@ -21,7 +21,8 @@
     "list_franchises":"Список франшиз",
     "add_collection":"Добавить коллекцию",
     "list_collections":"Список коллекций",
-    "list_section":"Список секций",
+    "assign_section":"Назначение разделов",
+    "partition_management":"Управление разделами",
     "actor":"Актёр",
     "actress":"Актриса",
     "producer":"Продюсер",
@@ -37,9 +38,12 @@
     "movies":"Фильмы",
     "persons":"Персоны",
     "export":"Экспорт",
+    "import":"Импорт",
     "export_movies":"Экспорт фильмов",
     "export_taxonomies":"Экспорт таксономий",
     "export_tags":"Экспорт тегов",
-    "export_index_images":"Экспорт изображений индекса"
+    "export_index_images":"Экспорт изображений индекса",
+    "charts":"Списки IMDb"
+
 }
 

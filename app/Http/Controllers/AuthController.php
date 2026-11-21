@@ -35,7 +35,10 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
+
             Auth::loginUsingId($user->id, true);
+
+            $request->session()->save();
 
             return response()->json($this->extractPermissionsFromUser($user));
         } catch (\Exception $error) {

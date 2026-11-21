@@ -1,154 +1,107 @@
-// playwright-parser.js — Stable + Poster Retries
 const express = require('express');
-const { chromium } = require('playwright');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
+const path = require('path');
+
+puppeteer.use(StealthPlugin());
 
 const app = express();
-const PORT = 3001;
-const EMPTY_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+const PORT = process.env.PORT || 3001;
+const COOKIES_FILE = path.join(__dirname, 'imdb_cookies.json');
 
-app.get('/parse', async (req, res) => {
-    const { url, userAgent, width, height, locale, timezone, waitSelector, proxy } = req.query;
+app.use(express.json({ limit: '15mb' }));
 
-    if (!url) return res.status(400).json({ error: 'URL is required' });
+const sendResult = (res, url, html = null, error = null) => {
+    res.json({
+        status: html ? 'success' : 'error',
+        url,
+        html,
+        length: html ? html.length : 0,
+        error: error ? (error.message || String(error)) : null
+    });
+};
 
-    const isMediaindex = url.includes('/mediaindex?');
-    const isPosterIndex = isMediaindex && url.includes('contentTypes=poster');
-    const isTitlePage = url.match(/\/title\/tt\d+/) && !isMediaindex;
-
-    let browser;
+const loadCleanCookies = () => {
     try {
-        browser = await chromium.launch({
+        if (fs.existsSync(COOKIES_FILE)) {
+            const all = JSON.parse(fs.readFileSync(COOKIES_FILE, 'utf8'));
+            return all.filter(c => ['aws-waf-token', 'session-id', 'session-id-time', 'ci'].includes(c.name));
+        }
+        return [];
+    } catch (e) { return []; }
+};
+
+const attemptFetch = async (url, attemptNumber = 1, minBytesOverride = null) => {
+    const cleanUrl = url.trim();
+    let minBytes = 10000;
+    if (cleanUrl.match(/\/title\/tt\d+\/$/)) minBytes = 50000;
+    if (minBytesOverride !== null) minBytes = minBytesOverride;
+
+    let browser, page;
+    try {
+        const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
+        const args = [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-gpu',
+            '--disable-dev-shm-usage'
+        ];
+        if (proxyUrl) args.push(`--proxy-server=${proxyUrl}`);
+
+        console.log(`🚀 Запуск браузера (попытка ${attemptNumber})...`);
+
+        browser = await puppeteer.launch({
             headless: true,
-            args: [
-                '--no-zygote',
-                '--disable-blink-features=AutomationControlled',
-                '--no-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--user-agent=' + (userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'),
-                '--window-size=' + (width || 1920) + ',' + (height || 1080),
-            ]
+            executablePath: '/usr/bin/chromium',
+            args,
+            defaultViewport: { width: 1920, height: 1080 }
         });
 
-        const context = await browser.newContext({
-            viewport: { width: parseInt(width) || 1920, height: parseInt(height) || 1080 },
-            // === [RU-LOCALE-MOD] START ===
-            locale: locale || 'ru-RU',              // 🔥 Русский
-            timezoneId: timezone || 'Europe/Moscow', // 🔥 Москва
-            // === [RU-LOCALE-MOD] END ===
-            userAgent: userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            permissions: ['geolocation'],
-            geolocation: { longitude: -74.0060, latitude: 40.7128 },
+        page = await browser.newPage();
+
+        const cookies = loadCleanCookies();
+        if (cookies.length > 0) await page.setCookie(...cookies);
+
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none', 'Upgrade-Insecure-Requests': '1'
         });
 
-        await context.addInitScript(() => {
-            Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => undefined });
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            Object.defineProperty(Navigator.prototype, 'plugins', { get: () => [1,2,3,4,5] });
-            window.chrome = { runtime: {}, loadTimes: () => ({ connectionType: '4g' }), csi: () => ({ startE: Date.now() }) };
-        });
-        // === [RU-LOCALE-MOD] START ===
-        // 🔥 Эмуляция navigator.language через evaluate (дополнительный слой)
-        await context.addInitScript(() => {
-            Object.defineProperty(navigator, 'language', {
-                get: () => 'ru-RU',
-                configurable: true
-            });
-            Object.defineProperty(navigator, 'languages', {
-                get: () => ['ru-RU', 'ru', 'en-US', 'en'],
-                configurable: true
-            });
-        });
-        // === [RU-LOCALE-MOD] END ===
+        console.log(`🌐 Переход на: ${cleanUrl}`);
+        await page.goto(cleanUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        await new Promise(r => setTimeout(r, 2000));
 
-        const page = await context.newPage();
-
-        // === [RU-LOCALE-MOD] START ===
-        // 🔥 Установка куки lc-main для IMDb (до навигации!)
-        await context.addCookies([{
-            name: 'lc-main',
-            value: 'ru_RU',
-            domain: '.imdb.com',
-            path: '/',
-            expires: Math.floor(Date.now() / 1000) + 31536000 // 1 год
-        }]);
-        // === [RU-LOCALE-MOD] END ===
-
-        // 🔧 Подмена картинок ТОЛЬКО для /title/
-        if (isTitlePage) {
-            await page.route('**/*.{png,jpg,jpeg,webp,gif,svg}', async route => {
-                await route.fulfill({ status: 200, contentType: 'image/gif', body: EMPTY_GIF });
-            });
+        const html = await page.content();
+        if (html.length < minBytes || html.includes('403 Forbidden') || html.includes('gokuProps')) {
+            throw new Error(`WAF Block or Too Short (${html.length} bytes)`);
         }
 
-        // 🔧 Загрузка страницы
-        // 🔧 Загрузка страницы
-        console.log(`🌐 Navigating: ${url}`);
-
-        // Для поиска используем networkidle, чтобы дождаться всех AJAX-запросов
-        const waitStrategy = url.includes('/search/') ? 'networkidle' : 'domcontentloaded';
-
-        await page.goto(url, {
-            waitUntil: waitStrategy,
-            timeout: 60000 // Увеличили таймаут самой загрузки
-        });
-
-        // 🔧 Дополнительная пауза для поиска, чтобы JS точно все отрисовал
-        if (url.includes('/search/')) {
-            await page.waitForTimeout(2000);
-        }
-
-        // 🔧 Ожидание селектора
-        if (waitSelector) {
-            try {
-                const waitTimeout = url.includes('/search/') ? 15000 : 10000;
-                await page.waitForSelector(waitSelector, { timeout: waitTimeout, state: 'attached' });
-            } catch (e) {
-                console.warn(`⚠️ Selector "${waitSelector}" not found for ${url}`);
-                const currentContent = await page.content();
-                console.log(`📄 Current HTML length: ${currentContent.length}`);
-                console.log(`📄 First 500 chars: ${currentContent.substring(0, 500)}`);
-            }
-        }
-
-        // 🔧 Прогрессивный ретрай для постеров
-        let html = await page.content();
-        if (isPosterIndex && html.length < 50000) {
-            console.log(`⚠️ Poster index too short (${html.length} bytes), retrying...`);
-            await page.waitForTimeout(2000); // Ждём 2 сек
-            await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
-            if (waitSelector) {
-                try {
-                    await page.waitForSelector(waitSelector, { timeout: 8000, state: 'attached' });
-                } catch (e) {}
-            }
-            await page.waitForTimeout(300);
-            html = await page.content();
-            console.log(`✅ Retry done: ${html.length} bytes`);
-        }
-
-        await page.waitForTimeout(200);
-
-        // 🔧 Валидация
-        const isBlockedByWaf = html.includes('awsWaf') || html.includes('Access Denied');
-        const isCaptchaPage = html.includes('mp_verify') || (html.includes('captcha') && html.length < 50000);
-
-        if (html.length < 2000 || isBlockedByWaf || isCaptchaPage) {
-            console.error(`🚫 Blocked content detected. Length: ${html.length}, WAF: ${isBlockedByWaf}, CaptchaPage: ${isCaptchaPage}`);
-            throw new Error(`Blocked or empty: ${html.length} bytes`);
-        }
-
-        res.send(html);
-        console.log(`✅ Sent ${html.length} bytes for ${url}`);
+        console.log(`✅ Успех: ${html.length} байт`);
+        return html;
 
     } catch (error) {
-        console.error(`❌ Error for ${url}:`, error.message);
-        return res.status(500).json({ error: error.message });
+        console.error(`❌ ОШИБКА: ${error.message || error}`);
+        if (attemptNumber < 2 && (!error.message || !error.message.includes('WAF'))) {
+            console.log("🔄 Повторная попытка через 2 сек...");
+            await new Promise(r => setTimeout(r, 2000));
+            return attemptFetch(url, attemptNumber + 1, minBytes);
+        }
+        throw error;
     } finally {
-        if (browser) await browser.close().catch(() => {});
+        if (page) try { await page.close(); } catch(e){}
+        if (browser) try { await browser.close(); } catch(e){}
     }
+};
+
+app.post('/parse/info', async (req, res) => {
+    try {
+        const html = await attemptFetch(req.body.url, 1, 10000);
+        sendResult(res, req.body.url, html);
+    } catch (error) { sendResult(res, req.body.url, null, error); }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`⚡ Playwright parser (POSTER-RETRY) running on port ${PORT}`);
-});
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.listen(PORT, '0.0.0.0', () => console.log(`⚡ Local Stealth Parser on port ${PORT}`));

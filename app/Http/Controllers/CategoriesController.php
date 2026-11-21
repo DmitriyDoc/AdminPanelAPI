@@ -127,103 +127,132 @@ class CategoriesController extends Controller
             $modelCollection->insert($data->getData());
         }
     }
-    public function store(Request $request) : array
+    public function store(Request $request): array
     {
-        $allowedTableNames = [
-            0=>'FeatureFilm',
-            1=>'MiniSeries',
-            2=>'ShortFilm',
-            3=>'TvMovie',
-            4=>'TvSeries',
-            5=>'TvShort',
-            6=>'TvSpecial',
-            7=>'Video',
-        ];
         $locale = Lang::locale();
-        $data = Validator::make($request->all(),[
-            'id_movie' => 'required|string|max:10',
-            'type_film' => 'required|string|max:12',
+        $data = Validator::make($request->all(), [
+            'id_movie'   => 'required|string|max:10',
             'categories' => 'present|array',
-            'tags' => 'array',
-            'viewed' => 'boolean',
-            'short' => 'boolean',
-            'adult' => 'boolean',
+            'tags'       => 'array',
+            'viewed'     => 'boolean',
+            'short'      => 'boolean',
+            'adult'      => 'boolean',
         ])->safe()->all();
+        $typeFilm = MovieInfo::where('id_movie', $data['id_movie'])->value('type_film');
+
+        if ($typeFilm === null) {
+            return ['success' => false, 'error' => 'Movie not found in MovieInfo'];
+        }
+
+        $data['type_film'] = $typeFilm;
 
         MovieInfo::where('id_movie', $data['id_movie'])
             ->where('published', 2)
             ->update(['published' => 1]);
 
-        if (!empty($data['categories'])){
+        if (!empty($data['categories'])) {
             if (count($data['categories']) >= 2) {
-                foreach ($data['categories'] as $arrLeft){
-                    if (array_search(90000,$arrLeft)  === 0 || array_search(1000000 ,$arrLeft) === 0){
-                        if ($arrLeft[0] != 90000 && $arrLeft[0] != 1000000){
-                            return ['success'=>false];
+                foreach ($data['categories'] as $arrLeft) {
+                    if (array_search(90000, $arrLeft) === 0 || array_search(1000000, $arrLeft) === 0) {
+                        if ($arrLeft[0] != 90000 && $arrLeft[0] != 1000000) {
+                            return ['success' => false];
                         }
-                        foreach ($data['categories'] as $arrRight){
-                            if ($arrRight[0] != $arrLeft[0]){
-                                return ['success'=>false];
+                        foreach ($data['categories'] as $arrRight) {
+                            if ($arrRight[0] != $arrLeft[0]) {
+                                return ['success' => false];
                             }
                         }
                     }
                 }
             }
+
             $model = modelByName('MovieInfo');
-            //foreach ($allowedTableNames as $tableName){
-                //$model = convertVariableToModelName('IdType',$tableName, ['App', 'Models']);
-                $typeCollection = $model->where('id_movie','=',$data['id_movie'])->get('type_film');
-                if (!$typeCollection->isEmpty()){
-                    $data['type_film'] = $typeCollection[0]['type_film'];
-                    //break;
-                }
-            //}
+            $typeCollection = $model->where('id_movie', '=', $data['id_movie'])->get('type_film');
+            if (!$typeCollection->isEmpty()) {
+                $data['type_film'] = $typeCollection[0]['type_film'];
+            }
         }
-        transaction( function () use ($data,$locale){
-            CollectionsCategoriesPivot::where('id_movie',$data['id_movie'])->delete();
-            TagsMoviesPivot::where('id_movie',$data['id_movie'])->delete();
-            MovieCategory::where('id_movie',$data['id_movie'])->delete();
-            $categoriesToInsert = [];
-            if (!empty($data['categories'])){
-                foreach ( $data['categories'] as $cat){
-                    $franchiseId = null;
-                    $categoryId = $cat[0];
-                    $key = $data['id_movie'] . '_' . $categoryId;
-                    $categoriesToInsert[$key] = [
-                        'id_movie' => $data['id_movie'],
-                        'id_category' => $categoryId,
-                    ];
-                    if (!empty($cat[2])){
-                        $franchiseId = str_replace("fr_".$cat[1], '', $cat[2]);
+
+        DB::transaction(function () use ($data, $locale) {
+
+            MovieInfo::where('id_movie', $data['id_movie'])->lockForUpdate()->first();
+            CollectionsCategoriesPivot::where('id_movie', $data['id_movie'])->delete();
+            TagsMoviesPivot::where('id_movie', $data['id_movie'])->delete();
+            MovieCategory::where('id_movie', $data['id_movie'])->delete();
+
+            if (!empty($data['categories'])) {
+                $groupedCats = [];
+
+                foreach ($data['categories'] as $cat) {
+                    $categoryId   = $cat[0];
+                    $collectionId = $cat[1];
+                    $franchiseId  = 0;
+
+                    if (!empty($cat[2])) {
+                        $franchiseId = (int) str_replace("fr_" . $cat[1], '', $cat[2]);
                     }
-                    MovieCategory::upsert(
-                        array_values($categoriesToInsert),
-                        ['id_movie', 'id_category']
-                    );
-                    CollectionsCategoriesPivot::create([
-                        'id_movie' =>$data['id_movie'],
-                        'type_film' => $data['type_film'],
-                        'collection_id' => $cat[1],
-                        'franchise_id' => $franchiseId,
-                        'viewed' => $data['viewed'] ?? null,
-                        'short' => $data['short'] ?? null,
-                        'adult' => $data['adult'] ?? null,
-                    ]);
-                }
-                if (!empty($data['tags'])){
-                    foreach ($data['tags'] as $tag){
-                        $tagExist = DB::table('tags')->where('tag_name_'.$locale,'=',$tag)->first();
-                        if ($tagExist){
-                            TagsMoviesPivot::create([
-                                'id_movie' => $data['id_movie'],
-                                'id_tag' => $tagExist->id,
-                                'type_film' => $data['type_film']
-                            ]);
+
+                    $groupKey = $collectionId;
+
+                    if (!isset($groupedCats[$groupKey])) {
+                        $groupedCats[$groupKey] = [
+                            'category_id'  => $categoryId,
+                            'franchise_id' => $franchiseId,
+                        ];
+                    } else {
+                        if ($groupedCats[$groupKey]['franchise_id'] === 0 && $franchiseId > 0) {
+                            $groupedCats[$groupKey]['franchise_id'] = $franchiseId;
                         }
                     }
                 }
+
+                $pivotData       = [];
+                $movieCategories = [];
+
+                foreach ($groupedCats as $collectionId => $catData) {
+                    $movieCategories[] = [
+                        'id_movie'    => $data['id_movie'],
+                        'id_category' => $catData['category_id'],
+                    ];
+
+                    $pivotData[] = [
+                        'id_movie'      => $data['id_movie'],
+                        'collection_id' => $collectionId,
+                        'franchise_id'  => $catData['franchise_id'],
+                        'type_film'     => $data['type_film'],
+                        'viewed'        => $data['viewed'] ?? 0,
+                        'short'         => $data['short'] ?? 0,
+                        'adult'         => $data['adult'] ?? 0,
+                    ];
+                }
+
+                if (!empty($movieCategories)) {
+                    MovieCategory::upsert($movieCategories, ['id_movie', 'id_category']);
+                }
+
+                if (!empty($pivotData)) {
+                    CollectionsCategoriesPivot::insert($pivotData);
+                }
+            }
+
+            if (!empty($data['tags'])) {
+                $tagsToInsert = [];
+                foreach ($data['tags'] as $tag) {
+                    $tagExist = DB::table('tags')->where('tag_name_' . $locale, '=', $tag)->first();
+                    if ($tagExist) {
+                        $tagsToInsert[] = [
+                            'id_movie'  => $data['id_movie'],
+                            'id_tag'    => $tagExist->id,
+                            'type_film' => $data['type_film'],
+                        ];
+                    }
+                }
+                if (!empty($tagsToInsert)) {
+                    TagsMoviesPivot::insert($tagsToInsert);
+                }
             }
         });
-        return ['success'=>true];
+
+        return ['success' => true];
     }
 }

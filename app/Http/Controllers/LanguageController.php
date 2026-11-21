@@ -216,6 +216,7 @@ class LanguageController
             'title'=> __('table_fields.title'),
             'actions'=> __('table_fields.actions'),
             'status'=> __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
         ];
     }
     public static function localizingCollectionsList() : array
@@ -238,6 +239,7 @@ class LanguageController
             'title'=> __('table_fields.title'),
             'actions'=> __('table_fields.actions'),
             'status'=> __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
         ];
     }
     public static function localizingFranchisesList() : array
@@ -261,6 +263,7 @@ class LanguageController
             'title' => __('table_fields.title'),
             'actions' => __('table_fields.actions'),
             'status'=> __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
         ];
     }
     public static function localizingMoviesList() : array
@@ -284,6 +287,7 @@ class LanguageController
             'title' => __('table_fields.title'),
             'actions' => __('table_fields.actions'),
             'status'=> __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
         ];
     }
     public static function localizingMoviesExportList() : array
@@ -298,6 +302,7 @@ class LanguageController
             'title' => __('table_fields.title'),
             'actions' => __('table_fields.actions'),
             'status'=> __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
             'no_movies_for_export'=> __('movies.no_movies_for_export'),
             'export_all_tables'=> __('movies.export_all_tables'),
             'data_for_export'=> __('movies.data_for_export'),
@@ -308,8 +313,9 @@ class LanguageController
         return [
             'edit' => __('buttons.edit'),
             'update' => __('buttons.update'),
+            'sync_data' => __('buttons.sync_data'),
             'back_to_show' => __('buttons.back_to_show'),
-            'sync_imdb' => __('buttons.sync_imdb'),
+            'sync_full' => __('buttons.sync_full'),
             'submit_resize' => __('buttons.submit_resize'),
             'add_to_export' => __('buttons.add_to_export'),
             'clear_selection' => __('buttons.clear_selection'),
@@ -361,6 +367,7 @@ class LanguageController
             'id_image' => __('table_fields.id_image'),
             'link' => __('table_fields.link'),
             'assign_status' => __('table_fields.assign_status'),
+            'poster_source'=> __('table_fields.poster_source'),
             'step' => __('export.step'),
             'published' => __('export.published'),
             'assign_are_categories' => __('export.assign_are_categories'),
@@ -386,11 +393,12 @@ class LanguageController
             'id_movie' => __('table_fields.id_movie'),
             'year' => __('table_fields.year'),
             'status'=> __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
             'photo' => __('table_fields.photo'),
             'link' => __('table_fields.link'),
             'images' => __('movies.images'),
             'next_page' => __('buttons.next_page'),
-            'sync_imdb' => __('buttons.sync_imdb'),
+            'sync_full' => __('buttons.sync_full'),
             'clear_selection' => __('buttons.clear_selection'),
             'delete_selection' => __('buttons.delete_selection'),
         ];
@@ -469,6 +477,7 @@ class LanguageController
             'created_at' => __('table_fields.created_at'),
             'poster' => __('table_fields.poster'),
             'status' => __('table_fields.status'),
+            'poster_source'=> __('table_fields.poster_source'),
             'id_movie' => __('table_fields.id_movie'),
             'year' => __('table_fields.year'),
             'title' => __('table_fields.title'),
@@ -480,6 +489,7 @@ class LanguageController
             'table_sort_fields' => [
                 ['value' => 'position', 'label' => __('table_fields.position')],
                 ['value' => 'published', 'label' => __('table_fields.status')],
+                ['value' => 'poster_source', 'label' => __('table_fields.poster_source')],
                 ['value' => 'year_release', 'label' => __('table_fields.year')],
                 ['value' => 'updated_at', 'label' => __('table_fields.updated_at')],
                 ['value' => 'created_at', 'label' => __('table_fields.created_at')],

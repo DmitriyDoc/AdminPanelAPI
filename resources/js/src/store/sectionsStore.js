@@ -1,11 +1,10 @@
 import { defineStore } from "pinia";
-import axios from 'axios'
+import axios from 'axios';
 import { useRoute } from 'vue-router';
-import { ref }  from "vue";
-import {ElMessage} from "element-plus";
+import { ref } from "vue";
+import { ElMessage } from "element-plus";
 
-
-export const useSectionStore = defineStore('sectionStore',() => {
+export const useSectionStore = defineStore('sectionStore', () => {
 
     const state = ref({
         searchQuery: '',
@@ -28,16 +27,17 @@ export const useSectionStore = defineStore('sectionStore',() => {
     const route = useRoute();
     const sectionImagesData = ref({});
 
-    const getSections = async () =>{
+    const getSections = async () => {
         try {
             axios.get('/categories/sections').then((response) => {
                 sections.value = response.data;
             });
         } catch (e) {
-            console.log('error',e);
+            console.log('error', e);
         }
     }
-    const getDataSections = async () =>{
+
+    const getDataSections = async () => {
         try {
             loader.value = true;
             axios.get('/sections/'
@@ -56,21 +56,24 @@ export const useSectionStore = defineStore('sectionStore',() => {
                 loader.value = false;
             });
         } catch (e) {
-            console.log('error',e);
+            console.log('error', e);
         }
     }
-    const removeItemFromSection = async (id,index) => {
+
+    const removeItemFromSection = async (id, index) => {
         try {
-            axios.delete('/sections',{ data: {
+            axios.delete('/sections', {
+                data: {
                     id_movie: id,
-                }}
-            ).then((response) => {
-                sectionsData.value.data.splice(index,1);
+                }
+            }).then((response) => {
+                sectionsData.value.data.splice(index, 1);
             });
         } catch (e) {
-            console.log('error',e);
+            console.log('error', e);
         }
     }
+
     const removeImage = async (file, sectionId, field) => {
         try {
             await axios.delete('/section/images', {
@@ -82,6 +85,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
             ElMessage.error('Ошибка при удалении изображения');
         }
     };
+
     const updateSection = async (data) => {
         try {
             const response = await axios.post('/section/update', data);
@@ -100,6 +104,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
             console.log('error', e);
         }
     }
+
     const updateSectionImages = async (formData) => {
         try {
             const response = await axios.post('/section/update-images', formData, {
@@ -124,6 +129,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
             });
         }
     };
+
     const getSectionImages = async () => {
         try {
             const response = await axios.get('/section/images');
@@ -132,21 +138,56 @@ export const useSectionStore = defineStore('sectionStore',() => {
             console.log('error', e);
         }
     };
+
     const updateSearchQuery = (q) => {
         state.value.searchQuery = q;
     }
+
     const updateSpin = (param) => {
         state.value.spinParam = param;
     }
+
     const updateSort = (param) => {
         state.value.sortBy = param;
     }
+
     const updateCurrentPage = (param) => {
         state.value.page = param;
     }
+
     const updatePageSize = (param) => {
         state.value.limit = param;
     }
+
+    const syncWithTMDB = async (imdbId, offset = 0, limit = 10) => {
+        try {
+            const response = await axios.get('/section/tmdb-images', {
+                params: {
+                    imdb_id: imdbId,
+                    offset: offset,
+                    limit: limit
+                }
+            });
+            return response.data;
+        } catch (e) {
+            console.log('TMDB sync error', e);
+            ElMessage.error('Ошибка синхронизации с TMDB');
+            return { success: false, message: 'Ошибка синхронизации с TMDB' };
+        }
+    };
+
+    const getSuggestedMovies = async (sectionId) => {
+        try {
+            const response = await axios.get('/section/suggested-movies', {
+                params: { section_id: sectionId }
+            });
+            return response.data;
+        } catch (e) {
+            console.log('getSuggestedMovies error', e);
+            ElMessage.error('Ошибка получения списка фильмов');
+            return { success: false, message: 'Ошибка получения списка фильмов' };
+        }
+    };
 
     return {
         sectionImagesData,
@@ -174,5 +215,7 @@ export const useSectionStore = defineStore('sectionStore',() => {
         updateSort,
         updateCurrentPage,
         updatePageSize,
+        syncWithTMDB,
+        getSuggestedMovies,
     }
 });

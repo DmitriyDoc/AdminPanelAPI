@@ -68,9 +68,35 @@
     <el-table :data="tableData" v-loading="loader" :empty-text="$t('data_not_found')" style="width: 100%"  ref="multipleTableRef" >
         <el-table-column type="index" label="№"/>
         <el-table-column fixed prop="created_at" :label="locale.created_at" width="130" />
-        <el-table-column prop="poster" :label="locale.poster" width="150" >
+        <el-table-column prop="poster" :label="locale.poster"  style="width: 50px; height: 75px; object-fit: cover;"  width="150" >
             <template v-slot:default="scope">
                 <el-image :src="scope.row.poster" />
+            </template>
+        </el-table-column>
+        <el-table-column
+            prop="poster_source"
+            :label="locale.poster_source"
+            width="120"
+            align="center"
+            class-name="badge-column"
+        >
+            <template v-slot:default="scope">
+                <div class="badge-wrapper">
+                    <template v-if="scope.row.poster_source">
+                        <el-badge
+                            v-if="scope.row.poster_source.toLowerCase() === 'tmdb'"
+                            value="TMDB"
+                            class="badge-tmdb-el"
+                        />
+                        <el-badge
+                            v-else-if="scope.row.poster_source.toLowerCase() === 'imdb'"
+                            value="IMDB"
+                            class="badge-imdb-el"
+                        />
+                        <span v-else style="color: #909399; font-size: 14px;">{{ scope.row.poster_source }}</span>
+                    </template>
+                    <span v-else style="color: #909399; font-size: 14px;">-</span>
+                </div>
             </template>
         </el-table-column>
         <el-table-column prop="published" :label="locale.status" width="170" >
@@ -218,5 +244,55 @@
         justify-content: center;
         height: 100%;
         right: 20px;
+    }
+    /* 👇 1. Увеличиваем отступы и включаем flex-центрирование для конкретной колонки */
+    :deep(.el-table .badge-column .cell) {
+        padding-top: 16px !important;
+        padding-bottom: 16px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .badge-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .badge-tmdb-el :deep(.el-badge__content) {
+        background-color: #e6fffa !important;
+        color: #2c7a7b !important;
+        border: 1px solid #81e6d9 !important;
+        font-weight: 700;
+        font-size: 11px;
+        padding: 0 8px !important;
+        height: 22px !important;
+        line-height: 22px !important;
+        border-radius: 11px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        margin-top: 0 !important;
+        top: 0 !important;
+    }
+
+    .badge-imdb-el :deep(.el-badge__content) {
+        background-color: #F5C518 !important;
+        color: #000000 !important;
+        border: 1px solid #d4a90f !important;
+        font-weight: 800;
+        font-size: 11px;
+        padding: 0 8px !important;
+        height: 22px !important;
+        line-height: 22px !important;
+        border-radius: 11px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        margin-top: 0 !important;
+        top: 0 !important;
+    }
+
+    .text-muted {
+        color: #909399;
+        font-size: 14px;
     }
 </style>

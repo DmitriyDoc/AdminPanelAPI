@@ -8,30 +8,14 @@ use Illuminate\Support\Facades\Lang;
 
 class CelebsController extends Controller
 {
+    private const MEDIUM_SIZE = 'w300';
+    private const SMALL_SIZE = 'w185';
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): array
     {
-//        $tableName = request()->segment(3) ?? '';
-//        $allowedTableNames = [
-//            0=>'FeatureFilm',
-//            1=>'MiniSeries',
-//            2=>'ShortFilm',
-//            3=>'TvMovie',
-//            4=>'TvSeries',
-//            5=>'TvShort',
-//            6=>'TvSpecial',
-//            7=>'Video',
-//            8=>'Celebs',
-//        ];
-//        if (!in_array($tableName,$allowedTableNames)){
-//            $tableName = $allowedTableNames[0];
-//        }
-
-
         $model = modelByName('CelebsInfo'.ucfirst(Lang::locale()));
-
 
         $allowedSortFields = ['desc','asc'];
         $allowedFilterFields = $model->getFillable();
@@ -47,7 +31,6 @@ class CelebsController extends Controller
             $sortDir = $allowedSortFields[0];
         }
 
-
         if ($request->query('search')){
             $searchQuery = trim(strtolower(strip_tags($request->query('search'))));
             $model = $model->where('nameActor','like',"{$searchQuery}%")->orWhere('id_celeb','like',"{$searchQuery}%");
@@ -58,12 +41,24 @@ class CelebsController extends Controller
         if (!empty($modelArr['data'])){
             foreach ($modelArr['data'] as $k => $item) {
                 if (!empty($item['info'])){
-                    $modelArr['data'][$k]['created_at'] = date('Y-m-d', strtotime($item['info']['created_at'])) ?? '';
-                    $modelArr['data'][$k]['poster'] = $item['info']['photo'] ?? '';
+                    $modelArr['data'][$k]['created_at'] = !empty($item['info']['created_at']) ? date('Y-m-d', strtotime($item['info']['created_at'])) : '';
+
+                    $photo = $item['info']['photo'] ?? '';
+                    if (!empty($photo)) {
+                        if (str_starts_with($photo, env('TMDB_IMAGE_BASE_URL').'/t/p/')) {
+                            $search = ['/t/p/original/', '/t/p/w500/', '/t/p/w780/', '/t/p/w1280/'];
+                            $replace = '/t/p/' . self::MEDIUM_SIZE . '/';
+                            $modelArr['data'][$k]['poster'] = str_replace($search, $replace, $photo);
+                        } else {
+                            $modelArr['data'][$k]['poster'] = $photo;
+                        }
+                    } else {
+                        $modelArr['data'][$k]['poster'] = '';
+                    }
                 }
             }
-
         }
+
         $modelArr['locale'] = LanguageController::localizingPersonsList();
         return $modelArr;
     }
@@ -101,77 +96,121 @@ class CelebsController extends Controller
             7=>'Video',
         ];
         $curLocale = app()->currentLocale();
+
         if (!empty($id)) {
             $model = modelByName('CelebsInfo'.ucfirst(Lang::locale()));
-            $modelArr = $model->where('id_celeb',$id)->with('info')->first()->toArray();
+            $modelRecord = $model->where('id_celeb',$id)->with('info')->first();
 
-            if (!empty($modelArr)){
-                if (!empty($modelArr['info']['knowfor'])){
-                    $knownForArr = json_decode($modelArr['info']['knowfor']);
-                    foreach ($allowedTableNames as $type){
-                        $relationPosterName = 'poster'.$type;
-                        $relationPosterNameSnake = 'poster_'.camelToSnake($type);
-                        foreach ($knownForArr as $index => $id) {
-                            $res = MovieInfo::with($relationPosterName)->where('type_film',getTableSegmentOrTypeId($type))->where('id_movie',$id)->first();
-                            if (!empty($res)){
-                                $res = $res->toArray();
-                                $type = getTableSegmentOrTypeId($res['type_film']);
-                                $knownFor[$index]['id_movie'] = $res['id_movie'];
-                                $knownFor[$index]['type_film'] = __('movies.type_movies.'.$type);
-                                $knownFor[$index]['type_film_slug'] = $type;
-                                $knownFor[$index]['title'] = $res['title'];
-                                $knownFor[$index]['original_title'] = $res['original_title'];
-                                $knownFor[$index]['poster'] = '';
-                                if (!empty($res[$relationPosterNameSnake])){
-                                    $knownFor[$index]['poster'] = $res[$relationPosterNameSnake][0]['src']??'';
+            if (!$modelRecord) {
+                return [];
+            }
+
+            $modelArr = $modelRecord->toArray();
+
+            $photo = $modelArr['info']['photo'] ?? '';
+            if (!empty($photo)) {
+                if (str_starts_with($photo, env('TMDB_IMAGE_BASE_URL').'/t/p/')) {
+                    $search = ['/t/p/original/', '/t/p/w500/', '/t/p/w780/', '/t/p/w1280/'];
+                    $replace = '/t/p/' . self::MEDIUM_SIZE . '/';
+                    $modelArr['info']['photo'] = str_replace($search, $replace, $photo);
+                } else {
+                    $modelArr['info']['photo'] = $photo; // Оставляем как есть
+                }
+            } else {
+                $modelArr['info']['photo'] = '';
+            }
+
+            if (!empty($modelArr['info']['knowfor'])){
+                $knownForArr = json_decode($modelArr['info']['knowfor'], true) ?? [];
+
+                foreach ($allowedTableNames as $tableName){
+                    $relationPosterName = 'poster'.$tableName;
+                    $relationPosterNameSnake = 'poster_'.camelToSnake($tableName);
+
+                    foreach ($knownForArr as $index => $movieId) {
+                        $res = MovieInfo::with($relationPosterName)
+                            ->where('type_film', getTableSegmentOrTypeId($tableName))
+                            ->where('id_movie', $movieId)
+                            ->first();
+
+                        if (!empty($res)){
+                            $resArr = $res->toArray();
+                            $currentType = getTableSegmentOrTypeId($resArr['type_film']);
+
+                            $knownFor[$index]['id_movie'] = $resArr['id_movie'];
+                            $knownFor[$index]['type_film'] = __('movies.type_movies.'.$currentType);
+                            $knownFor[$index]['type_film_slug'] = $currentType;
+                            $knownFor[$index]['title'] = $resArr['title'];
+                            $knownFor[$index]['original_title'] = $resArr['original_title'];
+                            $knownFor[$index]['poster'] = '';
+
+                            if (!empty($resArr[$relationPosterNameSnake])){
+                                $posterSrc = $resArr[$relationPosterNameSnake][0]['src'] ?? '';
+
+                                if (!empty($posterSrc)) {
+                                    // 👇 ТА ЖЕ ЛОГИКА: проверяем TMDB и оптимизируем, иначе оставляем как есть
+                                    if (str_starts_with($posterSrc, env('TMDB_IMAGE_BASE_URL').'/t/p/')) {
+                                        $search = ['/t/p/original/', '/t/p/w500/', '/t/p/w780/', '/t/p/w1280/'];
+                                        $replace = '/t/p/' . self::SMALL_SIZE . '/';
+                                        $knownFor[$index]['poster'] = str_replace($search, $replace, $posterSrc);
+                                    } else {
+                                        $knownFor[$index]['poster'] = $posterSrc; // Оставляем как есть
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
-                $modelArr['info']['knowfor'] = $knownFor;
-                $modelArr['filmography'] = json_decode($modelArr['filmography'],true) ?? [];
-
-                $allMovieIds = [];
-                foreach ($modelArr['filmography'] as $occupation) {
-                    foreach ($occupation as $imdbId => $dataArr) {
-                        $allMovieIds[] = $imdbId;
-                    }
-                }
-                $allMovieIds = array_unique($allMovieIds);
-                $moviesInfoCollection = MovieInfo::whereIn('id_movie', $allMovieIds)
-                    ->select('id_movie', 'published', 'type_film')
-                    ->get()
-                    ->keyBy('id_movie');
-                $filmographyArr = [];
-                foreach ($modelArr['filmography'] as $k => &$occupation) {
-                    uasort($occupation, function ($a, $b) {
-                        return ($a['year'] < $b['year']) ? 1 : -1;
-                    });
-                    foreach ($occupation as $id => $dataArr) {
-                        $movieInfo = $moviesInfoCollection->get($id);
-                        $statusVal = $movieInfo ? $movieInfo->published : null;
-                        $typeFilmVal = $movieInfo ? getTableSegmentOrTypeId($movieInfo->type_film) : null;
-                        $categoryName = $movieInfo ? getCategoryNameByTableSegment($typeFilmVal,$curLocale) : null;
-                        $filmographyArr[$k][] = [
-                            'id' => $id,
-                            'role' => $dataArr['role'],
-                            'year' => $dataArr['year'],
-                            'title' => $dataArr['title'],
-                            'type_film' => $typeFilmVal,
-                            'cat_name' => $categoryName,
-                            'status' => statusSelection($statusVal) ?? [],
-                        ];
-                    }
-                }
-                $modelArr['filmography'] = $filmographyArr;
-                $modelArr['info']['created_at'] = date('Y-m-d', strtotime($modelArr['info']['created_at'])) ?? '';
-                $modelArr['info']['updated_at'] = date('Y-m-d', strtotime($modelArr['info']['updated_at'])) ?? '';
-                $modelArr['locale'] = LanguageController::localizingPersonShow();
-                return $modelArr;
             }
+
+            $modelArr['info']['knowfor'] = array_values($knownFor);
+            $modelArr['filmography'] = json_decode($modelArr['filmography'], true) ?? [];
+
+            $allMovieIds = [];
+            foreach ($modelArr['filmography'] as $occupation) {
+                foreach ($occupation as $imdbId => $dataArr) {
+                    $allMovieIds[] = $imdbId;
+                }
+            }
+            $allMovieIds = array_unique($allMovieIds);
+
+            $moviesInfoCollection = MovieInfo::whereIn('id_movie', $allMovieIds)
+                ->select('id_movie', 'published', 'type_film')
+                ->get()
+                ->keyBy('id_movie');
+
+            $filmographyArr = [];
+            foreach ($modelArr['filmography'] as $k => &$occupation) {
+                uasort($occupation, function ($a, $b) {
+                    return ($a['year'] < $b['year']) ? 1 : -1;
+                });
+
+                foreach ($occupation as $id => $dataArr) {
+                    $movieInfo = $moviesInfoCollection->get($id);
+                    $statusVal = $movieInfo ? $movieInfo->published : null;
+                    $typeFilmVal = $movieInfo ? getTableSegmentOrTypeId($movieInfo->type_film) : null;
+                    $categoryName = $movieInfo ? getCategoryNameByTableSegment($typeFilmVal, $curLocale) : null;
+
+                    $filmographyArr[$k][] = [
+                        'id' => $id,
+                        'role' => $dataArr['role'],
+                        'year' => $dataArr['year'],
+                        'title' => $dataArr['title'],
+                        'type_film' => $typeFilmVal,
+                        'cat_name' => $categoryName,
+                        'status' => statusSelection($statusVal) ?? [],
+                    ];
+                }
+            }
+
+            $modelArr['filmography'] = $filmographyArr;
+            $modelArr['info']['created_at'] = !empty($modelArr['info']['created_at']) ? date('Y-m-d', strtotime($modelArr['info']['created_at'])) : '';
+            $modelArr['info']['updated_at'] = !empty($modelArr['info']['updated_at']) ? date('Y-m-d', strtotime($modelArr['info']['updated_at'])) : '';
+            $modelArr['locale'] = LanguageController::localizingPersonShow();
+
+            return $modelArr;
         }
+
         return [];
     }
 

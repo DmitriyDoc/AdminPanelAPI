@@ -16,11 +16,17 @@ class AdminMovieController extends Controller
     public function send(Request $request)
     {
         try {
-            $request->validate([
-                'switch_all' => 'boolean',
-            ]);
-            $switchAll = $request->input('switch_all', false);
-            $result = $this->exportService->exportMovies($switchAll);
+            $result = $this->exportService->exportMovies();
+            return response()->json(['data' => $result], $result['status']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function sendFull(Request $request)
+    {
+        try {
+            $result = $this->exportService->exportMovies(true);
             return response()->json(['data' => $result], $result['status']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

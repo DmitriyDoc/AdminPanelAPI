@@ -16,12 +16,8 @@ class AdminTagsController extends Controller
     public function send(Request $request)
     {
         try {
-            $request->validate([
-                'switch_all' => 'boolean',
-            ]);
-            $switchAll = $request->input('switch_all', false);
-            $result = $this->exportService->exportTags($switchAll);
-            return response()->json(['data' => $result], $result['status']);
+            $result = $this->exportService->exportTags();
+            return response()->json(['data' => $result], $result['status'] ?? 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

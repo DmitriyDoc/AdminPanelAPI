@@ -478,7 +478,7 @@
                     id: movie_ID.value,
                     type: selectType.value,
                     posterType: posterType.value,
-                    typeSync: 'full_sync'
+                    typeSync: 'import_sync'
                 });
                 celeb_ID.value = 'nm';
             } else {

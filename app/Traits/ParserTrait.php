@@ -36,9 +36,12 @@ trait ParserTrait
         gc_collect_cycles(); // принудительный вызов встроенного сборщика мусора PHP
     }
 
-    public function logErrors($document,$exspression,$marker,$url=null){
-        if ($document->has($exspression)){
-            Log::info(date('Y-m-d H:i:s').$marker.$url.PHP_EOL);
+    public function logErrors($document, $selector, $prefix, $url)
+    {
+        if ($document->has($selector)) {
+            Log::error("$prefix detected in $url");
+            return true;
         }
+        return false;
     }
 }

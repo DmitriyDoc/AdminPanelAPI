@@ -10,14 +10,17 @@ import UpdateMovieAdm from "@/pages/UpdateMovieAdm.vue";
 import UpdatePersonAdm from "@/pages/UpdatePersonAdm.vue";
 import MovieDetailsAdm from "@/pages/MovieDetailsAdm.vue";
 import PersonDetailsAdm from "@/pages/PersonDetailsAdm.vue";
-import FranchiseAddAdm from "@/pages/FranchiseAddAdm.vue";
-import FranchiseListAdm from "@/pages/FranchiseListAdm.vue";
-import CollectionListAdm from "@/pages/CollectionListAdm.vue";
-import CollectionAddAdm from "@/pages/CollectionAddAdm.vue";
 import TagListAdm from "@/pages/TagListAdm.vue";
 import TagsInfoAdm from "@/pages/TagsInfoAdm.vue";
 import SectionsListAdm from "@/pages/SectionsListAdm.vue";
 import LoginAdm from "@/pages/LoginAdm.vue";
+import ChartsListAdm from "../pages/ChartsListAdm.vue";
+import ChartMoviesAdm from "../pages/ChartMoviesAdm.vue";
+import SectionsManagementAdm from "../pages/SectionsManagementAdm.vue";
+import ImportAdm from "@/pages/ImportAdm.vue";
+
+
+
 
 const routes = [
     {
@@ -176,36 +179,9 @@ const routes = [
         },
     },
     {
-        path: '/categories/franchise/',
-        name: 'addFranchise',
-        component: FranchiseAddAdm,
-        meta: {
-            layout: 'full',
-            permissions: [],
-        },
-    },
-    {
-        path: '/categories/franchise/list',
-        name: 'listFranchise',
-        component: FranchiseListAdm,
-        meta: {
-            layout: 'full',
-            permissions: [],
-        },
-    },
-    {
-        path: '/categories/collection/',
-        name: 'addCollection',
-        component: CollectionAddAdm,
-        meta: {
-            layout: 'full',
-            permissions: [],
-        },
-    },
-    {
-        path: '/categories/collection/list',
-        name: 'listCollection',
-        component: CollectionListAdm,
+        path: '/categories/management/',
+        name: 'catsManagement',
+        component: SectionsManagementAdm,
         meta: {
             layout: 'full',
             permissions: [],
@@ -229,6 +205,32 @@ const routes = [
             permissions: [],
         },
     },
-
+    {
+        path: '/charts',
+        name: 'charts',
+        component: ChartsListAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/charts/:chart_id',
+        name: 'chartMovies',
+        component: ChartMoviesAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
+    {
+        path: '/import',
+        name: 'import',
+        component: ImportAdm,
+        meta: {
+            layout: 'full',
+            permissions: [],
+        },
+    },
 ];
 export default routes;

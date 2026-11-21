@@ -20,8 +20,6 @@ trait MoviesInfoTrait
             return;
         }
 
-        Log::info("🚀 Starting parsing of " . count($pages) . " pages in getMoviesInfo...");
-
         foreach ($pages as $url => $page) {
             if (empty($page) || !is_string($page) || trim($page) === '') {
                 Log::error("Empty page: $url");
@@ -89,12 +87,7 @@ trait MoviesInfoTrait
 
                     // TITLE
                     $title = $document->find('h1');
-                    if (!$this->isUpdate){
-                        $titleRus = $translator->translateSingle($title[0]->text());
-                        $insertData[$this->update_info_table]['title'] = $titleRus ?? null;
-                    }
-
-
+                    $insertData[$this->update_info_table]['title'] = $title[0]->text() ?? null;
                     // ORIGINAL TITLE
                     $originalTitle = $title[0]->nextSibling('div') ?? null;
                     if ($originalTitle) {

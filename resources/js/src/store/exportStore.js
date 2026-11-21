@@ -1,14 +1,14 @@
 import { defineStore } from "pinia";
 import axios from 'axios'
 import { ref,reactive} from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElNotification } from 'element-plus';
 
 
 export const useExportStore = defineStore('exportStore',() => {
 
     const statePagination = ref({
         page: 1,
-        limit: 50,
+        limit: 20,
         total: 0,
     });
     const tableData = ref([]);
@@ -34,6 +34,13 @@ export const useExportStore = defineStore('exportStore',() => {
         type:"",
         text:"",
     });
+    const spinBtnFullTaxonomy = ref(false);
+    const spinBtnFullTags = ref(false);
+    const spinBtnFullMovie = ref(false);
+    const messageExportFullMovie = reactive({ type: "", text: "" });
+    const countsExportFullMovie = ref(0);
+    const messageExportTaxonomyType = ref('success');
+    const messageExportTagType = ref('success');
     const getExportMovies = () =>{
         try {
             loader.value = true;
@@ -84,79 +91,263 @@ export const useExportStore = defineStore('exportStore',() => {
             }
         });
     }
-    const exportMovies = async (switchAll) => {
+
+
+    const exportMovies = async () => {
         spinBtnExportMovie.value = true;
         loader.value = true;
-        axios.post('/movies/send',{
-            'switch_all': switchAll,
-        }).then((response) => {
-            if (response.status === 200) {
-                ElMessage({
-                    type: response.data.data.type,
-                    message: response.data.data.message,
-                })
-                if (response.data.data.body){
-                    countsExportMovie.value = response.data.data.body.exported_count;
-                    disableBtnMovieExport.value = true;
-                }
-                messageExportMovie.type = response.data.data.type;
-                messageExportMovie.text = response.data.data.message;
-                getExportMovies();
-                loader.value = false;
-            } else {
-                ElMessage({
-                    type: 'error',
-                    message: 'Export is not finished',
+
+        axios.post('/movies/send').then((response) => {
+
+            const resData = response.data.data ? response.data.data : response.data;
+            const msgType = resData.type || 'success';
+
+            // Основное уведомление (краткое)
+            ElMessage({
+                type: msgType,
+                message: resData.message,
+                duration: msgType === 'warning' ? 5000 : 3000,
+            });
+
+            if (resData.skipped_details && Array.isArray(resData.skipped_details) && resData.skipped_details.length > 0) {
+
+                // Формируем HTML-список ошибок
+                const errorListHtml = resData.skipped_details.map(error => {
+                    return `<li style="margin-bottom: 8px; padding: 8px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; font-size: 13px;">
+                        <strong style="color: #856404;">⚠️ ${error}</strong>
+                    </li>`;
+                }).join('');
+
+                ElNotification({
+                    title: `⚠️ Пропущено фильмов: ${resData.skipped_details.length}`,
+                    type: 'warning',
+                    duration: 0, // Не закрывается автоматически
+                    dangerouslyUseHTMLString: true,
+                    message: `
+                        <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                            <p style="margin-bottom: 12px; color: #666; font-weight: bold;">
+                                Следующие фильмы не были экспортированы из-за отсутствия обязательных полей:
+                            </p>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                ${errorListHtml}
+                            </ul>
+                        </div>
+                    `,
+                    position: 'top-right',
                 });
             }
-            spinBtnExportMovie.value = false
+
+            messageExportMovie.type = msgType;
+            messageExportMovie.text = resData.message;
+
+            if (resData.sent_count !== undefined) {
+                countsExportMovie.value = resData.sent_count;
+            }
+
+            if (msgType === 'success' && resData.remaining === 0) {
+                disableBtnMovieExport.value = true;
+            } else {
+                disableBtnMovieExport.value = false;
+            }
+
+            getExportMovies();
+            loader.value = false;
+
+        }).catch((error) => {
+            console.error(error);
+            ElMessage({
+                type: 'error',
+                message: 'Ошибка соединения или сервера при экспорте',
+            });
+            loader.value = false;
+        }).finally(() => {
+            spinBtnExportMovie.value = false;
         });
     }
-    const exportTags = async (switchAll) => {
+    const exportTaxonomy = async () => {
+        spinBtnExportTaxonomy.value = true;
+        try {
+            const response = await axios.post('/taxonomies/send');
+            const resData = response.data.data ? response.data.data : response.data;
+
+            if (resData.success) {
+                ElMessage({ type: 'success', message: resData.message, duration: 4000 });
+                messageExportTaxonomy.value = resData.message;
+                // Сохраняем как число, а не как массив
+                countsExportTaxonomy.value = resData.sent_count || 0;
+                disableBtnTaxonomyExport.value = true;
+            } else {
+                ElMessage({ type: resData.type || 'warning', message: resData.message });
+                disableBtnTaxonomyExport.value = false;
+            }
+        } catch (error) {
+            console.error(error);
+            ElMessage({ type: 'error', message: 'Ошибка соединения или сервера при экспорте таксономий' });
+        } finally {
+            spinBtnExportTaxonomy.value = false;
+        }
+    }
+
+    const exportTags = async () => {
         spinBtnExportTag.value = true;
-        axios.post('/tags/send',{
-            'switch_all': switchAll,
-        }).then((response) => {
-            if (response.status === 200) {
-                ElMessage({
-                    type: 'success',
-                    message: response.data.data.message,
-                })
-                messageExportTag.value = response.data.data.message;
-                countsExportTag.value = response.data.data.body.exported_count;
+        try {
+            const response = await axios.post('/tags/send');
+            const resData = response.data.data ? response.data.data : response.data;
+
+            if (resData.success) {
+                ElMessage({ type: 'success', message: resData.message, duration: 4000 });
+                messageExportTag.value = resData.message;
+                // Сохраняем как число, а не как массив
+                countsExportTag.value = resData.sent_count || 0;
                 disableBtnTagExport.value = true;
                 disableBtnMovieExport.value = false;
             } else {
-                ElMessage({
-                    type: 'error',
-                    message: 'Export is not finished',
-                });
+                ElMessage({ type: resData.type || 'warning', message: resData.message });
+                disableBtnTagExport.value = false;
             }
-        });
-        spinBtnExportTag.value = false;
+        } catch (error) {
+            console.error(error);
+            ElMessage({ type: 'error', message: 'Ошибка соединения или сервера при экспорте тегов' });
+        } finally {
+            spinBtnExportTag.value = false;
+        }
     }
-    const exportTaxonomy = async (switchAll) => {
-        spinBtnExportTaxonomy.value = true;
-        axios.post('/taxonomies/send',{
-            'switch_all': switchAll,
-        }).then((response) => {
-            if (response.status === 200) {
-                ElMessage({
+    const exportFullTaxonomy = async () => {
+        spinBtnFullTaxonomy.value = true;
+        try {
+            const response = await axios.post('/taxonomies/send-full');
+            const resData = response.data;
+
+            if (resData.success && resData.data) {
+                ElMessage({ type: 'success', message: resData.data.message || 'Синхронизация завершена' });
+
+                // Формируем детальный HTML-отчет
+                const details = resData.data.details || {};
+                const reportHtml = Object.entries(details).map(([key, info]) => {
+                    const color = info.status === 'success' ? '#67c23a' : '#f56c6c';
+                    const icon = info.status === 'success' ? '✅' : '❌';
+                    return `<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee;">
+                        <span>${icon} <strong>${translateKey(key)}</strong></span>
+                        <span style="color: ${color}; font-weight: bold;">${info.count} записей (${info.message})</span>
+                    </div>`;
+                }).join('');
+
+                ElNotification({
+                    title: '📊 Детальный отчет: Таксономии',
                     type: 'success',
-                    message: response.data.data.message,
-                })
-                messageExportTaxonomy.value = response.data.data.message;
-                countsExportTaxonomy.value = response.data.data.body.exported_count;
-                disableBtnTaxonomyExport.value = true;
+                    duration: 0,
+                    dangerouslyUseHTMLString: true,
+                    message: `<div style="min-width: 350px;">${reportHtml}</div>`,
+                    position: 'top-right',
+                });
             } else {
-                ElMessage({
-                    type: 'error',
-                    message: 'Export is not finished',
+                throw new Error(resData.message || 'Ошибка синхронизации');
+            }
+        } catch (error) {
+            console.error(error);
+            ElMessage({ type: 'error', message: error.message || 'Ошибка соединения при полной синхронизации' });
+        } finally {
+            spinBtnFullTaxonomy.value = false;
+        }
+    };
+
+    const exportFullTags = async () => {
+        spinBtnFullTags.value = true;
+        try {
+            const response = await axios.post('/tags/send-full');
+            const resData = response.data;
+
+            if (resData.success && resData.data) {
+                ElMessage({ type: 'success', message: resData.data.message || 'Синхронизация завершена' });
+
+                const details = resData.data.details || {};
+                const reportHtml = Object.entries(details).map(([key, info]) => {
+                    const color = info.status === 'success' ? '#67c23a' : '#f56c6c';
+                    const icon = info.status === 'success' ? '✅' : '❌';
+                    return `<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee;">
+                        <span>${icon} <strong>${translateKey(key)}</strong></span>
+                        <span style="color: ${color}; font-weight: bold;">${info.count} записей (${info.message})</span>
+                    </div>`;
+                }).join('');
+
+                ElNotification({
+                    title: '📊 Детальный отчет: Теги',
+                    type: 'success',
+                    duration: 0,
+                    dangerouslyUseHTMLString: true,
+                    message: `<div style="min-width: 350px;">${reportHtml}</div>`,
+                    position: 'top-right',
+                });
+            } else {
+                throw new Error(resData.message || 'Ошибка синхронизации');
+            }
+        } catch (error) {
+            console.error(error);
+            ElMessage({ type: 'error', message: error.message || 'Ошибка соединения при полной синхронизации' });
+        } finally {
+            spinBtnFullTags.value = false;
+        }
+    };
+
+    const translateKey = (key) => {
+        const map = {
+            'categories': 'Категории',
+            'collections': 'Коллекции',
+            'franchises': 'Франшизы',
+            'collections_categories_pivots': 'Связи (Коллекции/Франшизы)',
+            'tags': 'Теги',
+            'tags_movies_pivots': 'Связи (Теги/Фильмы)'
+        };
+        return map[key] || key;
+    };
+    const exportFullMovies = async () => {
+        spinBtnFullMovie.value = true;
+        try {
+            const response = await axios.post('/movies/send-full');
+            const resData = response.data.data ? response.data.data : response.data;
+            const msgType = resData.type || 'success';
+
+            ElMessage({
+                type: msgType,
+                message: resData.message || 'Синхронизация фильмов завершена',
+                duration: 5000,
+            });
+
+            messageExportFullMovie.type = msgType;
+            messageExportFullMovie.text = resData.message;
+
+            if (resData.sent_count !== undefined) {
+                countsExportFullMovie.value = resData.sent_count;
+            }
+
+            // Если есть ошибки валидации, показываем их
+            if (resData.skipped_details && Array.isArray(resData.skipped_details) && resData.skipped_details.length > 0) {
+                const errorListHtml = resData.skipped_details.map(error => {
+                    return `<li style="margin-bottom: 8px; padding: 8px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; font-size: 13px;">
+                        <strong style="color: #856404;">⚠️ ${error}</strong>
+                    </li>`;
+                }).join('');
+
+                ElNotification({
+                    title: `⚠️ Пропущено фильмов: ${resData.skipped_details.length}`,
+                    type: 'warning',
+                    duration: 0,
+                    dangerouslyUseHTMLString: true,
+                    message: `<div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                        <p style="margin-bottom: 12px; color: #666; font-weight: bold;">Следующие фильмы не прошли валидацию:</p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">${errorListHtml}</ul>
+                    </div>`,
+                    position: 'top-right',
                 });
             }
-        });
-        spinBtnExportTaxonomy.value = false;
-    }
+
+        } catch (error) {
+            console.error(error);
+            ElMessage({ type: 'error', message: error.message || 'Ошибка соединения при полной синхронизации фильмов' });
+        } finally {
+            spinBtnFullMovie.value = false;
+        }
+    };
     const updateCurrentPage = (param) => {
         statePagination.value.page = param;
     }
@@ -168,6 +359,9 @@ export const useExportStore = defineStore('exportStore',() => {
         updateCurrentPage,
         exportIndex,
         exportCollections,
+        exportFullTaxonomy,
+        exportFullTags,
+        exportFullMovies,
         locale,
         loader,
         tableData,
@@ -188,5 +382,12 @@ export const useExportStore = defineStore('exportStore',() => {
         disableBtnMovieExport,
         disableBtnTaxonomyExport,
         disableBtnTagExport,
+        spinBtnFullTaxonomy,
+        spinBtnFullTags,
+        spinBtnFullMovie,
+        messageExportFullMovie,
+        countsExportFullMovie,
+        messageExportTaxonomyType,
+        messageExportTagType,
     }
 });

@@ -13,12 +13,12 @@
                 </el-radio-group>
             </div>
             <el-button type="danger" style="width: 100%;" @click="submitSync()" :loading="!!disabledBtnSync">
-                {{singleData.locale.sync_imdb}}
+                {{singleData.locale.sync_full}}
             </el-button>
-            <div v-if="Object.keys(percentageSync).length" class="mt-1">
-                <el-progress :percentage="percentageSync.percent" :status="percentageSync.color"/>
-                <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>
-            </div>
+<!--            <div v-if="Object.keys(percentageSync).length" class="mt-1">-->
+<!--                <el-progress :percentage="percentageSync.percent" :status="percentageSync.color"/>-->
+<!--                <el-text type="success" ><strong>{{percentageSync.action}}</strong></el-text>-->
+<!--            </div>-->
             <ul class="list-group mt-2">
                 <li class="list-group-item"><strong>{{singleData.locale.birthday}}</strong> {{ singleData.info.birthday ?? singleData.locale.empty }}</li>
                 <li class="list-group-item"><strong>{{singleData.locale.birthday_location}}</strong> {{ singleData.birthdayLocation ?? singleData.locale.empty }}</li>
@@ -194,7 +194,7 @@
 
     onMounted(() => {
         personsStore.showItem();
-        percentageSync.value = 0;
+        //percentageSync.value = 0;
     });
 
     const toggleSelectionCeleb = () => {
@@ -279,7 +279,7 @@
         return arr.filter((el, ind) => ind === arr.indexOf(el));
     };
     const submitSync = () => {
-        percentageSync.value = 0;
+        //percentageSync.value = 0;
         ElMessageBox.confirm(`Are you sure?`, 'WARNING', {
             confirmButtonText: 'OK',
             cancelButtonText: 'Cancel',
